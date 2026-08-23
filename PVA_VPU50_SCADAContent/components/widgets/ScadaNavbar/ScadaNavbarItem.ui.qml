@@ -19,7 +19,7 @@ Rectangle {
     property bool isHovered: navMouse.containsMouse
     property bool isPressed: navMouse.pressed
 
-    signal clicked()
+    property alias mouseArea: navMouse
 
     color: navBtn.isActive ? "#155590" : (navBtn.isPressed ? "#07203a" : (navBtn.isHovered ? "#103f6d" : "#0d365e"))
     border.color: navBtn.isActive ? "#00d2ff" : (navBtn.isHovered ? "#38bdf8" : "#1a5286")
@@ -97,6 +97,5 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: navBtn.clicked()
     }
 }

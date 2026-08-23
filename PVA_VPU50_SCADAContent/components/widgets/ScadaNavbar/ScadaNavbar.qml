@@ -106,7 +106,7 @@ Rectangle {
                         badgeCount: modelData.id === 3 ? navbarRoot.unackAlarmsCount : 0
                         visible: navbarRoot.showAllScreens || modelData.minLevel <= navbarRoot.userLevel
 
-                        onClicked: {
+                        mouseArea.onClicked: {
                             navbarRoot.activeIndex = modelData.id;
                         }
                     }

@@ -15,15 +15,6 @@ Rectangle {
 
     property var bomModel
 
-    function phaseColor(phase) {
-        if (phase === "A") return "#1e3a8a"
-        if (phase === "B") return "#14532d"
-        if (phase === "C") return "#7c2d12"
-        if (phase === "D") return "#581c87"
-        if (phase === "E") return "#854d0e"
-        return "#0f766e"
-    }
-
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10
@@ -66,7 +57,7 @@ Rectangle {
                     spacing: 8
                     Rectangle {
                         width: 22; height: 22; radius: 3
-                        color: bomRoot.phaseColor(model.phase)
+                        color: model.phase === "A" ? "#1e3a8a" : (model.phase === "B" ? "#14532d" : (model.phase === "C" ? "#7c2d12" : (model.phase === "D" ? "#581c87" : (model.phase === "E" ? "#854d0e" : "#0f766e"))))
                         Text { anchors.centerIn: parent; text: model.phase; color: "#ffffff"; font.bold: true; font.pixelSize: 10 }
                     }
                     Text { text: model.name; color: "#ffffff"; font.pixelSize: 12; Layout.fillWidth: true; elide: Text.ElideRight }
