@@ -12,9 +12,18 @@
         <file>PVA_VPU50_SCADAContent/assets/3d/Metadata/thumbnail.png</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/common/icon_check.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/common/icon_warning.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_equip.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_hold.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_loop.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_manual.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_media.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_schedule.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/arrow_down.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/arrow_up.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/backspace.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/clock.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/close_x.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/controls/duplicate.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/pause.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/pause_dark.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/start.svg</file>

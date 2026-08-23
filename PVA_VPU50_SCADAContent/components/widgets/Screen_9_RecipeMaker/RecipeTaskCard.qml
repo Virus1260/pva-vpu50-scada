@@ -1,14 +1,16 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import ".."
 
 // One operation inside a stage: name, activity types, live P&ID summary, add-activity.
+// Optimized for touchscreen human finger touch operation (32px action buttons & 36px activity buttons).
 Rectangle {
     id: taskCard
-    implicitWidth: 360
-    implicitHeight: 124
-    width: 360
-    height: 124
+    implicitWidth: 380
+    implicitHeight: 140
+    width: 380
+    height: 140
     radius: 6
     color: selected ? "#0c345a" : "#0a2e50"
     border.color: selected ? "#00d2ff" : "#1d5b94"
@@ -49,35 +51,45 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
+            spacing: 4
+
             Text {
                 text: taskCard.taskLabel
                 color: "#38bdf8"
                 font.bold: true
-                font.pixelSize: 10
+                font.pixelSize: 11
             }
             Item { Layout.fillWidth: true }
             Repeater {
                 model: [
-                    { glyph: "↑", key: "up" },
-                    { glyph: "↓", key: "down" },
-                    { glyph: "⧉", key: "dup" },
-                    { glyph: "✕", key: "del" }
+                    { icon: "arrow_up", key: "up", tip: "Move Task Up" },
+                    { icon: "arrow_down", key: "down", tip: "Move Task Down" },
+                    { icon: "duplicate", key: "dup", tip: "Duplicate Task" },
+                    { icon: "close_x", key: "del", tip: "Delete Task" }
                 ]
                 delegate: Rectangle {
-                    width: 20
-                    height: 20
-                    radius: 3
-                    color: modelData.key === "del" ? "#450a0a" : "#0d2847"
-                    border.color: modelData.key === "del" ? "#ef4444" : "#1e40af"
-                    Text {
+                    id: taskActionBtn
+                    width: 32
+                    height: 32
+                    radius: 5
+                    color: modelData.key === "del" ? (tskMouse.containsMouse ? "#7f1d1d" : "#450a0a") : (tskMouse.containsMouse ? "#11385f" : "#0d2847")
+                    border.color: modelData.key === "del" ? "#ef4444" : (tskMouse.containsMouse ? "#38bdf8" : "#1e40af")
+                    border.width: 1
+
+                    scale: tskMouse.pressed ? 0.90 : (tskMouse.containsMouse ? 1.10 : 1.0)
+                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+
+                    ScadaIcon {
                         anchors.centerIn: parent
-                        text: modelData.glyph
-                        color: modelData.key === "del" ? "#f87171" : "#94a3b8"
-                        font.pixelSize: 10
-                        font.bold: true
+                        width: 18
+                        height: 18
+                        iconName: modelData.icon
+                        iconColor: modelData.key === "del" ? "#f87171" : "#94a3b8"
                     }
                     MouseArea {
+                        id: tskMouse
                         anchors.fill: parent
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             if (modelData.key === "up") taskCard.moveUp()
@@ -85,6 +97,9 @@ Rectangle {
                             else if (modelData.key === "dup") taskCard.duplicated()
                             else taskCard.deleted()
                         }
+                        ToolTip.visible: containsMouse
+                        ToolTip.text: modelData.tip
+                        ToolTip.delay: 250
                     }
                 }
             }
@@ -115,7 +130,7 @@ Rectangle {
 
         RecipeActivityToolbar {
             Layout.fillWidth: true
-            Layout.preferredHeight: 26
+            Layout.preferredHeight: 38
             hasTimer: taskCard.hasTimer
             hasManual: taskCard.hasManual
             hasMedia: taskCard.hasMedia

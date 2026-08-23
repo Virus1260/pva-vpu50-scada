@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="shackleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="lockBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="60%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <filter id="lockShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <!-- Hardened Steel Shackle -->
+  <path d="M14 20 L14 14 C14 8.5 18.5 4 24 4 C29.5 4 34 8.5 34 14 L34 20" fill="none" stroke="url(#shackleGrad)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Heavy Duty Brass Padlock Body -->
+  <rect x="8" y="18" width="32" height="26" rx="6" fill="url(#lockBody)" stroke="#fde68a" stroke-width="1.5" filter="url(#lockShadow)"/>
+  <!-- Specular Top Gloss -->
+  <path d="M11 21 L37 21 C39 21 40 22 40 24 L40 28 L8 28 L8 24 C8 22 9 21 11 21 Z" fill="#ffffff" opacity="0.25"/>
+  <!-- Center Keyhole -->
+  <circle cx="24" cy="29" r="3.5" fill="#451a03"/>
+  <polygon points="22.5,29 25.5,29 26.5,36 21.5,36" fill="#451a03"/>
+</svg>

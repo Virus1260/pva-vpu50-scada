@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="downBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="downGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="downShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <!-- Stem Accent -->
+  <rect x="21" y="10" width="6" height="14" rx="3" fill="url(#downBg)"/>
+  <rect x="22" y="10" width="4" height="13" rx="2" fill="#e0f2fe" opacity="0.6"/>
+  <!-- Outer Beveled Down Chevron -->
+  <path d="M24 40 L8 24 L15 17 L24 26 L33 17 L40 24 Z" fill="url(#downBg)" filter="url(#downShadow)"/>
+  <!-- Top Specular Highlight Edge -->
+  <path d="M8 24 L15 17 L24 26 L33 17 L40 24 L38 26 L33 21 L24 30 L15 21 L10 26 Z" fill="url(#downGlow)" opacity="0.9"/>
+</svg>
