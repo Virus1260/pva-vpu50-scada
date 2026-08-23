@@ -5,6 +5,8 @@ import QtQuick.Layouts
 // Role assignment overlay: Author / Reviewer / Approver (one role per collaborator).
 Rectangle {
     id: modalRoot
+    implicitWidth: 800
+    implicitHeight: 600
     anchors.fill: parent
     visible: false
     color: "#cc041428"

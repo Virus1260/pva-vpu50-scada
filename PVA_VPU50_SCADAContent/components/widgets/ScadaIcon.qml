@@ -2,6 +2,8 @@ import QtQuick
 
 Item {
     id: rootIcon
+    implicitWidth: 32
+    implicitHeight: 32
     width: 32
     height: 32
 
@@ -89,6 +91,8 @@ Item {
             "nav_recipes": "../../assets/icons/nav/recipes_checklist.svg",
             "recipes_checklist": "../../assets/icons/nav/recipes_checklist.svg",
             "rcp": "../../assets/icons/nav/recipes_checklist.svg",
+            "recipe_maker": "../../assets/icons/nav/recipe_maker.svg",
+            "nav_recipe_maker": "../../assets/icons/nav/recipe_maker.svg",
 
             "audit": "../../assets/icons/nav/docs_report.svg",
             "nav_audit": "../../assets/icons/nav/docs_report.svg",

@@ -4,6 +4,8 @@ import QtQuick.Layouts
 // Author / reviewer / approver record for the master recipe (ISA-88 governance).
 Rectangle {
     id: govRoot
+    implicitWidth: 800
+    implicitHeight: 400
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"

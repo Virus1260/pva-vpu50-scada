@@ -5,8 +5,10 @@ import QtQuick.Layouts
 // One ISA-88 stage (unit procedure): name, sequential lock, reorder/copy/delete.
 Rectangle {
     id: stageCard
-    width: parent ? parent.width : 280
-    height: 118
+    implicitWidth: 220
+    implicitHeight: 110
+    width: 220
+    height: 110
     radius: 6
     color: selected ? "#0c345a" : "#0a2e50"
     border.color: selected ? "#00d2ff" : "#1d5b94"
@@ -32,8 +34,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 6
+        anchors.margins: 8
+        spacing: 4
 
         RowLayout {
             Layout.fillWidth: true
@@ -52,8 +54,8 @@ Rectangle {
                     { glyph: "✕", key: "del" }
                 ]
                 delegate: Rectangle {
-                    width: 22
-                    height: 22
+                    width: 20
+                    height: 20
                     radius: 3
                     color: modelData.key === "del" ? "#450a0a" : "#0d2847"
                     border.color: modelData.key === "del" ? "#ef4444" : "#1e40af"
@@ -61,7 +63,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: modelData.glyph
                         color: modelData.key === "del" ? "#f87171" : "#94a3b8"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                     }
                     MouseArea {
@@ -81,44 +83,51 @@ Rectangle {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 2
-            Text { text: "Name the stage"; color: "#6b8fbb"; font.pixelSize: 9 }
-            TextField {
-                id: nameField
+            Text { text: "Stage Title"; color: "#7dd3fc"; font.pixelSize: 8; font.bold: true }
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 28
-                text: stageCard.stageName
-                color: "#ffffff"
-                font.pixelSize: 12
-                background: Rectangle {
-                    color: "#08213b"
-                    border.color: "#1d5b94"
-                    radius: 4
+                Layout.preferredHeight: 26
+                radius: 4
+                color: "#08213b"
+                border.color: nameInput.activeFocus ? "#00d2ff" : "#1d5b94"
+
+                TextInput {
+                    id: nameInput
+                    anchors.fill: parent
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    verticalAlignment: TextInput.AlignVCenter
+                    text: stageCard.stageName
+                    color: "#ffffff"
+                    font.pixelSize: 11
+                    font.bold: true
+                    selectByMouse: true
+                    onEditingFinished: stageCard.nameEdited(text)
                 }
-                onEditingFinished: stageCard.nameEdited(text)
             }
         }
 
         RowLayout {
             Layout.fillWidth: true
             Text {
-                text: "Task sequential lock"
-                color: "#cbd5e1"
-                font.pixelSize: 10
-                Layout.fillWidth: true
+                text: "Sequential execution lock"
+                color: stageCard.sequentialLock ? "#38bdf8" : "#64748b"
+                font.pixelSize: 9
             }
+            Item { Layout.fillWidth: true }
             Rectangle {
-                width: 40
-                height: 20
-                radius: 10
-                color: stageCard.sequentialLock ? "#1d4ed8" : "#1e293b"
-                border.color: stageCard.sequentialLock ? "#38bdf8" : "#475569"
+                Layout.preferredWidth: 28
+                Layout.preferredHeight: 16
+                radius: 8
+                color: stageCard.sequentialLock ? "#0284c7" : "#334155"
                 Rectangle {
-                    width: 16
-                    height: 16
-                    radius: 8
-                    x: stageCard.sequentialLock ? parent.width - 18 : 2
-                    y: 2
+                    width: 12
+                    height: 12
+                    radius: 6
                     color: "#ffffff"
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: stageCard.sequentialLock ? parent.width - width - 2 : 2
+                    Behavior on x { NumberAnimation { duration: 120 } }
                 }
                 MouseArea {
                     anchors.fill: parent

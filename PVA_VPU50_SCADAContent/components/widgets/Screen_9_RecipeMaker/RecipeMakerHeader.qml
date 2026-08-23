@@ -6,8 +6,10 @@ import ".."
 // Master-recipe chrome: identity, lifecycle status, and authoring actions.
 Rectangle {
     id: headerRoot
+    implicitWidth: 1100
+    implicitHeight: 52
     Layout.fillWidth: true
-    Layout.preferredHeight: 56
+    Layout.preferredHeight: 52
     color: "#06182c"
     border.color: "#184d7e"
     border.width: 1
@@ -19,11 +21,13 @@ Rectangle {
     property int recipeVersion: 1
 
     property alias recipeSelector: recipeCombo
-    property alias newButton: btnNew
-    property alias saveButton: btnSave
-    property alias collaboratorsButton: btnCollab
-    property alias submitButton: btnSubmit
-    property alias approveButton: btnApprove
+
+    signal newClicked()
+    signal saveClicked()
+    signal collabClicked()
+    signal submitClicked()
+    signal approveClicked()
+    signal recipeSelected(int index, string text)
 
     readonly property color statusColor: recipeStatus === "APPROVED" ? "#22c55e"
                                        : (recipeStatus === "IN_REVIEW" ? "#38bdf8"
@@ -33,13 +37,13 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
-        spacing: 10
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
+        spacing: 8
 
         Rectangle {
-            Layout.preferredWidth: 128
-            Layout.preferredHeight: 32
+            Layout.preferredWidth: 110
+            Layout.preferredHeight: 30
             radius: 4
             color: "#0d2b4a"
             border.color: "#00d2ff"
@@ -49,23 +53,75 @@ Rectangle {
                 text: "RECIPE MAKER"
                 color: "#00d2ff"
                 font.bold: true
-                font.pixelSize: 11
+                font.pixelSize: 10
             }
         }
 
+        // Custom Dark Styled Recipe ComboBox
         ComboBox {
             id: recipeCombo
-            Layout.preferredWidth: 280
-            Layout.preferredHeight: 34
+            Layout.preferredWidth: 320
+            Layout.preferredHeight: 32
             model: [
                 "REC-VPU50-001 | Industrial Shampoo Formulation",
                 "REC-VPU50-002 | Intensive Body Lotion Cream",
                 "REC-VPU50-003 | High-Shear Cosmetic Gel"
             ]
+            onActivated: function(index) {
+                headerRoot.recipeSelected(index, currentText)
+            }
+
+            background: Rectangle {
+                color: "#0a243f"
+                border.color: recipeCombo.activeFocus ? "#00d2ff" : "#1d5b94"
+                border.width: 1
+                radius: 4
+            }
+            contentItem: Text {
+                leftPadding: 8
+                text: recipeCombo.currentText
+                color: "#ffffff"
+                font.pixelSize: 11
+                font.bold: true
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            popup: Popup {
+                y: recipeCombo.height + 2
+                width: recipeCombo.width
+                implicitHeight: Math.min(200, contentItem.implicitHeight + 8)
+                padding: 2
+                contentItem: ListView {
+                    clip: true
+                    implicitHeight: contentHeight
+                    model: recipeCombo.popup.visible ? recipeCombo.delegateModel : null
+                    currentIndex: recipeCombo.highlightedIndex
+                }
+                background: Rectangle {
+                    color: "#08213b"
+                    border.color: "#00d2ff"
+                    border.width: 1
+                    radius: 4
+                }
+            }
+            delegate: ItemDelegate {
+                width: recipeCombo.width
+                height: 30
+                contentItem: Text {
+                    text: modelData
+                    color: highlighted ? "#00d2ff" : "#ffffff"
+                    font.pixelSize: 10
+                    font.bold: highlighted
+                    verticalAlignment: Text.AlignVCenter
+                }
+                background: Rectangle {
+                    color: highlighted ? "#155590" : "transparent"
+                }
+            }
         }
 
         Rectangle {
-            Layout.preferredWidth: 52
+            Layout.preferredWidth: 46
             Layout.preferredHeight: 24
             radius: 12
             color: "#0f2d4d"
@@ -75,13 +131,13 @@ Rectangle {
                 text: "v" + headerRoot.recipeVersion + ".0"
                 color: "#38bdf8"
                 font.bold: true
-                font.pixelSize: 11
+                font.pixelSize: 10
             }
         }
 
         Rectangle {
             Layout.preferredHeight: 24
-            Layout.preferredWidth: Math.max(96, statusText.implicitWidth + 18)
+            Layout.preferredWidth: Math.max(90, statusText.implicitWidth + 16)
             radius: 12
             color: "#0a243f"
             border.color: headerRoot.statusColor
@@ -97,40 +153,94 @@ Rectangle {
 
         Item { Layout.fillWidth: true }
 
-        ScadaButton {
+        // Action Buttons
+        Rectangle {
             id: btnNew
-            Layout.preferredWidth: 72
-            Layout.preferredHeight: 32
-            text: "+ New"
-            accentColor: "#154d80"
+            Layout.preferredWidth: 70
+            Layout.preferredHeight: 30
+            radius: 4
+            color: "#0284c7"
+            Text { anchors.centerIn: parent; text: "+ New"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+            MouseArea {
+                id: mNew
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: headerRoot.newClicked()
+            }
+            opacity: mNew.containsMouse ? 0.85 : 1.0
         }
-        ScadaButton {
+
+        Rectangle {
             id: btnSave
-            Layout.preferredWidth: 92
-            Layout.preferredHeight: 32
-            text: "Save Draft"
-            accentColor: "#0f4477"
+            Layout.preferredWidth: 80
+            Layout.preferredHeight: 30
+            radius: 4
+            color: "#075985"
+            border.color: "#38bdf8"
+            border.width: 1
+            Text { anchors.centerIn: parent; text: "Save Draft"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+            MouseArea {
+                id: mSave
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: headerRoot.saveClicked()
+            }
+            opacity: mSave.containsMouse ? 0.85 : 1.0
         }
-        ScadaButton {
+
+        Rectangle {
             id: btnCollab
-            Layout.preferredWidth: 118
-            Layout.preferredHeight: 32
-            text: "Collaborators"
-            accentColor: "#0c345a"
+            Layout.preferredWidth: 90
+            Layout.preferredHeight: 30
+            radius: 4
+            color: "#1e293b"
+            border.color: "#475569"
+            border.width: 1
+            Text { anchors.centerIn: parent; text: "Collaborators"; color: "#cbd5e1"; font.bold: true; font.pixelSize: 11 }
+            MouseArea {
+                id: mCollab
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: headerRoot.collabClicked()
+            }
+            opacity: mCollab.containsMouse ? 0.85 : 1.0
         }
-        ScadaButton {
+
+        Rectangle {
             id: btnSubmit
-            Layout.preferredWidth: 132
-            Layout.preferredHeight: 32
-            text: "Submit Review"
-            accentColor: "#1d4ed8"
+            Layout.preferredWidth: 95
+            Layout.preferredHeight: 30
+            radius: 4
+            color: "#2563eb"
+            Text { anchors.centerIn: parent; text: "Submit Review"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+            MouseArea {
+                id: mSubmit
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: headerRoot.submitClicked()
+            }
+            opacity: mSubmit.containsMouse ? 0.85 : 1.0
         }
-        ScadaButton {
+
+        Rectangle {
             id: btnApprove
-            Layout.preferredWidth: 92
-            Layout.preferredHeight: 32
-            text: "Approve"
-            accentColor: "#166534"
+            Layout.preferredWidth: 80
+            Layout.preferredHeight: 30
+            radius: 4
+            color: "#16a34a"
+            Text { anchors.centerIn: parent; text: "Approve"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+            MouseArea {
+                id: mApprove
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: headerRoot.approveClicked()
+            }
+            opacity: mApprove.containsMouse ? 0.85 : 1.0
         }
     }
 }

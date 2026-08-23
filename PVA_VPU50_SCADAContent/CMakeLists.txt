@@ -34,6 +34,9 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "components/widgets/ScadaHeader.qml"
         "components/widgets/ScadaIcon.qml"
         "components/widgets/ScadaSidebar.qml"
+        "components/widgets/ScadaNavbar/ScadaNavbar.qml"
+        "components/widgets/ScadaNavbar/ScadaNavbarItem.qml"
+        "components/widgets/ScadaNavbar/ScadaNavbarModel.qml"
         "components/widgets/ScadaHeader/HeaderAnnunciator.qml"
         "components/widgets/ScadaHeader/HeaderMachineCluster.qml"
         "components/widgets/ScadaHeader/HeaderUserCluster.qml"
@@ -171,11 +174,11 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "assets/icons/nav/docs_report.svg"
         "assets/icons/nav/logs_order.svg"
         "assets/icons/nav/pid_vessel.svg"
+        "assets/icons/nav/recipe_maker.svg"
         "assets/icons/nav/recipes_checklist.svg"
         "assets/icons/nav/status_stack.svg"
         "assets/icons/nav/tools_maintenance.svg"
         "assets/icons/nav/trends_chart.svg"
-        "assets/icons/nav/recipe_maker.svg"
         "assets/icons/pid/heater_inline_active.svg"
         "assets/icons/pid/heater_inline_idle.svg"
         "assets/icons/pid/pump_centrifugal_idle.svg"
@@ -187,5 +190,3 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "assets/icons/pid/valve_diaphragm_closed.svg"
         "assets/icons/pid/valve_diaphragm_open.svg"
 )
-
-

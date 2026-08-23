@@ -4,6 +4,8 @@ import QtQuick.Layouts
 // Formulation / specification view: ingredients by SAP-style phase, quantities, UOM.
 Rectangle {
     id: bomRoot
+    implicitWidth: 800
+    implicitHeight: 400
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"

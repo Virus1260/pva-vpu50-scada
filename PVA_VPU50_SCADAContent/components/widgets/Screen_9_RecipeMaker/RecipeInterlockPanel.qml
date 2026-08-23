@@ -4,6 +4,8 @@ import QtQuick.Layouts
 // Recipe-level gates: sequential locks, holds, and equipment-state interlocks.
 Rectangle {
     id: lockRoot
+    implicitWidth: 800
+    implicitHeight: 400
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"

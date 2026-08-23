@@ -103,6 +103,9 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderMachineCluster.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderUserCluster.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaIcon.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbar.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarItem.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarModel.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaSidebar.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaCard.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaMediaControls.qml</file>

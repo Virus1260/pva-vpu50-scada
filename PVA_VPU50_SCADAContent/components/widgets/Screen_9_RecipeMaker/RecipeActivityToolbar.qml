@@ -5,8 +5,10 @@ import QtQuick.Layouts
 // Activity types on a task: timer, manual, media, loop, schedule, hold, equipment, checklist.
 Item {
     id: toolbarRoot
+    implicitWidth: 220
+    implicitHeight: 26
     Layout.fillWidth: true
-    Layout.preferredHeight: 32
+    Layout.preferredHeight: 26
 
     property bool hasTimer: false
     property bool hasManual: false
@@ -20,7 +22,7 @@ Item {
     signal typeToggled(string typeKey)
 
     Row {
-        spacing: 6
+        spacing: 4
         anchors.verticalCenter: parent.verticalCenter
 
         Repeater {
@@ -35,9 +37,9 @@ Item {
                 { key: "check", glyph: "☑", tip: "Checklist / verification", on: toolbarRoot.hasCheck }
             ]
             delegate: Rectangle {
-                width: 30
-                height: 30
-                radius: 4
+                width: 22
+                height: 22
+                radius: 3
                 color: modelData.on ? "#0d3a62" : "#0a243f"
                 border.color: modelData.on ? "#00d2ff" : "#1d5b94"
                 border.width: modelData.on ? 1.5 : 1
@@ -46,7 +48,7 @@ Item {
                     anchors.centerIn: parent
                     text: modelData.glyph
                     color: modelData.on ? "#00d2ff" : "#94a3b8"
-                    font.pixelSize: 13
+                    font.pixelSize: 11
                 }
 
                 MouseArea {

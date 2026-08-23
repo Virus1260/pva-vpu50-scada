@@ -4,8 +4,10 @@ import QtQuick.Layouts
 // Authoring workspaces: human flow first, then parameters, BOM, interlocks, governance.
 Rectangle {
     id: tabRoot
+    implicitWidth: 800
+    implicitHeight: 36
     Layout.fillWidth: true
-    Layout.preferredHeight: 40
+    Layout.preferredHeight: 36
     color: "#06182c"
     border.color: "#184d7e"
     border.width: 1
@@ -25,8 +27,8 @@ Rectangle {
         Repeater {
             model: tabRoot.tabs
             delegate: Rectangle {
-                width: tabLabel.implicitWidth + 28
-                height: 28
+                width: tabLabel.implicitWidth + 24
+                height: 26
                 radius: 4
                 color: tabRoot.currentTab === index ? "#154d80" : "transparent"
                 border.color: tabRoot.currentTab === index ? "#38bdf8" : "transparent"
@@ -38,7 +40,7 @@ Rectangle {
                     text: modelData
                     color: tabRoot.currentTab === index ? "#ffffff" : "#94a3b8"
                     font.bold: tabRoot.currentTab === index
-                    font.pixelSize: 12
+                    font.pixelSize: 11
                 }
 
                 MouseArea {

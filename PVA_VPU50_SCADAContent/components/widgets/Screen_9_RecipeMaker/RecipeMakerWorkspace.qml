@@ -267,8 +267,12 @@ Item {
         spacing: 8
         visible: workspace.currentTab === 0
 
+        // Column 1: Stages List (Fixed 230px Width)
         Rectangle {
-            Layout.preferredWidth: 300
+            Layout.preferredWidth: 230
+            Layout.minimumWidth: 230
+            Layout.maximumWidth: 230
+            Layout.fillWidth: false
             Layout.fillHeight: true
             color: "#06182c"
             border.color: "#184d7e"
@@ -278,13 +282,20 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 8
                 spacing: 6
-                Text { text: "STAGES  (process architecture)"; color: "#38bdf8"; font.bold: true; font.pixelSize: 11 }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text { text: "STAGES (PROCESS FLOW)"; color: "#38bdf8"; font.bold: true; font.pixelSize: 10 }
+                    Item { Layout.fillWidth: true }
+                    Text { text: stagesModel.count + " stages"; color: "#64748b"; font.pixelSize: 9 }
+                }
+
                 ListView {
                     id: stageList
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-                    spacing: 8
+                    spacing: 6
                     model: stagesModel
                     delegate: RecipeStageCard {
                         width: stageList.width
@@ -319,20 +330,26 @@ Item {
                         }
                     }
                 }
+
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 34
+                    Layout.preferredHeight: 30
                     radius: 4
-                    color: "#154d80"
+                    color: "#0d3a62"
                     border.color: "#38bdf8"
-                    Text { anchors.centerIn: parent; text: "+ Add stage"; color: "#ffffff"; font.bold: true; font.pixelSize: 12 }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: workspace.addStage() }
+                    border.width: 1
+
+                    Text { anchors.centerIn: parent; text: "+ Add Stage"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                    MouseArea { id: mAddStg; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: workspace.addStage() }
+                    opacity: mAddStg.pressed ? 0.7 : 1.0
                 }
             }
         }
 
+        // Column 2: Tasks List in Stage (Expands dynamically to fill available width)
         Rectangle {
             Layout.fillWidth: true
+            Layout.minimumWidth: 300
             Layout.fillHeight: true
             color: "#06182c"
             border.color: "#184d7e"
@@ -342,28 +359,43 @@ Item {
                 anchors.fill: parent
                 anchors.margins: 8
                 spacing: 6
-                Text {
-                    text: "TASKS  in Stage " + workspace.stageNumberForId(workspace.selectedStageId)
-                    color: "#38bdf8"
-                    font.bold: true
-                    font.pixelSize: 11
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "TASKS IN STAGE " + workspace.stageNumberForId(workspace.selectedStageId)
+                        color: "#38bdf8"
+                        font.bold: true
+                        font.pixelSize: 10
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: "Execution sequence"
+                        color: "#64748b"
+                        font.pixelSize: 9
+                    }
                 }
+
                 Flickable {
+                    id: taskScrollArea
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
                     contentWidth: width
-                    contentHeight: taskColumn.implicitHeight
+                    contentHeight: taskColumnContainer.implicitHeight
+                    flickableDirection: Flickable.VerticalFlick
+
                     Column {
-                        id: taskColumn
-                        width: parent.width
-                        spacing: 8
+                        id: taskColumnContainer
+                        width: taskScrollArea.width
+                        spacing: 6
+
                         Repeater {
                             model: tasksModel
+
                             delegate: RecipeTaskCard {
-                                width: taskColumn.width
+                                width: taskColumnContainer.width
                                 visible: model.stageId === workspace.selectedStageId
-                                height: visible ? (selected ? 168 : 132) : 0
                                 taskLabel: "Task " + workspace.stageNumberForId(model.stageId) + "." + workspace.taskOrdinal(model.stageId, index)
                                 taskName: model.name
                                 selected: workspace.selectedTaskIndex === index
@@ -401,20 +433,28 @@ Item {
                         }
                     }
                 }
+
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 34
+                    Layout.preferredHeight: 30
                     radius: 4
-                    color: "#154d80"
+                    color: "#0d3a62"
                     border.color: "#38bdf8"
-                    Text { anchors.centerIn: parent; text: "+ Add task"; color: "#ffffff"; font.bold: true; font.pixelSize: 12 }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: workspace.addTask() }
+                    border.width: 1
+
+                    Text { anchors.centerIn: parent; text: "+ Add Task"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                    MouseArea { id: mAddTsk; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: workspace.addTask() }
+                    opacity: mAddTsk.pressed ? 0.7 : 1.0
                 }
             }
         }
 
+        // Column 3: Task Properties Inspector (Fixed 340px Width)
         RecipeTaskInspector {
-            Layout.preferredWidth: 280
+            Layout.preferredWidth: 340
+            Layout.minimumWidth: 340
+            Layout.maximumWidth: 340
+            Layout.fillWidth: false
             Layout.fillHeight: true
             emptySelection: workspace.currentTask() === null
             taskLabel: workspace.currentTask() ? ("Task " + workspace.stageNumberForId(workspace.currentTask().stageId) + "." + workspace.taskOrdinal(workspace.currentTask().stageId, workspace.selectedTaskIndex)) : "Select a task"

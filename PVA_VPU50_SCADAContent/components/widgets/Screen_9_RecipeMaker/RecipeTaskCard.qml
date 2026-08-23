@@ -5,8 +5,10 @@ import QtQuick.Layouts
 // One operation inside a stage: name, activity types, live P&ID summary, add-activity.
 Rectangle {
     id: taskCard
-    width: parent ? parent.width : 360
-    height: selected ? 168 : 132
+    implicitWidth: 360
+    implicitHeight: 124
+    width: 360
+    height: 124
     radius: 6
     color: selected ? "#0c345a" : "#0a2e50"
     border.color: selected ? "#00d2ff" : "#1d5b94"
@@ -42,8 +44,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 6
+        anchors.margins: 8
+        spacing: 4
 
         RowLayout {
             Layout.fillWidth: true
@@ -62,8 +64,8 @@ Rectangle {
                     { glyph: "✕", key: "del" }
                 ]
                 delegate: Rectangle {
-                    width: 22
-                    height: 22
+                    width: 20
+                    height: 20
                     radius: 3
                     color: modelData.key === "del" ? "#450a0a" : "#0d2847"
                     border.color: modelData.key === "del" ? "#ef4444" : "#1e40af"
@@ -71,7 +73,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: modelData.glyph
                         color: modelData.key === "del" ? "#f87171" : "#94a3b8"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                     }
                     MouseArea {
@@ -88,27 +90,32 @@ Rectangle {
             }
         }
 
-        ColumnLayout {
+        // Editable Task Name
+        Rectangle {
             Layout.fillWidth: true
-            spacing: 2
-            Text { text: "Name the task"; color: "#6b8fbb"; font.pixelSize: 9 }
-            TextField {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
+            Layout.preferredHeight: 26
+            radius: 4
+            color: "#08213b"
+            border.color: tskNameInput.activeFocus ? "#00d2ff" : "#1d5b94"
+
+            TextInput {
+                id: tskNameInput
+                anchors.fill: parent
+                anchors.leftMargin: 6
+                anchors.rightMargin: 6
+                verticalAlignment: TextInput.AlignVCenter
                 text: taskCard.taskName
                 color: "#ffffff"
-                font.pixelSize: 12
-                background: Rectangle {
-                    color: "#08213b"
-                    border.color: "#1d5b94"
-                    radius: 4
-                }
+                font.pixelSize: 11
+                font.bold: true
+                selectByMouse: true
                 onEditingFinished: taskCard.nameEdited(text)
             }
         }
 
         RecipeActivityToolbar {
             Layout.fillWidth: true
+            Layout.preferredHeight: 26
             hasTimer: taskCard.hasTimer
             hasManual: taskCard.hasManual
             hasMedia: taskCard.hasMedia
@@ -122,11 +129,12 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            visible: taskCard.tagSummary !== "" || taskCard.stopSummary !== ""
+            spacing: 6
+
             Rectangle {
                 visible: taskCard.tagSummary !== ""
-                Layout.preferredHeight: 20
-                Layout.preferredWidth: tagTxt.implicitWidth + 12
+                Layout.preferredHeight: 18
+                Layout.preferredWidth: tagTxt.implicitWidth + 10
                 radius: 3
                 color: "#08213b"
                 border.color: "#38bdf8"
@@ -139,10 +147,11 @@ Rectangle {
                     font.bold: true
                 }
             }
+
             Rectangle {
                 visible: taskCard.stopSummary !== ""
-                Layout.preferredHeight: 20
-                Layout.preferredWidth: stopTxt.implicitWidth + 12
+                Layout.preferredHeight: 18
+                Layout.preferredWidth: stopTxt.implicitWidth + 10
                 radius: 3
                 color: taskCard.hasHold ? "#78350f" : "#08213b"
                 border.color: taskCard.hasHold ? "#f59e0b" : "#1d5b94"
@@ -155,18 +164,8 @@ Rectangle {
                     font.bold: true
                 }
             }
+
             Item { Layout.fillWidth: true }
-            Text {
-                text: "+ Add activity"
-                color: "#38bdf8"
-                font.pixelSize: 10
-                font.bold: true
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: taskCard.addActivity()
-                }
-            }
         }
     }
 }

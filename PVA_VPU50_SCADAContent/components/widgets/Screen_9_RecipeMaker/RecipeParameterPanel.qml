@@ -4,6 +4,8 @@ import QtQuick.Layouts
 // Flattened critical-process-parameter list for the whole master recipe.
 Rectangle {
     id: paramRoot
+    implicitWidth: 800
+    implicitHeight: 400
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"
