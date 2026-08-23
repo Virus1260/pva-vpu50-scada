@@ -100,7 +100,7 @@ Rectangle {
                             radius: 6
                             Text {
                                 anchors.centerIn: parent
-                                text: "📦 PRODUCT OPERATIONS"
+                                text: "PRODUCT OPERATIONS"
                                 color: "#60a5fa"
                                 font.bold: true
                                 font.pixelSize: 11
@@ -277,7 +277,7 @@ Rectangle {
                             radius: 6
                             Text {
                                 anchors.centerIn: parent
-                                text: "🧼 CIP OPERATIONS"
+                                text: "CIP OPERATIONS"
                                 color: "#22d3ee"
                                 font.bold: true
                                 font.pixelSize: 11
