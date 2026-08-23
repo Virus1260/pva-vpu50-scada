@@ -12,6 +12,7 @@ from PySide6.QtCore import Property, QObject, QTimer, Signal, Slot
 from scada.alarms import AlarmManager
 from scada.audit import AuditEvent, AuditStore, utc_now
 from scada.configuration import ConfigurationRegistry
+from scada.cortex import CortexEngine
 from scada.security import SecurityManager
 from scada.simulation import PlantSimulator
 from scada.store import HistorianStore, RecipeStore
@@ -39,6 +40,7 @@ class ScadaController(QObject):
         self.recipe_store.initialise()
         self.alarm_mgr = AlarmManager(self.registry, self.audit_store)
         self.simulator = PlantSimulator(Path(__file__).resolve().parent / "simulation" / "plant_profile.json")
+        self.cortex = CortexEngine(self)
 
         # Current User Context
         self._current_user = "operator"
@@ -277,6 +279,35 @@ class ScadaController(QObject):
     @Slot(result=str)
     def getRecipesJson(self) -> str:
         return json.dumps(self.recipe_store.list_recipes())
+
+    @Slot(str, result=str)
+    def getCortexReviewReportJson(self, batch_id: str) -> str:
+        return json.dumps(self.cortex.generate_review_by_exception_report(batch_id))
+
+    @Slot(str, float, float, float, result=str)
+    def getCortexYieldPredictionJson(self, recipe_id: str, homo_rpm: float, peak_temp: float, vacuum_mbar: float) -> str:
+        return json.dumps(self.cortex.yield_agent.predict_yield(recipe_id, homo_rpm, peak_temp, vacuum_mbar))
+
+    @Slot(int, int, int, result=str)
+    def getCortexOeeJson(self, total_runtime_sec: int, active_batch_time_sec: int, dev_count: int) -> str:
+        return json.dumps(self.cortex.efficiency_agent.calculate_oee(total_runtime_sec, active_batch_time_sec, dev_count))
+
+    @Slot(str, str, result=str)
+    def callCortexMcpToolJson(self, tool_name: str, args_json: str) -> str:
+        args = json.loads(args_json) if args_json else {}
+        if tool_name == "read_batch_record":
+            return json.dumps(self.cortex.mcp.read_batch_record(args.get("batch_id", "")))
+        elif tool_name == "get_process_params":
+            return json.dumps(self.cortex.mcp.get_process_params(args.get("batch_id", ""), args.get("tag")))
+        elif tool_name == "query_equipment":
+            return json.dumps(self.cortex.mcp.query_equipment(args.get("device_id", "")))
+        elif tool_name == "search_deviations":
+            return json.dumps(self.cortex.mcp.search_deviations(args.get("query", "")))
+        elif tool_name == "get_material_genealogy":
+            return json.dumps(self.cortex.mcp.get_material_genealogy(args.get("batch_id", "")))
+        elif tool_name == "log_agent_action":
+            return json.dumps(self.cortex.mcp.log_agent_action(args.get("agent_name", ""), args.get("action", ""), args.get("rationale", "")))
+        return json.dumps({"error": f"Unknown MCP tool: {tool_name}"})
 
     @Slot(str)
     def next_recipe_step(self, reason: str) -> None:

@@ -267,6 +267,45 @@ class TestScadaCompliance(unittest.TestCase):
             text = qds_cmake.read_text(encoding="utf-8")
             self.assertNotIn("scratch/", text, "qds.cmake must not contain scratch/ files")
 
+    def test_cortex_agents_and_mcp_tools(self):
+        from scada.cortex import CortexEngine, McpToolRegistry
+
+        class MockController:
+            pass
+
+        ctrl = MockController()
+        cortex = CortexEngine(ctrl)
+        ctrl.cortex = cortex
+
+        # 1. Test MCP Tools
+        eq = cortex.mcp.query_equipment("1M1501")
+        self.assertEqual(eq["type"], "AGITATOR")
+        self.assertEqual(eq["calibration_status"], "VALID")
+
+        genealogy = cortex.mcp.get_material_genealogy("BATCH-01")
+        self.assertGreaterEqual(len(genealogy), 3)
+
+        log_res = cortex.mcp.log_agent_action("TestAgent", "TEST_ACTION", "Testing reasoning log")
+        self.assertEqual(len(log_res["hash"]), 64)
+
+        # 2. Test Compliance Agent Review-by-Exception
+        normal_samples = [{"vpu.main.temperature": 75.0, "vpu.main.vacuum_pressure": -420.0}]
+        comp_clean = cortex.compliance_agent.analyze_batch_for_exceptions("BATCH-01", normal_samples)
+        self.assertTrue(comp_clean["review_by_exception_passed"])
+
+        excursion_samples = [{"vpu.main.temperature": 85.5, "vpu.main.vacuum_pressure": -420.0}]
+        comp_excursion = cortex.compliance_agent.analyze_batch_for_exceptions("BATCH-02", excursion_samples)
+        self.assertFalse(comp_excursion["review_by_exception_passed"])
+        self.assertEqual(comp_excursion["exception_count"], 1)
+
+        # 3. Test Yield Optimization Agent
+        yield_res = cortex.yield_agent.predict_yield("REC-01", 3600.0, 76.0, -450.0)
+        self.assertGreater(yield_res["predicted_yield_pct"], 98.0)
+
+        # 4. Test Efficiency Agent OEE
+        oee_res = cortex.efficiency_agent.calculate_oee(3600, 3400, 0)
+        self.assertGreater(oee_res["oee_pct"], 80.0)
+
 
 if __name__ == "__main__":
     unittest.main()
