@@ -69,26 +69,82 @@ Rectangle {
         }
     }
 
-    // Unacknowledged Alarms / Notification Badge
-    Rectangle {
+    // =========================================================================
+    // Enhanced High-Visibility Pulsing Alarm Badge (Prominent & Interactive)
+    // =========================================================================
+    Item {
+        id: badgeContainer
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.topMargin: 4
         anchors.rightMargin: 4
-        width: 18
-        height: 18
-        radius: 9
-        color: "#ef4444"
-        border.color: "#ffffff"
-        border.width: 1
+        width: Math.max(26, badgeLabel.implicitWidth + 12)
+        height: 24
         visible: navBtn.badgeCount > 0
+        z: 10
 
-        Text {
+        // Pulsing Soft Glow Halo Ring
+        Rectangle {
+            id: glowRing
             anchors.centerIn: parent
-            text: navBtn.badgeCount > 99 ? "99+" : navBtn.badgeCount
-            color: "#ffffff"
-            font.pixelSize: 9
-            font.bold: true
+            width: parent.width + 8
+            height: parent.height + 8
+            radius: (parent.height + 8) / 2
+            color: "transparent"
+            border.color: "#ef4444"
+            border.width: 2
+            opacity: 0.0
+
+            SequentialAnimation on scale {
+                running: navBtn.badgeCount > 0
+                loops: Animation.Infinite
+                NumberAnimation { from: 0.9; to: 1.35; duration: 900; easing.type: Easing.OutQuad }
+                NumberAnimation { from: 1.35; to: 0.9; duration: 900; easing.type: Easing.InQuad }
+            }
+
+            SequentialAnimation on opacity {
+                running: navBtn.badgeCount > 0
+                loops: Animation.Infinite
+                NumberAnimation { from: 0.8; to: 0.0; duration: 900; easing.type: Easing.OutQuad }
+                NumberAnimation { from: 0.0; to: 0.8; duration: 900; easing.type: Easing.InQuad }
+            }
+        }
+
+        // Main Alarm Badge Pill
+        Rectangle {
+            id: badgePill
+            anchors.fill: parent
+            radius: height / 2
+            color: navBtn.isHovered ? "#dc2626" : "#ef4444"
+            border.color: "#ffffff"
+            border.width: 2.0
+
+            scale: navBtn.isHovered ? 1.15 : 1.0
+            Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+
+            // Inner Highlight Top Gloss
+            Rectangle {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 2
+                height: 4
+                radius: 2
+                color: "#ffffff"
+                opacity: 0.35
+            }
+
+            Text {
+                id: badgeLabel
+                anchors.centerIn: parent
+                text: navBtn.badgeCount > 99 ? "99+" : (navBtn.badgeCount + "")
+                color: "#ffffff"
+                font.pixelSize: 12
+                font.bold: true
+                font.family: "Segoe UI"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
 
