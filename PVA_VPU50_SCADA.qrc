@@ -95,6 +95,7 @@
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes/DeleteConfirmModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes/NewRecipeModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes/StepConfirmDialog.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/RecipeCollaboratorsModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/PvaLogo.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaButton.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader.qml</file>
@@ -145,6 +146,20 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeStepProgress.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeToolbar.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeTopToolbar.ui.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeActivityToolbar.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeBomPanel.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeGovernancePanel.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeInterlockPanel.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeInterlockRow.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeMakerHeader.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeMakerKpiCard.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeMakerKpiStrip.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeMakerTabBar.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeMakerWorkspace.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeParameterPanel.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeStageCard.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeTaskCard.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/RecipeTaskInspector.qml</file>
         <file>PVA_VPU50_SCADAContent/config/ScadaConfig.qml</file>
         <file>PVA_VPU50_SCADAContent/config/ScadaStateMiddleware.qml</file>
         <file>PVA_VPU50_SCADAContent/Main_frame_screen.qml</file>
