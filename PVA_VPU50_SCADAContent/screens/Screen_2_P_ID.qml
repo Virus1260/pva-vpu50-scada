@@ -271,5 +271,13 @@ Rectangle {
         vK168201.mouseArea.onClicked: pidScreenRoot.componentTapped("K 168 201")
         vK168202.mouseArea.onClicked: pidScreenRoot.componentTapped("K 168 202")
         vK168204.mouseArea.onClicked: pidScreenRoot.componentTapped("K 168 204")
+
+        isRecipeRunning: scadaBridge.isRecipeRunning
+        activeRecipeName: scadaBridge.activeRecipeName
+        currentRecipeStepIndex: scadaBridge.currentRecipeStepIndex
+        currentRecipeStepName: scadaBridge.currentRecipeStepName
+        stepTimerRemaining: scadaBridge.stepTimerSec
+        batchTimerElapsed: scadaBridge.batchTimerSec
+        activeOpDevices: scadaBridge.activeOpDevices
     }
 }

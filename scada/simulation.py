@@ -78,13 +78,16 @@ class PlantSimulator:
         elif not self.is_vacuum_on and self.vacuum_pressure < -5.0:
             self.vacuum_pressure = min(-5.0, self.vacuum_pressure + 15.0 * dt)
 
-        # Mechanical Seal Dynamics
-        if self.homogenizer_speed > 100 or self.agitator_speed > 5:
-            self.seal_temp = min(55.0, self.seal_temp + 0.05 * dt)
-            self.seal_pressure = 3.2 + (random.random() * 0.04 - 0.02)
-        else:
-            self.seal_temp = max(24.5, self.seal_temp - 0.05 * dt)
-            self.seal_pressure = 2.8
+        # Flow Rate & Filling/Draining Dynamics
+        self.flow_rate = 0.0
+        if getattr(self, "is_filling", False):
+            self.level_percent = min(100.0, self.level_percent + 2.5 * dt)
+            self.weight_kg = (self.level_percent / 100.0) * 50.0
+            self.flow_rate = 12.5
+        elif getattr(self, "is_draining", False):
+            self.level_percent = max(0.0, self.level_percent - 3.0 * dt)
+            self.weight_kg = (self.level_percent / 100.0) * 50.0
+            self.flow_rate = 15.0 if self.level_percent > 0 else 0.0
 
         return {
             "vpu.main.temperature": round(self.vessel_temp, 2),
@@ -97,4 +100,5 @@ class PlantSimulator:
             "vpu.seal.pressure": round(self.seal_pressure, 2),
             "vpu.main.level": round(self.level_percent, 1),
             "vpu.main.weight": round(self.weight_kg, 1),
+            "vpu.main.flow_rate": round(self.flow_rate, 1),
         }

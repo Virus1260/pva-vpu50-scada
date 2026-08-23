@@ -6,14 +6,28 @@ QtObject {
     property ScadaConfig config: ScadaConfig {}
 
     // =========================================================================
-    // 1. ACTIVE BATCH & RECIPE CONTEXT
+    // 1. ACTIVE BATCH & RECIPE CONTEXT (ISA-88 Batch Engine)
     // =========================================================================
     property string activeBatchId: "B1"
-    property string activeProductName: "Carbopol 980 Pharma Gel"
-    property string activeRecipeName: "UNIMIX_BATCH_01"
+    property string activeProductName: "Industrial Shampoo Formulation"
+    property string activeRecipeName: "Industrial Shampoo Formulation"
     property int currentRecipeStepIndex: 0
-    property string currentRecipeStepName: "INITIAL HOMOGENIZATION"
+    property string currentRecipeStepName: "Phase A: Initial Water Charge"
+    property string currentRecipeStepDescription: "Fill vessel to 55% with DI water at ambient temperature"
+    property int totalRecipeSteps: 10
     property bool isRecipeRunning: false
+    property bool isRecipePaused: false
+    property int stepTimerSec: 0
+    property int batchTimerSec: 0
+    property real activeStepProgress: 0.0
+    property int activeOperationsCount: 1
+    property string activeOpDevices: "Fill Valve"
+
+    // 21 CFR Part 11 Phase Hold Point State
+    property bool isManualWaiting: false
+    property bool confirmActive: false
+    property string confirmMessage: ""
+    property int confirmCountdown: 0
 
     // =========================================================================
     // 2. LIVE MOTOR & ACTUATOR STATES (Shared by Control, P&ID, Trends, Alarms)
@@ -167,6 +181,23 @@ QtObject {
             copy[k] = (presetMap[k] === "OPEN" || presetMap[k] === true);
         }
         valveStates = copy;
+        stateChangedExternally();
+    }
+
+    function updateRecipeExecution(running, paused, recipeName, stepIdx, stepName, stepDesc, totalSteps, stepSec, batchSec, waiting, confirmAct, confirmMsg, opDevs) {
+        isRecipeRunning = running;
+        isRecipePaused = paused;
+        if (recipeName !== undefined) activeRecipeName = recipeName;
+        if (stepIdx !== undefined) currentRecipeStepIndex = stepIdx;
+        if (stepName !== undefined) currentRecipeStepName = stepName;
+        if (stepDesc !== undefined) currentRecipeStepDescription = stepDesc;
+        if (totalSteps !== undefined) totalRecipeSteps = totalSteps;
+        if (stepSec !== undefined) stepTimerSec = stepSec;
+        if (batchSec !== undefined) batchTimerSec = batchSec;
+        if (waiting !== undefined) isManualWaiting = waiting;
+        if (confirmAct !== undefined) confirmActive = confirmAct;
+        if (confirmMsg !== undefined) confirmMessage = confirmMsg;
+        if (opDevs !== undefined) activeOpDevices = opDevs;
         stateChangedExternally();
     }
 }

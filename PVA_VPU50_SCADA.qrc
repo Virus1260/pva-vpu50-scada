@@ -1,7 +1,5 @@
 <RCC>
     <qresource>
-        <file>.vercel/project.json</file>
-        <file>.vscode/settings.json</file>
         <file>PVA_VPU50_SCADA.qmlproject</file>
         <file>PVA_VPU50_SCADA/Constants.qml</file>
         <file>PVA_VPU50_SCADA/EventListModel.qml</file>
@@ -79,7 +77,6 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_diaphragm_closed.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_diaphragm_open.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_schema.svg</file>
-        <file>PVA_VPU50_SCADAContent/assets/pid_schema_tags.json</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_body.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_jacket.svg</file>
         <file>PVA_VPU50_SCADAContent/components/modals/ConfirmationModal.qml</file>
@@ -169,10 +166,10 @@
         <file>qtquickcontrols2.conf</file>
         <file>scada/config/alarm_catalog.json</file>
         <file>scada/config/opcua.production.example.json</file>
+        <file>scada/config/recipe_catalog.json</file>
         <file>scada/config/role_catalog.json</file>
         <file>scada/config/sensor_catalog.json</file>
         <file>scada/config/tag_catalog.json</file>
         <file>scada/simulation/plant_profile.json</file>
-        <file>vercel.json</file>
     </qresource>
 </RCC>

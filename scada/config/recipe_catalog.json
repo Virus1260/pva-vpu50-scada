@@ -1,0 +1,328 @@
+{
+  "catalogVersion": "3.0.0",
+  "facility": "PVA Systems VPU-50 Pharmaceutical & Personal Care Mixing Skid",
+  "compliance": "21 CFR Part 11 / GAMP-5 Compliant Recipe Matrix",
+  "recipes": [
+    {
+      "id": "REC-VPU50-001",
+      "name": "Industrial Shampoo Formulation",
+      "version": "1.2.0",
+      "author": "Dr. E. Vance (Process Eng)",
+      "approvalStatus": "APPROVED",
+      "createdAt": "2026-02-20T10:00:00.000Z",
+      "estimatedDurationSec": 2400,
+      "batchSizeKg": 100.0,
+      "ingredients": [
+        { "sr": 1, "name": "Deionized Water", "phase": "A", "qty": "45.0 kg" },
+        { "sr": 2, "name": "EDTA Disodium", "phase": "A", "qty": "0.1 kg" },
+        { "sr": 3, "name": "Citric Acid (50% Sol)", "phase": "A", "qty": "0.3 kg" },
+        { "sr": 4, "name": "Sodium Laureth Sulfate (SLES 28%)", "phase": "B", "qty": "18.0 kg" },
+        { "sr": 5, "name": "Cocamidopropyl Betaine (CAPB)", "phase": "B", "qty": "4.0 kg" },
+        { "sr": 6, "name": "Cocamide DEA", "phase": "B", "qty": "2.0 kg" },
+        { "sr": 7, "name": "Glycol Distearate (Pearlizer)", "phase": "C", "qty": "3.0 kg" },
+        { "sr": 8, "name": "Cetyl Alcohol", "phase": "C", "qty": "1.5 kg" },
+        { "sr": 9, "name": "Dimethicone (Fluid 350 cSt)", "phase": "C", "qty": "1.0 kg" },
+        { "sr": 10, "name": "Polyquaternium-7", "phase": "D", "qty": "1.5 kg" },
+        { "sr": 11, "name": "Panthenol (Pro-Vitamin B5)", "phase": "D", "qty": "0.5 kg" },
+        { "sr": 12, "name": "Fragrance Oil (Botanical)", "phase": "E", "qty": "0.8 kg" },
+        { "sr": 13, "name": "Methylisothiazolinone (Preservative)", "phase": "E", "qty": "0.15 kg" },
+        { "sr": 14, "name": "Sodium Chloride (Viscosity Thickener)", "phase": "F", "qty": "2.5 kg" },
+        { "sr": 15, "name": "D&C Yellow No. 10 (Color CI 19140)", "phase": "F", "qty": "0.02 kg" }
+      ],
+      "steps": [
+        {
+          "id": 1,
+          "name": "Phase A: Initial Water Charge",
+          "description": "Fill vessel to 55% with DI water at ambient temperature",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "sh1-op1", "device": "fillValve", "action": "on", "delaySeconds": 0, "durationSeconds": 180, "level": 55, "stopCondition": { "type": "level_above", "value": 55 } }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Phase A: Pre-Heating & Gentle Agitation",
+          "description": "Heat aqueous phase to 45.0°C under slow anchor stirring",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "sh2-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 240, "speed": 25, "stopCondition": { "type": "temp_above", "value": 450 } },
+            { "id": "sh2-op2", "device": "heater", "action": "on", "delaySeconds": 0, "durationSeconds": 240, "temperature": 450, "stopCondition": { "type": "temp_above", "value": 450 } }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "Phase A: Dissolve EDTA & Citric Acid",
+          "description": "Manual addition of chelating and pH adjusting agents",
+          "requireConfirm": true,
+          "confirmMessage": "21 CFR Part 11 Sign-off: Verify addition of EDTA Disodium (0.1 kg) and Citric Acid (0.3 kg) via top charging port.",
+          "confirmTimeout": 120,
+          "operations": [
+            { "id": "sh3-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 120, "speed": 45, "stopCondition": { "type": "timer", "value": 120 } }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "Phase B: SLES 28% Surfactant Addition",
+          "description": "Slowly charge primary surfactant through bottom suction port",
+          "requireConfirm": true,
+          "confirmMessage": "Verify SLES 28% (18.0 kg) manifold connection. Confirm valve V302 open before suction start.",
+          "confirmTimeout": 180,
+          "operations": [
+            { "id": "sh4-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "speed": 20, "stopCondition": { "type": "timer", "value": 300 } },
+            { "id": "sh4-op2", "device": "vacuum", "action": "on", "delaySeconds": 15, "durationSeconds": 285, "stopCondition": { "type": "timer", "value": 285 } }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "Phase B: Co-Surfactants (CAPB & DEA)",
+          "description": "Add foam boosters and secondary surfactants under vacuum",
+          "requireConfirm": true,
+          "confirmMessage": "Add CAPB (4.0 kg) and Cocamide DEA (2.0 kg). Secure charging hatch.",
+          "confirmTimeout": 120,
+          "operations": [
+            { "id": "sh5-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 180, "speed": 25, "stopCondition": { "type": "timer", "value": 180 } },
+            { "id": "sh5-op2", "device": "vacuum", "action": "on", "delaySeconds": 30, "durationSeconds": 150, "stopCondition": { "type": "timer", "value": 150 } }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "Phase C: Heating for Pearlizer Melt",
+          "description": "Raise batch temperature to 70.0°C for wax and pearlizer dissolution",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "sh6-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 360, "speed": 35, "stopCondition": { "type": "temp_above", "value": 700 } },
+            { "id": "sh6-op2", "device": "heater", "action": "on", "delaySeconds": 0, "durationSeconds": 360, "temperature": 700, "stopCondition": { "type": "temp_above", "value": 700 } }
+          ]
+        },
+        {
+          "id": 7,
+          "name": "Phase C: High-Shear Emulsification",
+          "description": "High shear homogenization with speed ramping and full vacuum deaeration",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "sh7-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 480, "speed": 60, "stopCondition": { "type": "timer", "value": 480 } },
+            { "id": "sh7-op2", "device": "homogenizer", "action": "ramp", "delaySeconds": 0, "durationSeconds": 120, "rampFrom": 600, "rampTo": 3600, "stopCondition": { "type": "timer", "value": 120 } },
+            { "id": "sh7-op3", "device": "homogenizer", "action": "on", "delaySeconds": 120, "durationSeconds": 360, "speed": 3600, "stopCondition": { "type": "timer", "value": 360 } },
+            { "id": "sh7-op4", "device": "vacuum", "action": "on", "delaySeconds": 60, "durationSeconds": 420, "stopCondition": { "type": "timer", "value": 420 } },
+            { "id": "sh7-op5", "device": "heater", "action": "on", "delaySeconds": 0, "durationSeconds": 480, "temperature": 700, "stopCondition": { "type": "timer", "value": 480 } }
+          ]
+        },
+        {
+          "id": 8,
+          "name": "Phase D: Cool-Down to 45.0°C",
+          "description": "Jacket cooling under moderate agitation",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "sh8-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "speed": 30, "stopCondition": { "type": "temp_below", "value": 450 } },
+            { "id": "sh8-op2", "device": "cooler", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "temperature": 450, "stopCondition": { "type": "temp_below", "value": 450 } }
+          ]
+        },
+        {
+          "id": 9,
+          "name": "Phase E: Conditioning & Preservative Addition",
+          "description": "Add heat-sensitive actives: Polyquaternium-7, Panthenol, Fragrance, MIT",
+          "requireConfirm": true,
+          "confirmMessage": "Verify temperature <= 45.0°C before adding Fragrance and Preservative.",
+          "confirmTimeout": 120,
+          "operations": [
+            { "id": "sh9-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 180, "speed": 30, "stopCondition": { "type": "timer", "value": 180 } }
+          ]
+        },
+        {
+          "id": 10,
+          "name": "Phase F: Viscosity Adjustment (Salt Trim)",
+          "description": "Add Sodium Chloride and color solution for final specification",
+          "requireConfirm": true,
+          "confirmMessage": "Sample QC viscosity check. Dose NaCl (2.5 kg) incrementally.",
+          "confirmTimeout": 180,
+          "operations": [
+            { "id": "sh10-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 240, "speed": 40, "stopCondition": { "type": "timer", "value": 240 } },
+            { "id": "sh10-op2", "device": "vacuum", "action": "on", "delaySeconds": 30, "durationSeconds": 210, "stopCondition": { "type": "timer", "value": 210 } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REC-VPU50-002",
+      "name": "Intensive Body Lotion Cream",
+      "version": "2.0.1",
+      "author": "M. Hoffmann (Lead Formulator)",
+      "approvalStatus": "APPROVED",
+      "createdAt": "2026-02-15T14:30:00.000Z",
+      "estimatedDurationSec": 2100,
+      "batchSizeKg": 50.0,
+      "ingredients": [
+        { "sr": 1, "name": "Purified Water (USP)", "phase": "A", "qty": "32.0 kg" },
+        { "sr": 2, "name": "Glycerin (99.5%)", "phase": "A", "qty": "2.5 kg" },
+        { "sr": 3, "name": "Allantoin", "phase": "A", "qty": "0.1 kg" },
+        { "sr": 4, "name": "Mineral Oil (Light)", "phase": "B", "qty": "6.0 kg" },
+        { "sr": 5, "name": "Shea Butter (Refined)", "phase": "B", "qty": "3.0 kg" },
+        { "sr": 6, "name": "Glyceryl Stearate (SE)", "phase": "B", "qty": "2.5 kg" },
+        { "sr": 7, "name": "Stearic Acid (Triple Pressed)", "phase": "B", "qty": "1.5 kg" },
+        { "sr": 8, "name": "Cetyl Alcohol", "phase": "B", "qty": "1.0 kg" },
+        { "sr": 9, "name": "Triethanolamine (TEA 99%)", "phase": "C", "qty": "0.4 kg" },
+        { "sr": 10, "name": "Tocopheryl Acetate (Vit E)", "phase": "D", "qty": "0.2 kg" },
+        { "sr": 11, "name": "Phenoxyethanol / Ethylhexylglycerin", "phase": "D", "qty": "0.4 kg" },
+        { "sr": 12, "name": "Almond Blossom Fragrance", "phase": "D", "qty": "0.4 kg" }
+      ],
+      "steps": [
+        {
+          "id": 1,
+          "name": "Phase A: Water & Humectant Charge",
+          "description": "Fill vessel with purified water and add glycerin humectant",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "bl1-op1", "device": "fillValve", "action": "on", "delaySeconds": 0, "durationSeconds": 120, "level": 65, "stopCondition": { "type": "level_above", "value": 65 } }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Phase A: Aqueous Phase Heating (75.0°C)",
+          "description": "Heat aqueous phase to 75.0°C with continuous anchor agitation",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "bl2-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "speed": 30, "stopCondition": { "type": "temp_above", "value": 750 } },
+            { "id": "bl2-op2", "device": "heater", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "temperature": 750, "stopCondition": { "type": "temp_above", "value": 750 } }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "Phase B: Oil Phase Induction",
+          "description": "Induct melted oil phase (Mineral oil, Shea butter, Emulsifiers) under vacuum",
+          "requireConfirm": true,
+          "confirmMessage": "Confirm Oil Melter temperature at 75°C. Open Suction Valve V301 for induction.",
+          "confirmTimeout": 150,
+          "operations": [
+            { "id": "bl3-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 240, "speed": 40, "stopCondition": { "type": "timer", "value": 240 } },
+            { "id": "bl3-op2", "device": "vacuum", "action": "on", "delaySeconds": 10, "durationSeconds": 230, "stopCondition": { "type": "timer", "value": 230 } }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "Phase C: Emulsion Formation & Homogenization",
+          "description": "High shear rotor-stator homogenization to achieve sub-micron droplet size",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "bl4-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 420, "speed": 55, "stopCondition": { "type": "timer", "value": 420 } },
+            { "id": "bl4-op2", "device": "homogenizer", "action": "ramp", "delaySeconds": 0, "durationSeconds": 60, "rampFrom": 800, "rampTo": 4000, "stopCondition": { "type": "timer", "value": 60 } },
+            { "id": "bl4-op3", "device": "homogenizer", "action": "on", "delaySeconds": 60, "durationSeconds": 360, "speed": 4000, "stopCondition": { "type": "timer", "value": 360 } },
+            { "id": "bl4-op4", "device": "vacuum", "action": "on", "delaySeconds": 30, "durationSeconds": 390, "stopCondition": { "type": "timer", "value": 390 } }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "Phase D: Slow Cooling & Deaeration",
+          "description": "Controlled cooling to 38.0°C under deep vacuum to eliminate micro-bubbles",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "bl5-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 360, "speed": 20, "stopCondition": { "type": "temp_below", "value": 380 } },
+            { "id": "bl5-op2", "device": "cooler", "action": "on", "delaySeconds": 0, "durationSeconds": 360, "temperature": 380, "stopCondition": { "type": "temp_below", "value": 380 } },
+            { "id": "bl5-op3", "device": "vacuum", "action": "on", "delaySeconds": 0, "durationSeconds": 360, "stopCondition": { "type": "timer", "value": 360 } }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "Phase E: Post-Cooling Active Scent Dosing",
+          "description": "Add Tocopheryl Acetate, Preservative blend, and Scent at 38°C",
+          "requireConfirm": true,
+          "confirmMessage": "Verify temperature <= 38.0°C. Add Vitamin E, Preservative, and Fragrance.",
+          "confirmTimeout": 120,
+          "operations": [
+            { "id": "bl6-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 180, "speed": 25, "stopCondition": { "type": "timer", "value": 180 } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REC-VPU50-003",
+      "name": "High-Shear Cosmetic Gel (Carbomer)",
+      "version": "1.0.0",
+      "author": "Dr. S. Nair (R&D Chemist)",
+      "approvalStatus": "APPROVED",
+      "createdAt": "2026-02-18T09:15:00.000Z",
+      "estimatedDurationSec": 1500,
+      "batchSizeKg": 40.0,
+      "ingredients": [
+        { "sr": 1, "name": "Purified Water (USP)", "phase": "A", "qty": "35.0 kg" },
+        { "sr": 2, "name": "Carbomer 940 (Polymer)", "phase": "A", "qty": "0.35 kg" },
+        { "sr": 3, "name": "Disodium EDTA", "phase": "A", "qty": "0.05 kg" },
+        { "sr": 4, "name": "Glycerin (99.5%)", "phase": "B", "qty": "2.0 kg" },
+        { "sr": 5, "name": "Triethanolamine 99% (Neutralizer)", "phase": "C", "qty": "0.45 kg" },
+        { "sr": 6, "name": "Polysorbate 20", "phase": "D", "qty": "0.5 kg" },
+        { "sr": 7, "name": "Aloe Vera Extract (10x)", "phase": "D", "qty": "0.8 kg" },
+        { "sr": 8, "name": "Phenoxyethanol (Preservative)", "phase": "D", "qty": "0.3 kg" }
+      ],
+      "steps": [
+        {
+          "id": 1,
+          "name": "Phase A: Water Charge & Carbomer Dispersion",
+          "description": "Induct Carbomer powder via vacuum hopper into ambient DI water",
+          "requireConfirm": true,
+          "confirmMessage": "Ensure vacuum >= -400 mbar before opening Carbomer powder hopper valve.",
+          "confirmTimeout": 120,
+          "operations": [
+            { "id": "cg1-op1", "device": "fillValve", "action": "on", "delaySeconds": 0, "durationSeconds": 90, "level": 70, "stopCondition": { "type": "level_above", "value": 70 } },
+            { "id": "cg1-op2", "device": "agitator", "action": "on", "delaySeconds": 30, "durationSeconds": 180, "speed": 35, "stopCondition": { "type": "timer", "value": 180 } },
+            { "id": "cg1-op3", "device": "vacuum", "action": "on", "delaySeconds": 30, "durationSeconds": 180, "stopCondition": { "type": "timer", "value": 180 } }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Phase A/B: High-Shear Polymer Hydration",
+          "description": "High shear homogenizer dispersion to hydrate polymer without lumping",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "cg2-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "speed": 50, "stopCondition": { "type": "timer", "value": 300 } },
+            { "id": "cg2-op2", "device": "homogenizer", "action": "ramp", "delaySeconds": 0, "durationSeconds": 60, "rampFrom": 1000, "rampTo": 3500, "stopCondition": { "type": "timer", "value": 60 } },
+            { "id": "cg2-op3", "device": "homogenizer", "action": "on", "delaySeconds": 60, "durationSeconds": 240, "speed": 3500, "stopCondition": { "type": "timer", "value": 240 } },
+            { "id": "cg2-op4", "device": "vacuum", "action": "on", "delaySeconds": 0, "durationSeconds": 300, "stopCondition": { "type": "timer", "value": 300 } }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "Phase C: Neutralization & Gel Formation",
+          "description": "Add TEA neutralizer at low shear to form crystal clear gel structure",
+          "requireConfirm": true,
+          "confirmMessage": "Slowly dose TEA (0.45 kg). Agitator speed must remain <= 20 RPM to prevent air entrapment.",
+          "confirmTimeout": 180,
+          "operations": [
+            { "id": "cg3-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 240, "speed": 20, "stopCondition": { "type": "timer", "value": 240 } },
+            { "id": "cg3-op2", "device": "vacuum", "action": "on", "delaySeconds": 30, "durationSeconds": 210, "stopCondition": { "type": "timer", "value": 210 } }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "Phase D: Botanical Actives & Final Deaeration",
+          "description": "Add Aloe extract, preservative, and pull final deep vacuum",
+          "requireConfirm": false,
+          "confirmMessage": "",
+          "confirmTimeout": 0,
+          "operations": [
+            { "id": "cg4-op1", "device": "agitator", "action": "on", "delaySeconds": 0, "durationSeconds": 180, "speed": 15, "stopCondition": { "type": "timer", "value": 180 } },
+            { "id": "cg4-op2", "device": "vacuum", "action": "on", "delaySeconds": 0, "durationSeconds": 180, "stopCondition": { "type": "timer", "value": 180 } }
+          ]
+        }
+      ]
+    }
+  ]
+}

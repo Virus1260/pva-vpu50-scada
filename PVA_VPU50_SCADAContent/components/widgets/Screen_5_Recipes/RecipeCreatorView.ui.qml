@@ -2,6 +2,7 @@
 This is a UI file (.ui.qml) for the Recipe Formulation Studio & 21 CFR Part 11 Recipe Creator.
 Strictly declarative for Qt Design Studio.
 Compliant with GAMP 5 and FDA 21 CFR Part 11.
+Supports Nested Step Schema: Parent Steps containing Multiple Concurrent/Sequential Sub-steps.
 */
 
 import QtQuick
@@ -18,11 +19,13 @@ Rectangle {
     radius: 6
     clip: true
 
-    property string selectedRecipeName: "UNIMIX_BATCH_01"
-    property string selectedProduct: "Carbopol 980 Pharma Gel"
-    property string recipeVersion: "v2.6.4-GAMP5"
+    property string selectedRecipeName: "Industrial Shampoo Formulation"
+    property string selectedProduct: "Botanical Conditioning Shampoo (100 kg)"
+    property string recipeVersion: "v3.0.0-GAMP5"
     property string validationStatus: "APPROVED & VALIDATED"
-    property string approvedBy: "Florian Rismondo (QA Officer)"
+    property string approvedBy: "Dr. E. Vance (Process Eng)"
+    property int totalStepsCount: 10
+    property int totalOpsCount: 22
 
     ColumnLayout {
         anchors.fill: parent
@@ -34,7 +37,7 @@ Rectangle {
         // =====================================================================
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 80
+            Layout.preferredHeight: 76
             radius: 6
             color: "#0d2b4a"
             border.color: "#0284c7"
@@ -63,15 +66,15 @@ Rectangle {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
-                    Text { text: "MASTER FORMULATION TEMPLATE"; color: "#38bdf8"; font.bold: true; font.pixelSize: 10 }
-                    Text { text: creatorRoot.selectedRecipeName + " (" + creatorRoot.selectedProduct + ")"; color: "#ffffff"; font.bold: true; font.pixelSize: 15 }
-                    Text { text: "Compliance: FDA 21 CFR Part 11 & ISPE GAMP 5 Category 4 | Revision: " + creatorRoot.recipeVersion; color: "#94a3b8"; font.pixelSize: 11 }
+                    Text { text: "MASTER FORMULATION MATRIX (ISA-88)"; color: "#38bdf8"; font.bold: true; font.pixelSize: 10 }
+                    Text { text: creatorRoot.selectedRecipeName + " (" + creatorRoot.selectedProduct + ")"; color: "#ffffff"; font.bold: true; font.pixelSize: 14 }
+                    Text { text: "Compliance: FDA 21 CFR Part 11 & ISPE GAMP 5 | " + creatorRoot.totalStepsCount + " Steps | " + creatorRoot.totalOpsCount + " Sub-operations"; color: "#94a3b8"; font.pixelSize: 11 }
                 }
 
                 // Electronic Approval Stamp
                 Rectangle {
                     Layout.preferredWidth: 220
-                    Layout.preferredHeight: 52
+                    Layout.preferredHeight: 48
                     radius: 4
                     color: "#052e16"
                     border.color: "#22c55e"
@@ -92,14 +95,14 @@ Rectangle {
         }
 
         // =====================================================================
-        // 2. TWO-COLUMN SPLIT: PHASE PARAMETERS (LEFT) & BOM INGREDIENTS (RIGHT)
+        // 2. TWO-COLUMN SPLIT: NESTED STEP SCHEMA (LEFT) & BOM INGREDIENTS (RIGHT)
         // =====================================================================
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 10
 
-            // LEFT COLUMN: 5-PHASE SETPOINTS CONFIGURATION MATRIX
+            // LEFT COLUMN: NESTED PARENT STEPS & SUB-OPERATIONS MATRIX
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -113,51 +116,178 @@ Rectangle {
                     anchors.margins: 10
                     spacing: 6
 
-                    Text { text: "PHASE SEQUENCE & PROCESS SETPOINTS (ISA-88)"; color: "#94a3b8"; font.bold: true; font.pixelSize: 11 }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text { text: "PARENT PROCESS PHASES & CONCURRENT SUB-OPERATIONS"; color: "#94a3b8"; font.bold: true; font.pixelSize: 11 }
+                        Item { Layout.fillWidth: true }
+                        Text { text: "ISA-88 Procedure Hierarchy"; color: "#38bdf8"; font.pixelSize: 10 }
+                    }
 
-                    Repeater {
-                        model: [
-                            { step: 1, name: "Raw Material Charging", tempSp: "25.0 °C", vacSp: "-200 mbar", agitSp: "15 rpm", homoSp: "0 rpm", dur: "5 min", autoNext: "Manual Sign-off" },
-                            { step: 2, name: "Pre-Heat & Agitation", tempSp: "70.0 °C", vacSp: "-300 mbar", agitSp: "35 rpm", homoSp: "0 rpm", dur: "10 min", autoNext: "Auto-Advance" },
-                            { step: 3, name: "Vacuum Deaeration", tempSp: "70.0 °C", vacSp: "-450 mbar", agitSp: "25 rpm", homoSp: "0 rpm", dur: "8 min", autoNext: "Auto-Advance" },
-                            { step: 4, name: "High-Shear Emulsification", tempSp: "68.0 °C", vacSp: "-450 mbar", agitSp: "35 rpm", homoSp: "2800 rpm", dur: "10 min", autoNext: "Auto-Advance" },
-                            { step: 5, name: "Cooling & Discharge Transfer", tempSp: "35.0 °C", vacSp: "0 mbar", agitSp: "15 rpm", homoSp: "0 rpm", dur: "8 min", autoNext: "Manual Sign-off" }
-                        ]
+                    // Parent Step 1: Initial Water Charge & Pre-Heat
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 68
+                        radius: 4
+                        color: "#0a243f"
+                        border.color: "#1d4ed8"
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: 52
-                            radius: 4
-                            color: "#0a243f"
-                            border.color: "#184d7e"
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 4
 
                             RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
-                                spacing: 10
-
+                                Layout.fillWidth: true
+                                spacing: 8
                                 Rectangle {
-                                    width: 24
-                                    height: 24
-                                    radius: 12
-                                    color: "#0f3a64"
-                                    border.color: "#38bdf8"
-                                    Text { anchors.centerIn: parent; text: modelData.step + ""; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                                    width: 20; height: 20; radius: 10; color: "#1e40af"
+                                    Text { anchors.centerIn: parent; text: "1"; color: "#ffffff"; font.bold: true; font.pixelSize: 10 }
                                 }
+                                Text { text: "Phase A: Water Prep & Initial Heating (45.0°C)"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                                Item { Layout.fillWidth: true }
+                                Text { text: "Dur: 4 min | Auto-Advance"; color: "#38bdf8"; font.pixelSize: 10 }
+                            }
 
-                                ColumnLayout {
-                                    Layout.preferredWidth: 150
-                                    spacing: 1
-                                    Text { text: modelData.name; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
-                                    Text { text: modelData.autoNext; color: modelData.autoNext === "Auto-Advance" ? "#38bdf8" : "#f59e0b"; font.pixelSize: 9 }
+                            // Sub-operations pills row
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 150; radius: 3; color: "#0c345a"; border.color: "#0284c7"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "FillValve: ON (SP 55%)"; color: "#93c5fd"; font.pixelSize: 9 } }
                                 }
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 150; radius: 3; color: "#0c345a"; border.color: "#22c55e"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Agitator: ON (25 RPM)"; color: "#86efac"; font.pixelSize: 9 } }
+                                }
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 160; radius: 3; color: "#0c345a"; border.color: "#f97316"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Heater: ON (SP 45.0°C)"; color: "#fdba74"; font.pixelSize: 9 } }
+                                }
+                            }
+                        }
+                    }
 
-                                Text { text: "Temp: " + modelData.tempSp; color: "#94a3b8"; font.pixelSize: 10; Layout.preferredWidth: 80 }
-                                Text { text: "Vac: " + modelData.vacSp; color: "#94a3b8"; font.pixelSize: 10; Layout.preferredWidth: 85 }
-                                Text { text: "Agit: " + modelData.agitSp; color: "#94a3b8"; font.pixelSize: 10; Layout.preferredWidth: 75 }
-                                Text { text: "Homo: " + modelData.homoSp; color: "#94a3b8"; font.pixelSize: 10; Layout.preferredWidth: 85 }
-                                Text { text: "Dur: " + modelData.dur; color: "#f5d033"; font.bold: true; font.pixelSize: 10; Layout.preferredWidth: 60 }
+                    // Parent Step 2: Surfactant Addition & Vacuum Deaeration
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 68
+                        radius: 4
+                        color: "#0a243f"
+                        border.color: "#1d4ed8"
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 4
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Rectangle {
+                                    width: 20; height: 20; radius: 10; color: "#1e40af"
+                                    Text { anchors.centerIn: parent; text: "2"; color: "#ffffff"; font.bold: true; font.pixelSize: 10 }
+                                }
+                                Text { text: "Phase B: SLES 28% & CAPB Induction"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                                Item { Layout.fillWidth: true }
+                                Text { text: "21 CFR Hold Point Sign-off"; color: "#f59e0b"; font.bold: true; font.pixelSize: 10 }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 150; radius: 3; color: "#0c345a"; border.color: "#22c55e"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Agitator: ON (20 RPM)"; color: "#86efac"; font.pixelSize: 9 } }
+                                }
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 160; radius: 3; color: "#0c345a"; border.color: "#8b5cf6"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Vacuum: ON (-300 mbar)"; color: "#c4b5fd"; font.pixelSize: 9 } }
+                                }
+                            }
+                        }
+                    }
+
+                    // Parent Step 3: Pearlizer Melt & High-Shear Emulsification
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 68
+                        radius: 4
+                        color: "#0a243f"
+                        border.color: "#1d4ed8"
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 4
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Rectangle {
+                                    width: 20; height: 20; radius: 10; color: "#1e40af"
+                                    Text { anchors.centerIn: parent; text: "3"; color: "#ffffff"; font.bold: true; font.pixelSize: 10 }
+                                }
+                                Text { text: "Phase C: High-Shear Emulsification (70.0°C)"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                                Item { Layout.fillWidth: true }
+                                Text { text: "Dur: 8 min | Auto-Advance"; color: "#38bdf8"; font.pixelSize: 10 }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 130; radius: 3; color: "#0c345a"; border.color: "#22c55e"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Agitator: 60 RPM"; color: "#86efac"; font.pixelSize: 9 } }
+                                }
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 170; radius: 3; color: "#0c345a"; border.color: "#a855f7"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Homo: RAMP (600->3600 RPM)"; color: "#d8b4fe"; font.pixelSize: 9 } }
+                                }
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 140; radius: 3; color: "#0c345a"; border.color: "#8b5cf6"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Vacuum: -450 mbar"; color: "#c4b5fd"; font.pixelSize: 9 } }
+                                }
+                            }
+                        }
+                    }
+
+                    // Parent Step 4: Cooling & Active Scent Dosing
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 68
+                        radius: 4
+                        color: "#0a243f"
+                        border.color: "#1d4ed8"
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: 6
+                            spacing: 4
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Rectangle {
+                                    width: 20; height: 20; radius: 10; color: "#1e40af"
+                                    Text { anchors.centerIn: parent; text: "4"; color: "#ffffff"; font.bold: true; font.pixelSize: 10 }
+                                }
+                                Text { text: "Phase D/E: Jacket Cooling (45.0°C) & Preservative Addition"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+                                Item { Layout.fillWidth: true }
+                                Text { text: "21 CFR Hold Point Sign-off"; color: "#f59e0b"; font.bold: true; font.pixelSize: 10 }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 140; radius: 3; color: "#0c345a"; border.color: "#06b6d4"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Cooler: ON (SP 45.0°C)"; color: "#67e8f9"; font.pixelSize: 9 } }
+                                }
+                                Rectangle {
+                                    Layout.preferredHeight: 22; Layout.preferredWidth: 140; radius: 3; color: "#0c345a"; border.color: "#22c55e"
+                                    RowLayout { anchors.centerIn: parent; spacing: 4; Text { text: "Agitator: ON (30 RPM)"; color: "#86efac"; font.pixelSize: 9 } }
+                                }
                             }
                         }
                     }
@@ -166,7 +296,7 @@ Rectangle {
 
             // RIGHT COLUMN: BILL OF MATERIALS (BOM) RAW MATERIALS
             Rectangle {
-                Layout.preferredWidth: 420
+                Layout.preferredWidth: 380
                 Layout.fillHeight: true
                 radius: 5
                 color: "#071c33"
@@ -178,46 +308,49 @@ Rectangle {
                     anchors.margins: 10
                     spacing: 6
 
-                    Text { text: "RAW MATERIAL BILL OF MATERIALS (BOM)"; color: "#94a3b8"; font.bold: true; font.pixelSize: 11 }
+                    Text { text: "BILL OF MATERIALS (15 INGREDIENTS)"; color: "#94a3b8"; font.bold: true; font.pixelSize: 11 }
 
                     Repeater {
                         model: [
-                            { code: "RM-101", name: "Purified USP Water (Bulk Phase)", qty: "320.0 kg", tol: "±0.2 kg", phase: "Phase 1" },
-                            { code: "RM-102", name: "Carbopol 980 Polymer", qty: "4.50 kg", tol: "±0.05 kg", phase: "Phase 1" },
-                            { code: "RM-103", name: "Propylene Glycol (Humectant)", qty: "25.0 kg", tol: "±0.1 kg", phase: "Phase 2" },
-                            { code: "RM-104", name: "Triethanolamine (Neutralizer 99%)", qty: "5.20 kg", tol: "±0.05 kg", phase: "Phase 4" },
-                            { code: "RM-105", name: "Methylparaben (Preservative)", qty: "0.80 kg", tol: "±0.01 kg", phase: "Phase 4" }
+                            { code: "PH-A", name: "Deionized Water (USP Bulk)", qty: "45.0 kg", phase: "Phase A" },
+                            { code: "PH-A", name: "EDTA Disodium / Citric Acid", qty: "0.4 kg", phase: "Phase A" },
+                            { code: "PH-B", name: "Sodium Laureth Sulfate (SLES 28%)", qty: "18.0 kg", phase: "Phase B" },
+                            { code: "PH-B", name: "Cocamidopropyl Betaine (CAPB)", qty: "4.0 kg", phase: "Phase B" },
+                            { code: "PH-C", name: "Glycol Distearate (Pearlizer)", qty: "3.0 kg", phase: "Phase C" },
+                            { code: "PH-D", name: "Polyquaternium-7 / Panthenol", qty: "2.0 kg", phase: "Phase D" },
+                            { code: "PH-E", name: "Fragrance Oil / Preservative MIT", qty: "0.95 kg", phase: "Phase E" },
+                            { code: "PH-F", name: "Sodium Chloride (Viscosity Trim)", qty: "2.5 kg", phase: "Phase F" }
                         ]
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 48
+                            Layout.preferredHeight: 38
                             radius: 4
                             color: "#0a243f"
                             border.color: "#184d7e"
 
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 10
+                                anchors.leftMargin: 8
+                                anchors.rightMargin: 8
                                 spacing: 8
 
                                 Rectangle {
-                                    width: 50
-                                    height: 20
+                                    width: 44
+                                    height: 18
                                     radius: 3
-                                    color: "#1e3a8a"
-                                    Text { anchors.centerIn: parent; text: modelData.code; color: "#93c5fd"; font.bold: true; font.pixelSize: 9 }
+                                    color: modelData.phase === "Phase A" ? "#1e3a8a" : modelData.phase === "Phase B" ? "#c2410c" : modelData.phase === "Phase C" ? "#7e22ce" : "#0f766e"
+                                    Text { anchors.centerIn: parent; text: modelData.code; color: "#ffffff"; font.bold: true; font.pixelSize: 8 }
                                 }
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
                                     spacing: 1
-                                    Text { text: modelData.name; color: "#ffffff"; font.bold: true; font.pixelSize: 10; elide: Text.ElideRight }
-                                    Text { text: "Charged in " + modelData.phase + " | Tol: " + modelData.tol; color: "#64748b"; font.pixelSize: 9 }
+                                    Text { text: modelData.name; color: "#ffffff"; font.bold: true; font.pixelSize: 9; elide: Text.ElideRight }
+                                    Text { text: modelData.phase; color: "#64748b"; font.pixelSize: 8 }
                                 }
 
-                                Text { text: modelData.qty; color: "#22c55e"; font.bold: true; font.pixelSize: 11; horizontalAlignment: Text.AlignRight }
+                                Text { text: modelData.qty; color: "#22c55e"; font.bold: true; font.pixelSize: 10; horizontalAlignment: Text.AlignRight }
                             }
                         }
                     }

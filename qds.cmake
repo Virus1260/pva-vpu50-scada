@@ -10,14 +10,12 @@ qt6_add_resources(${CMAKE_PROJECT_NAME} MainResource
     PREFIX "/qt/qml"
     VERSION 1.0
     FILES 
-        "vercel.json"
-        ".vercel/project.json"
-        ".vscode/settings.json"
         "scada/config/alarm_catalog.json"
         "scada/config/opcua.production.example.json"
         "scada/config/role_catalog.json"
         "scada/config/sensor_catalog.json"
         "scada/config/tag_catalog.json"
+        "scada/config/recipe_catalog.json"
         "scada/simulation/plant_profile.json"
 )
 
