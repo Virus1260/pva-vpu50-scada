@@ -62,6 +62,7 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/nav/docs_report.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/nav/logs_order.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/nav/pid_vessel.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/icons/nav/recipe_maker.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/nav/recipes_checklist.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/nav/status_stack.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/nav/tools_maintenance.svg</file>
@@ -163,6 +164,8 @@
         <file>PVA_VPU50_SCADAContent/screens/Screen_7_PlaybackView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_8_Diagnostics.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_8_DiagnosticsView.ui.qml</file>
+        <file>PVA_VPU50_SCADAContent/screens/Screen_9_RecipeMaker.qml</file>
+        <file>PVA_VPU50_SCADAContent/screens/Screen_9_RecipeMakerView.ui.qml</file>
         <file>qtquickcontrols2.conf</file>
         <file>scada/config/alarm_catalog.json</file>
         <file>scada/config/opcua.production.example.json</file>

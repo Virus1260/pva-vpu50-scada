@@ -33,6 +33,7 @@ Rectangle {
     property alias trendsScreen: trendsView
     property alias alarmsScreen: alarmsView
     property alias recipesScreen: recipesView
+    property alias recipeMakerScreen: makerView
     property alias auditScreen: auditView
     property alias playbackScreen: playbackView
     property alias maintenanceScreen: maintView
@@ -103,19 +104,19 @@ Rectangle {
             id: alarmsView
         }
 
-        // SCREEN 4: RECIPES & BATCH PHASES
+        // SCREEN 4: RECIPE EXECUTION (OPERATOR & RUN MONITORING)
         Screen_5_Recipes {
             id: recipesView
         }
 
-        // SCREEN 5: AUDIT TRAIL & 21 CFR PART 11 EBR
-        Screen_6_Audit {
-            id: auditView
+        // SCREEN 5: RECIPE MAKER (AUTHORING - INCHARGE & ADMIN)
+        Screen_9_RecipeMaker {
+            id: makerView
         }
 
-        // SCREEN 6: PROCESS LOG PLAYBACK
-        Screen_7_Playback {
-            id: playbackView
+        // SCREEN 6: AUDIT TRAIL & 21 CFR PART 11 EBR
+        Screen_6_Audit {
+            id: auditView
         }
 
         // SCREEN 7: HARDWARE MAINTENANCE & I/O DIAGNOSTICS

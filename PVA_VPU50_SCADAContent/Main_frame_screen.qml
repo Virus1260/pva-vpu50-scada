@@ -66,13 +66,13 @@ Item {
     property int alarmIndex: 0
 
     property var screenTitles: [
-        "SYSTEM READY - RECIPE [VPU_BATCH_01] STANDBY",
+        "SYSTEM READY - CONTROL DASHBOARD",
         "P&ID VIEW - PVA SYSTEMS VPU-50 SKID & PROCESS VALVES",
         "PROCESS TRENDS - MULTI-CHANNEL HISTORICAL LOG",
         "ALARM ANNUNCIATOR - ACTIVE PROCESS NOTIFICATIONS",
-        "RECIPES - STEP-BY-STEP PHASE EXECUTION MANAGER",
+        "RECIPES (RUN) - ISA-88 BATCH PROCESS EXECUTION MONITOR",
+        "RECIPE MAKER - 21 CFR PART 11 MASTER RECIPE AUTHORING",
         "ELECTRONIC BATCH RECORD - 21 CFR PART 11 AUDIT LOG",
-        "PROCESS PLAYBACK - HISTORICAL BATCH TRACE",
         "MAINTENANCE - HARDWARE I/O DIAGNOSTICS & OVERRIDE"
     ]
 
@@ -87,6 +87,18 @@ Item {
     Main_frame_screenView {
         id: ui
         anchors.fill: parent
+    }
+
+    // Bind sidebar role & level dynamically
+    Binding {
+        target: ui.sidebar
+        property: "userRole"
+        value: rootWindow.activeUserId
+    }
+    Binding {
+        target: ui.sidebar
+        property: "userLevel"
+        value: rootWindow.activeUserLevel
     }
 
     // --- Component Setup & Static Wiring ---

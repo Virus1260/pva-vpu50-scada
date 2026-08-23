@@ -169,6 +169,73 @@ class TestScadaCompliance(unittest.TestCase):
         self.assertTrue(removed)
         self.assertEqual(len(engine.recipe.steps), 4)
 
+    def test_sqlite_persistence_and_snapshot_isolation(self):
+        import tempfile
+        from pathlib import Path
+        from scada.store import ScadaDatabaseStore
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            db_path = Path(tmp_dir) / "test_scada.db"
+            store = ScadaDatabaseStore(db_path)
+            store.initialise()
+
+            # 1. Verify default users seeded
+            with store.connection() as conn:
+                users = conn.execute("SELECT username, role FROM users").fetchall()
+                roles = {u["username"]: u["role"] for u in users}
+                self.assertEqual(roles.get("operator"), "operator")
+                self.assertEqual(roles.get("incharge"), "incharge")
+                self.assertEqual(roles.get("admin"), "administrator")
+
+            # 2. Create Master Recipe
+            test_body = {
+                "id": "REC-TEST-001",
+                "name": "Test Hydrogel",
+                "version": "1.0",
+                "author": "Incharge",
+                "approvalStatus": "APPROVED",
+                "createdAt": "2026-02-22T00:00:00Z",
+                "estimatedDurationSec": 600,
+                "batchSizeKg": 25.0,
+                "steps": [
+                    {"id": 1, "name": "Step 1", "description": "Original Step", "operations": []}
+                ],
+                "ingredients": []
+            }
+            store.create_recipe("REC-TEST-001", "Test Hydrogel", test_body, "incharge")
+            store.approve_recipe("REC-TEST-001", "Dr. Vance")
+
+            # 3. Start Batch Run -> Creates Immutable Snapshot
+            batch_run = store.start_batch_run("REC-TEST-001", "operator_1")
+            self.assertIsNotNone(batch_run["batchId"])
+            self.assertEqual(batch_run["snapshot"]["name"], "Test Hydrogel")
+            self.assertEqual(batch_run["snapshot"]["steps"][0]["name"], "Step 1")
+
+            # 4. Modify Master Recipe (Draft v2)
+            updated_body = dict(test_body)
+            updated_body["steps"] = [{"id": 1, "name": "Step 1 Modified", "description": "New SOP", "operations": []}]
+            store.update_recipe("REC-TEST-001", "Test Hydrogel (Modified)", updated_body, "incharge")
+
+            # 5. Verify Snapshot Isolation: Batch run still holds original Step 1
+            events = store.get_batch_events(batch_run["batchId"])
+            self.assertGreaterEqual(len(events), 1)
+            self.assertEqual(events[0]["eventType"], "batch_start")
+
+            with store.connection() as conn:
+                run_row = conn.execute("SELECT recipe_snapshot_json FROM batch_runs WHERE id = ?", (batch_run["batchId"],)).fetchone()
+                import json
+                snap = json.loads(run_row["recipe_snapshot_json"])
+                self.assertEqual(snap["steps"][0]["name"], "Step 1", "Batch run snapshot must NEVER change after master recipe edit")
+
+    def test_pid_device_tags_mapping(self):
+        from scada.recipes import DeviceType, PID_TAG_MAP
+        self.assertIn("1M1501", PID_TAG_MAP[DeviceType.AGITATOR])
+        self.assertIn("1X1001", PID_TAG_MAP[DeviceType.HOMOGENIZER])
+        self.assertIn("1M5001", PID_TAG_MAP[DeviceType.VACUUM])
+        self.assertIn("1E6001", PID_TAG_MAP[DeviceType.HEATER])
+        self.assertIn("1K1001", PID_TAG_MAP[DeviceType.FILL_VALVE])
+        self.assertIn("1M2001", PID_TAG_MAP[DeviceType.DRAIN_VALVE])
+
     def test_cmake_and_qrc_build_integrity(self):
         root_dir = Path(__file__).resolve().parent.parent
         cmake_file = root_dir / "PVA_VPU50_SCADAContent" / "CMakeLists.txt"

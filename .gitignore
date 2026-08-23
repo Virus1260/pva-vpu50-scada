@@ -73,4 +73,6 @@ scratch/
 scratch/*
 __pycache__/
 *.pyc
+*.db
+scada/data/
 

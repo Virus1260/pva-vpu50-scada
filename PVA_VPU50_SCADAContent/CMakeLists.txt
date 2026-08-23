@@ -95,6 +95,8 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "screens/Screen_7_PlaybackView.ui.qml"
         "screens/Screen_8_Diagnostics.qml"
         "screens/Screen_8_DiagnosticsView.ui.qml"
+        "screens/Screen_9_RecipeMaker.qml"
+        "screens/Screen_9_RecipeMakerView.ui.qml"
     RESOURCES
         "assets/pid_schema.svg"
         "assets/pid_vessel_body.svg"
@@ -158,6 +160,7 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "assets/icons/nav/status_stack.svg"
         "assets/icons/nav/tools_maintenance.svg"
         "assets/icons/nav/trends_chart.svg"
+        "assets/icons/nav/recipe_maker.svg"
         "assets/icons/pid/heater_inline_active.svg"
         "assets/icons/pid/heater_inline_idle.svg"
         "assets/icons/pid/pump_centrifugal_idle.svg"

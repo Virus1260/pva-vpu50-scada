@@ -11,16 +11,19 @@ Rectangle {
 
     property int activeIndex: 0
     property int unackAlarmsCount: 0
+    property string userRole: "operator" // "operator", "incharge", "administrator"
+    property int userLevel: 1 // 1: Operator, 2: Incharge/Supervisor, 3: Administrator
 
-    property var navItems: [
-        { name: "Control", icon: "status_stack", label: "Control" },
-        { name: "P&ID", icon: "pid_vessel", label: "P&ID" },
-        { name: "Trends", icon: "trends_chart", label: "Trends" },
-        { name: "Alarms", icon: "alarms_bell", label: "Alarms" },
-        { name: "Recipes", icon: "recipes_checklist", label: "Recipes" },
-        { name: "Reports", icon: "docs_report", label: "Reports" },
-        { name: "AuditLog", icon: "logs_order", label: "Audit Log" },
-        { name: "Diagnostics", icon: "tools_maintenance", label: "Diagnostics" }
+    // All available screens with role requirements
+    property var allNavItems: [
+        { id: 0, name: "Control", icon: "status_stack", label: "Control", minLevel: 1 },
+        { id: 1, name: "P&ID", icon: "pid_vessel", label: "P&ID", minLevel: 1 },
+        { id: 2, name: "Trends", icon: "trends_chart", label: "Trends", minLevel: 1 },
+        { id: 3, name: "Alarms", icon: "alarms_bell", label: "Alarms", minLevel: 1 },
+        { id: 4, name: "Recipes", icon: "recipes_checklist", label: "Recipes (Run)", minLevel: 1 },
+        { id: 5, name: "RecipeMaker", icon: "recipe_maker", label: "Recipe Maker", minLevel: 2 }, // Incharge / Admin only
+        { id: 6, name: "AuditLog", icon: "logs_order", label: "Audit Log", minLevel: 1 },
+        { id: 7, name: "Diagnostics", icon: "tools_maintenance", label: "Diagnostics", minLevel: 1 }
     ]
 
     ColumnLayout {
@@ -32,15 +35,16 @@ Rectangle {
         spacing: 5
 
         Repeater {
-            model: sidebarRoot.navItems
+            model: sidebarRoot.allNavItems
 
             delegate: Rectangle {
                 id: navBtn
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 6
+                visible: modelData.minLevel <= sidebarRoot.userLevel
 
-                property bool isActive: sidebarRoot.activeIndex === index
+                property bool isActive: sidebarRoot.activeIndex === modelData.id
                 property bool isHovered: navMouse.containsMouse
                 property bool isPressed: navMouse.pressed
 
@@ -67,8 +71,8 @@ Rectangle {
                     ScadaIcon {
                         iconName: (modelData.icon === "alarms_bell" && sidebarRoot.unackAlarmsCount === 0) ? "alarms_bell_green" : modelData.icon
                         iconColor: "#ffffff"
-                        width: 36
-                        height: 36
+                        width: 32
+                        height: 32
                         Layout.alignment: Qt.AlignHCenter
                     }
 
@@ -76,7 +80,7 @@ Rectangle {
                         text: modelData.label
                         color: navBtn.isActive ? "#ffffff" : (navBtn.isHovered ? "#e0f2fe" : "#94a3b8")
                         font.bold: true
-                        font.pixelSize: 12
+                        font.pixelSize: 11
                         Layout.alignment: Qt.AlignHCenter
                         elide: Text.ElideRight
                     }
@@ -87,7 +91,7 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: sidebarRoot.activeIndex = index
+                    onClicked: sidebarRoot.activeIndex = modelData.id
                 }
             }
         }

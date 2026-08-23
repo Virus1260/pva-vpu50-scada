@@ -1,17 +1,19 @@
 """
 PVA Systems VPU-50 SCADA - Recipe Execution Engine & Catalog Manager
-Compliant with ISA-88 Batch Control and 21 CFR Part 11 Electronic Records.
+Compliant with ISA-88 Batch Control, GAMP 5, and 21 CFR Part 11 Electronic Records.
 """
 
 from __future__ import annotations
 
-import json
-import os
-import time
 from dataclasses import dataclass, field
 from enum import Enum
+import json
+import os
 from pathlib import Path
+import time
 from typing import Any, Dict, List, Optional
+
+from scada.store import scada_db, utc_now
 
 
 class DeviceType(str, Enum):
@@ -22,6 +24,18 @@ class DeviceType(str, Enum):
     COOLER = "cooler"
     FILL_VALVE = "fillValve"
     DRAIN_VALVE = "drainValve"
+
+
+# Real P&ID Tag Mapping (per VPU-50 Engineering Legend)
+PID_TAG_MAP = {
+    DeviceType.AGITATOR: "1M1501 (Anchor Stirrer)",
+    DeviceType.HOMOGENIZER: "1X1001 / 1M2003 (Homogenizer)",
+    DeviceType.VACUUM: "1M5001 / 1P5001 (Vacuum Pump)",
+    DeviceType.HEATER: "1E6001 (Immersion Heating)",
+    DeviceType.COOLER: "1E6001 (Jacket Cooling Loop)",
+    DeviceType.FILL_VALVE: "1K1001 (Charging Port Valve)",
+    DeviceType.DRAIN_VALVE: "1M2001 / V101 (Discharge Valve)",
+}
 
 
 class StopConditionType(str, Enum):
@@ -86,6 +100,7 @@ class RecipeOperation:
         res: Dict[str, Any] = {
             "id": self.id,
             "device": self.device.value,
+            "pidTag": PID_TAG_MAP.get(self.device, self.device.value),
             "action": self.action,
             "delaySeconds": self.delay_seconds,
             "durationSeconds": self.duration_seconds,
@@ -100,7 +115,7 @@ class RecipeOperation:
             res["temperature"] = self.temperature
         if self.level is not None:
             res["level"] = self.level
-        if self.stop_condition is not None:
+        if self.stop_condition:
             res["stopCondition"] = self.stop_condition.to_dict()
         return res
 
@@ -109,23 +124,23 @@ class RecipeOperation:
 class RecipeStep:
     id: int
     name: str
-    description: str
-    operations: List[RecipeOperation] = field(default_factory=list)
+    description: str = ""
     require_confirm: bool = False
     confirm_message: str = ""
     confirm_timeout: int = 0
+    operations: List[RecipeOperation] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> RecipeStep:
         ops = [RecipeOperation.from_dict(op) for op in data.get("operations", [])]
         return cls(
             id=int(data.get("id", 1)),
-            name=data.get("name", ""),
+            name=data.get("name", "Step"),
             description=data.get("description", ""),
-            operations=ops,
             require_confirm=bool(data.get("requireConfirm", False)),
             confirm_message=data.get("confirmMessage", ""),
             confirm_timeout=int(data.get("confirmTimeout", 0)),
+            operations=ops,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -153,7 +168,7 @@ class Ingredient:
             sr=int(data.get("sr", 1)),
             name=data.get("name", ""),
             phase=data.get("phase", "A"),
-            qty=data.get("qty", ""),
+            qty=data.get("qty", "0.0 kg"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -185,7 +200,7 @@ class Recipe:
         return cls(
             id=data.get("id", "REC-001"),
             name=data.get("name", "Untitled Recipe"),
-            version=data.get("version", "1.0.0"),
+            version=str(data.get("version", "1")),
             author=data.get("author", "Operator"),
             approval_status=data.get("approvalStatus", "DRAFT"),
             created_at=data.get("createdAt", ""),
@@ -211,7 +226,7 @@ class Recipe:
 
 
 class RecipeCatalog:
-    """Manages the catalog of pre-made and user-created recipe templates."""
+    """Manages the catalog of pre-made and user-created recipe templates backed by SQLite and fallback JSON."""
 
     def __init__(self, catalog_path: Optional[Path] = None):
         if catalog_path is None:
@@ -221,6 +236,18 @@ class RecipeCatalog:
         self.load_catalog()
 
     def load_catalog(self) -> None:
+        # Load from SQLite database first
+        try:
+            db_recipes = scada_db.list_recipes()
+            if db_recipes:
+                for r_record in db_recipes:
+                    recipe = Recipe.from_dict(r_record["body"])
+                    self.recipes[recipe.id] = recipe
+                return
+        except Exception:
+            pass
+
+        # Fallback to JSON file if DB unavailable
         if self.catalog_path.exists():
             with open(self.catalog_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -234,11 +261,15 @@ class RecipeCatalog:
     def list_recipes(self) -> List[Recipe]:
         return list(self.recipes.values())
 
-    def save_recipe(self, recipe: Recipe) -> None:
+    def save_recipe(self, recipe: Recipe, user_id: str = "incharge") -> None:
         self.recipes[recipe.id] = recipe
-        self.persist()
+        try:
+            scada_db.create_recipe(recipe.id, recipe.name, recipe.to_dict(), user_id)
+        except Exception:
+            pass
+        self.persist_json()
 
-    def persist(self) -> None:
+    def persist_json(self) -> None:
         data = {
             "catalogVersion": "3.0.0",
             "facility": "PVA Systems VPU-50 Pharmaceutical & Personal Care Mixing Skid",
@@ -263,10 +294,14 @@ class OperationRunState:
 
 
 class RecipeExecutionEngine:
-    """State machine executing ISA-88 recipe steps and sub-step operations."""
+    """
+    ISA-88 Batch Execution Engine.
+    Executes exclusively against an immutable batch snapshot from SQLite batch_runs.
+    """
 
     def __init__(self, recipe: Optional[Recipe] = None):
         self.recipe: Optional[Recipe] = recipe
+        self.active_batch_id: str = ""
         self.is_running: bool = False
         self.is_paused: bool = False
         self.current_step_index: int = -1
@@ -277,6 +312,16 @@ class RecipeExecutionEngine:
         self.confirm_message: str = ""
         self.confirm_timeout: int = 0
         self.last_tick_time: Optional[float] = None
+
+    def start_from_db_snapshot(self, recipe_id: str, operator_id: str = "operator") -> bool:
+        """Starts batch execution strictly against an immutable snapshot created in batch_runs."""
+        try:
+            batch_run = scada_db.start_batch_run(recipe_id, operator_id)
+            self.active_batch_id = batch_run["batchId"]
+            self.recipe = Recipe.from_dict(batch_run["snapshot"])
+            return self.start()
+        except Exception:
+            return False
 
     def load_recipe(self, recipe: Recipe) -> None:
         self.recipe = recipe
@@ -316,11 +361,26 @@ class RecipeExecutionEngine:
     def stop(self) -> None:
         self.is_running = False
         self.is_paused = False
+        if self.active_batch_id:
+            try:
+                scada_db.end_batch_run(self.active_batch_id, "aborted")
+            except Exception:
+                pass
 
     def confirm_hold_point(self, operator_id: str) -> bool:
         if self.confirm_active:
             self.confirm_active = False
             self.manual_waiting = False
+            if self.active_batch_id:
+                try:
+                    scada_db.record_batch_event(
+                        self.active_batch_id,
+                        "hold_point_confirm",
+                        operator_id,
+                        {"stepIndex": self.current_step_index, "message": self.confirm_message},
+                    )
+                except Exception:
+                    pass
             return True
         return False
 
@@ -346,38 +406,40 @@ class RecipeExecutionEngine:
 
         step = self.recipe.steps[self.current_step_index]
         
-        # Check if all operations in the step are complete
         all_done = True
+        pv = process_values or {}
+
         for op in step.operations:
             op_total = op.delay_seconds + op.duration_seconds
-            if op.stop_condition and op.stop_condition.type == StopConditionType.TIMER:
-                if self.step_elapsed_sec < op_total:
-                    all_done = False
-            elif op.stop_condition and process_values:
-                # Process condition checks
+            is_timer_done = (op.duration_seconds > 0 and self.step_elapsed_sec >= op_total)
+            
+            cond_done = False
+            if op.stop_condition and process_values is not None:
                 cond = op.stop_condition
-                if cond.type == StopConditionType.TEMP_ABOVE:
-                    pv_temp = process_values.get("vessel_temp", 0.0)
-                    if pv_temp < cond.value / 10.0:
-                        all_done = False
+                if cond.type == StopConditionType.LEVEL_ABOVE:
+                    cond_done = pv.get("vpu.main.level", 0.0) >= cond.value
+                elif cond.type == StopConditionType.LEVEL_BELOW:
+                    cond_done = pv.get("vpu.main.level", 0.0) <= cond.value
+                elif cond.type == StopConditionType.TEMP_ABOVE:
+                    cond_done = pv.get("vpu.main.temperature", 0.0) >= cond.value / 10.0
                 elif cond.type == StopConditionType.TEMP_BELOW:
-                    pv_temp = process_values.get("vessel_temp", 100.0)
-                    if pv_temp > cond.value / 10.0:
-                        all_done = False
-                elif cond.type == StopConditionType.LEVEL_ABOVE:
-                    pv_level = process_values.get("tank_level", 0.0)
-                    if pv_level < cond.value:
-                        all_done = False
-            elif self.step_elapsed_sec < op_total:
+                    cond_done = pv.get("vpu.main.temperature", 0.0) <= cond.value / 10.0
+                elif cond.type == StopConditionType.VESSEL_EMPTY:
+                    cond_done = pv.get("vpu.main.level", 0.0) <= 0.0
+
+            if not (is_timer_done or cond_done):
                 all_done = False
 
-        if all_done and (len(step.operations) > 0 or self.step_elapsed_sec >= 5.0):
-            # Advance to next step
+        if all_done:
             self.current_step_index += 1
             self.step_elapsed_sec = 0.0
             if self.current_step_index >= len(self.recipe.steps):
-                # Batch finished!
                 self.is_running = False
+                if self.active_batch_id:
+                    try:
+                        scada_db.end_batch_run(self.active_batch_id, "complete")
+                    except Exception:
+                        pass
             else:
                 self._check_step_confirmation()
 
@@ -385,6 +447,7 @@ class RecipeExecutionEngine:
         if not self.recipe or self.current_step_index < 0:
             return {
                 "recipeLoaded": False,
+                "batchId": self.active_batch_id,
                 "recipeName": "",
                 "totalSteps": 0,
                 "currentStepIndex": -1,
@@ -396,6 +459,7 @@ class RecipeExecutionEngine:
                 "confirmMessage": "",
                 "confirmTimeout": 0,
                 "operations": [],
+                "ingredients": [],
             }
 
         step = (
@@ -408,7 +472,6 @@ class RecipeExecutionEngine:
         op_states: List[Dict[str, Any]] = []
         if step:
             for op in step.operations:
-                op_total = op.delay_seconds + op.duration_seconds
                 op_elapsed = max(0.0, self.step_elapsed_sec - op.delay_seconds)
                 remaining = max(0.0, op.duration_seconds - op_elapsed)
                 
@@ -427,6 +490,7 @@ class RecipeExecutionEngine:
                 op_states.append({
                     "opId": op.id,
                     "device": op.device.value,
+                    "pidTag": PID_TAG_MAP.get(op.device, op.device.value),
                     "action": op.action,
                     "status": status,
                     "elapsedSec": op_elapsed,
@@ -436,7 +500,6 @@ class RecipeExecutionEngine:
                     "progress": progress,
                 })
 
-        # Calculate BOM ingredient phase statuses (pending / active / done)
         ingredient_statuses: List[Dict[str, Any]] = []
         if self.recipe and self.recipe.ingredients:
             total_steps = max(1, len(self.recipe.steps))
@@ -466,6 +529,7 @@ class RecipeExecutionEngine:
 
         return {
             "recipeLoaded": True,
+            "batchId": self.active_batch_id,
             "recipeName": self.recipe.name,
             "totalSteps": len(self.recipe.steps),
             "currentStepIndex": self.current_step_index,
@@ -500,7 +564,7 @@ class RecipeExecutionEngine:
             self.recipe = Recipe(
                 id="REC-NEW",
                 name="New Recipe",
-                version="1.0.0",
+                version="1",
                 author="Operator",
                 approval_status="DRAFT",
                 created_at="",
@@ -519,4 +583,3 @@ class RecipeExecutionEngine:
         initial_len = len(self.recipe.steps)
         self.recipe.steps = [s for s in self.recipe.steps if s.id != step_id]
         return len(self.recipe.steps) < initial_len
-

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
+  <defs>
+    <linearGradient id="makerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+  </defs>
+  <!-- Flask/Beaker Body -->
+  <path d="M48 20 H80 V44 L102 96 C106 104 100 112 90 112 H38 C28 112 22 104 26 96 L48 44 Z" fill="#08213b" stroke="#38bdf8" stroke-width="5" stroke-linejoin="round"/>
+  <!-- Top Neck Lip -->
+  <rect x="42" y="14" width="44" height="10" rx="3" fill="url(#makerGrad)" stroke="#38bdf8" stroke-width="2.5"/>
+  <!-- Liquid Wave -->
+  <path d="M33 90 Q48 82 64 90 T95 90 L100 102 C101 106 97 110 90 110 H38 C31 110 27 106 28 102 Z" fill="#0284c7" opacity="0.6"/>
+  <!-- Stirrer / Matrix Wand -->
+  <line x1="64" y1="26" x2="64" y2="82" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+  <!-- Measurement Ticks -->
+  <line x1="42" y1="62" x2="52" y2="62" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+  <line x1="38" y1="76" x2="52" y2="76" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+  <line x1="34" y1="90" x2="50" y2="90" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+  <!-- Sparkle Indicator -->
+  <circle cx="82" cy="68" r="4" fill="#38bdf8"/>
+  <circle cx="72" cy="80" r="3" fill="#67e8f9"/>
+</svg>
