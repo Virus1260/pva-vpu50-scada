@@ -35,7 +35,6 @@ Rectangle {
     property alias recipesScreen: recipesView
     property alias recipeMakerScreen: makerView
     property alias auditScreen: auditView
-    property alias playbackScreen: playbackView
     property alias maintenanceScreen: maintView
 
     // Property Aliases for Modals
