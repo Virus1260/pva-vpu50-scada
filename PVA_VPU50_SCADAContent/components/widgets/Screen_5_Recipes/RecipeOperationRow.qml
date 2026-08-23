@@ -25,7 +25,7 @@ Rectangle {
 
         // Device Icon & Name
         Text {
-            text: "⚙ " + (opRowRoot.operationData.dev || "Device")
+            text: opRowRoot.operationData.dev || "Device"
             color: "#38bdf8"
             font.bold: true
             font.pixelSize: 11

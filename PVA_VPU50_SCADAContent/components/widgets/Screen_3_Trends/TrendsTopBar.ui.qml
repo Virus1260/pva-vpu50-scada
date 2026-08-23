@@ -192,7 +192,7 @@ Rectangle {
             color: "#1e3a8a"
             border.color: "#60a5fa"
             border.width: 1.5
-            Text { anchors.centerIn: parent; text: "🔍 Reset Zoom"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
+            Text { anchors.centerIn: parent; text: "Reset Zoom"; color: "#ffffff"; font.bold: true; font.pixelSize: 11 }
         }
 
         // 5. High-Contrast Prominent Graph / Table View Switcher

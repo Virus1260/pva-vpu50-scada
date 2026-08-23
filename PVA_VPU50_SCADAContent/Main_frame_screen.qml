@@ -14,6 +14,7 @@ Item {
     property string activeUserName: "Line Operator"
     property string activeUserRole: "Operator (Level 1)"
     property int activeUserLevel: 1
+    property int lastAuthorizedScreenIndex: 0
 
     // --- Industrial Process State Variables ---
     property bool isAutoMode: true
@@ -622,6 +623,9 @@ Item {
                     ui.header.operatorRole = uRole;
                     ui.header.alarmMessage = "USER AUTHENTICATED: [" + uName + "] ACCESS GRANTED (" + uRole + ")";
                 }
+                if (ui.sidebar && ui.sidebar.activeIndex === 7 && uLevel >= 4) {
+                    rootWindow.lastAuthorizedScreenIndex = 7;
+                }
             });
 
             ui.loginModal.userLoggedOut.connect(function() {
@@ -635,10 +639,20 @@ Item {
                     ui.header.operatorRole = defUser.role;
                     ui.header.alarmMessage = "USER LOGGED OUT - REVERTED TO " + defUser.name.toUpperCase() + " (" + defUser.role.toUpperCase() + ")";
                 }
+                // If on restricted screen, revert immediately
+                if (ui.sidebar && ui.sidebar.activeIndex === 7) {
+                    ui.sidebar.activeIndex = 0;
+                    rootWindow.lastAuthorizedScreenIndex = 0;
+                }
             });
 
             ui.loginModal.closed.connect(function() {
                 ui.loginModal.visible = false;
+                // Strict Non-Bypass: If user was trying to access Screen 7 (Diagnostics) without Level 4+ authorization, revert back!
+                if (ui.sidebar && ui.sidebar.activeIndex === 7 && rootWindow.activeUserLevel < 4) {
+                    ui.sidebar.activeIndex = rootWindow.lastAuthorizedScreenIndex;
+                    if (ui.header) ui.header.alarmMessage = "ACCESS DENIED: Maintenance / Diagnostics requires Level 4+ authorization.";
+                }
             });
         }
 
@@ -658,8 +672,10 @@ Item {
                     }
                 } else if (idx === 5 && rootWindow.activeUserLevel < 3) {
                     // Screen 5: 21 CFR Part 11 Electronic Batch Record Review
+                    rootWindow.lastAuthorizedScreenIndex = idx;
                     if (ui.header && !ui.header.isAlarmActive) ui.header.alarmMessage = "VIEWING 21 CFR BATCH RECORD (Sign-off requires QA Officer Level 3+)";
                 } else {
+                    rootWindow.lastAuthorizedScreenIndex = idx;
                     // Maintain true alarm annunciator state (active process alarm or soothing normal)
                     updateAlarmAnnunciator();
                 }

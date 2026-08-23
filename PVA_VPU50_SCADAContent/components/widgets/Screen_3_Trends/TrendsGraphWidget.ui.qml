@@ -199,7 +199,7 @@ Rectangle {
                     Row {
                         anchors.centerIn: parent
                         spacing: 6
-                        Text { text: "⏪"; color: "#93c5fd"; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "<<"; color: "#93c5fd"; font.bold: true; font.pixelSize: 10; anchors.verticalCenter: parent.verticalCenter }
                         Text { text: "Oldest"; color: "#ffffff"; font.bold: true; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
                     }
                 }

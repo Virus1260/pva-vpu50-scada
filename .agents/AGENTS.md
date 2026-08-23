@@ -15,9 +15,12 @@
 4. **Mandatory Valve Confirmation Interlock**:
    - External Line Recirculation, CIP modes, and Suction charging modes MUST trigger `ConfirmationModal` with the 5-column Valve Status Matrix.
    - The `CONFIRM POSITIONING` button unlocks ONLY after all required manual butterfly valves (`V301`, `V302`, `V303`) are checked by the operator.
-5. **Slint & QML Design Standards**:
-   - Header Bar: Standardized at `86px` height. Machine capsule on the left, Centered Alarm/Annunciator Box with `Ack` button, Right-aligned User Profile, Digital Clock, and PVA Systems vector logo.
-   - Numeric Keypad: 4×4 Grid layout (`7,8,9,Del` | `4,5,6,Esc` | `1,2,3,Clear` | `0,.,−,OK`).
+6. **Zero Raw Unicode Emojis & Strict SVG Iconography**:
+   - NEVER use raw Unicode emojis (`🔒`, `🔐`, `📦`, `🧼`, `👤`, `⏱`, etc.) in QML text (prevents tofu `▯` boxes on industrial Linux/Windows displays).
+   - Use categorical SVG icons from `assets/icons/` via `ScadaIcon.qml`. (See `.agents/rules/no_unicode_emojis_and_icon_management.md`).
+7. **Physical Keyboard & RBAC Navigation Security**:
+   - All interactive modals must support physical PC keyboard entry (`0`-`9`, Enter, Backspace, Esc).
+   - Dismissing authentication on restricted screens (e.g. Diagnostics) MUST revert navigation to the previously authorized screen.
 
 ---
 

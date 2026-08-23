@@ -161,7 +161,7 @@ Rectangle {
                     Text { text: model.action; color: "#4ade80"; font.bold: true; font.pixelSize: 11; Layout.preferredWidth: 130 }
                     Text { text: model.target; color: "#facc15"; font.pixelSize: 11; Layout.preferredWidth: 130 }
                     Text { text: model.reason; color: "#e2e8f0"; font.pixelSize: 11; Layout.fillWidth: true }
-                    Text { text: model.before + " ➔ " + model.after; color: "#cbd5e1"; font.pixelSize: 11; Layout.preferredWidth: 140 }
+                    Text { text: model.before + " -> " + model.after; color: "#cbd5e1"; font.pixelSize: 11; Layout.preferredWidth: 140 }
                     Text { text: model.hash; color: "#94a3b8"; font.pixelSize: 10; font.family: "Monospace"; Layout.preferredWidth: 110 }
                 }
             }

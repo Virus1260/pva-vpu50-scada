@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 
 Rectangle {
@@ -21,6 +20,45 @@ Rectangle {
     signal accepted(double value)
     signal rejected
     signal closed
+
+    focus: true
+
+    onVisibleChanged: {
+        if (visible) {
+            keypadRoot.forceActiveFocus();
+        }
+    }
+    Component.onCompleted: {
+        if (visible) {
+            keypadRoot.forceActiveFocus();
+        }
+    }
+
+    Keys.onPressed: function(event) {
+        if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) {
+            keypadRoot.appendDigit((event.key - Qt.Key_0).toString());
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Period) {
+            keypadRoot.appendDot();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Minus) {
+            keypadRoot.toggleMinus();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            keypadRoot.submitValue();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Backspace) {
+            keypadRoot.backspace();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Escape) {
+            keypadRoot.rejected();
+            keypadRoot.closed();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Delete) {
+            keypadRoot.clear();
+            event.accepted = true;
+        }
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -54,8 +92,8 @@ Rectangle {
                     elide: Text.ElideRight
                 }
                 Rectangle {
-                    width: 26
-                    height: 26
+                    Layout.preferredWidth: 26
+                    Layout.preferredHeight: 26
                     radius: 3
                     color: "#0d365e"
                     border.color: "#1d5b94"
@@ -292,6 +330,7 @@ Rectangle {
 
     // Internal Custom Keypad Button Component
     component KeypadButton: Rectangle {
+        id: kBtn
         property string text: ""
         property bool isOk: false
         property bool isAction: false
@@ -303,16 +342,16 @@ Rectangle {
         implicitHeight: 52
         radius: 4
 
-        color: isOk ? "#8ee62c" : (btnMouse.pressed ? "#d0e2f2" : "#ffffff")
-        border.color: isOk ? "#ffffff" : (btnMouse.containsMouse ? "#3892e6" : "#b0cce6")
+        color: kBtn.isOk ? "#8ee62c" : (btnMouse.pressed ? "#d0e2f2" : "#ffffff")
+        border.color: kBtn.isOk ? "#ffffff" : (btnMouse.containsMouse ? "#3892e6" : "#b0cce6")
         border.width: 1
 
         Text {
             anchors.centerIn: parent
-            text: parent.text
+            text: kBtn.text
             color: "#08213b"
             font.bold: true
-            font.pixelSize: isOk ? 16 : (isAction ? 13 : 20)
+            font.pixelSize: kBtn.isOk ? 16 : (kBtn.isAction ? 13 : 20)
         }
 
         MouseArea {
@@ -320,7 +359,7 @@ Rectangle {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: parent.clicked()
+            onClicked: kBtn.clicked()
         }
     }
 }
