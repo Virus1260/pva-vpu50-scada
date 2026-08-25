@@ -193,7 +193,7 @@ Rectangle {
             }
         }
 
-        // 3. Scrollable Table Body
+        // 3. Scrollable Table Body with Permanent Bottom Inline Add Trigger
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -203,45 +203,46 @@ Rectangle {
             radius: 4
             clip: true
 
-            ListView {
-                id: ingList
+            ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 4
                 spacing: 4
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
 
-                footer: Item {
-                    width: ingList.width
-                    height: 42
+                ListView {
+                    id: ingList
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 4
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                }
 
-                    // Permanent "+ Add Ingredient" Inline Bottom Trigger Row
-                    Rectangle {
-                        id: addRowRect
-                        anchors.fill: parent
-                        anchors.margins: 4
-                        radius: 4
-                        color: "#0c2f54"
-                        border.color: "#38bdf8"
-                        border.width: 1
+                // Permanent "+ Add Ingredient" Inline Bottom Trigger Row
+                Rectangle {
+                    id: addRowRect
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    radius: 4
+                    color: "#0c2f54"
+                    border.color: "#38bdf8"
+                    border.width: 1
 
-                        RowLayout {
-                            anchors.centerIn: parent
-                            spacing: 8
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 8
 
-                            Text {
-                                text: "✚"
-                                color: "#38bdf8"
-                                font.bold: true
-                                font.pixelSize: 14
-                            }
+                        Text {
+                            text: "✚"
+                            color: "#38bdf8"
+                            font.bold: true
+                            font.pixelSize: 14
+                        }
 
-                            Text {
-                                text: "+ Add New Ingredient to Formulation"
-                                color: "#ffffff"
-                                font.bold: true
-                                font.pixelSize: 12
-                            }
+                        Text {
+                            text: "+ Add New Ingredient to Formulation"
+                            color: "#ffffff"
+                            font.bold: true
+                            font.pixelSize: 12
                         }
                     }
                 }

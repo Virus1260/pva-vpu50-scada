@@ -1,27 +1,20 @@
 pragma Singleton
 import QtQuick
-import QtQuick.Studio.Application
 
 QtObject {
-    readonly property int width: 1920
-    readonly property int height: 1080
+    readonly property int width: 1280
+    readonly property int height: 720
 
     property string relativeFontDirectory: "fonts"
 
-    /* Edit this comment to add your custom font */
     readonly property font font: Qt.font({
-                                             family: Qt.application.font.family,
-                                             pixelSize: Qt.application.font.pixelSize
+                                             family: "Segoe UI",
+                                             pixelSize: 12
                                          })
     readonly property font largeFont: Qt.font({
-                                                  family: Qt.application.font.family,
-                                                  pixelSize: Qt.application.font.pixelSize * 1.6
+                                                  family: "Segoe UI",
+                                                  pixelSize: 18
                                               })
 
-    readonly property color backgroundColor: "#EAEAEA"
-
-
-    property StudioApplication application: StudioApplication {
-        fontPath: Qt.resolvedUrl("../PVA_VPU50_SCADAContent/" + relativeFontDirectory)
-    }
+    readonly property color backgroundColor: "#08213b"
 }
