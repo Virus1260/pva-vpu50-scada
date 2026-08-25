@@ -35,6 +35,7 @@ Rectangle {
     property alias ingredientModal: ingModal
     property alias deleteConfirmModal: delModal
     property alias resourceConfigModal: resModal
+    property alias manualActivityModal: manModal
 
     ColumnLayout {
         anchors.fill: parent
@@ -229,6 +230,11 @@ Rectangle {
 
     RecipeResourceConfigModal {
         id: resModal
+        anchors.fill: parent
+    }
+
+    RecipeManualActivityModal {
+        id: manModal
         anchors.fill: parent
     }
 }

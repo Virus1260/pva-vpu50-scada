@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import "."
 import "../../../components/widgets"
 
 Rectangle {
@@ -150,6 +151,8 @@ Rectangle {
                     confirmMessage: phaseSlot.modelData.clip ? (phaseSlot.modelData.clip.confirmMessage || "") : ""
                     durationSec: phaseSlot.modelData.clip ? (phaseSlot.modelData.clip.durationSec || 180) : 180
                     stopCondition: phaseSlot.modelData.clip ? (phaseSlot.modelData.clip.stopCondition || "timer") : "timer"
+                    actionRequired: phaseSlot.modelData.clip ? (phaseSlot.modelData.clip.actionRequired || "OPEN") : "OPEN"
+                    actionTarget: phaseSlot.modelData.clip ? (phaseSlot.modelData.clip.actionTarget || "") : ""
 
                     onConfigureClicked: {
                         if (phaseSlot.modelData.clip) {

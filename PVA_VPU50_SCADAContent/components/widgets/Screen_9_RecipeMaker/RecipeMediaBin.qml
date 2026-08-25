@@ -17,6 +17,7 @@ Rectangle {
     property bool motorsExpanded: true
     property bool utilitiesExpanded: true
     property bool ingredientsExpanded: true
+    property bool manualExpanded: true
 
     signal resourceSelected(var resourceData)
 
@@ -399,6 +400,123 @@ Rectangle {
                                     };
                                     mediaBinRoot.resourceSelected(resData);
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // =============================================================
+                // ACCORDION 4: MANUAL ACTIVITIES & SEQUENCE INTERLOCKS
+                // =============================================================
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 28
+                    radius: 3
+                    color: "#581c87"
+                    border.color: "#c084fc"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        spacing: 6
+
+                        Text {
+                            text: mediaBinRoot.manualExpanded ? "▼" : "▶"
+                            color: "#facc15"
+                            font.pixelSize: 10
+                        }
+
+                        Text {
+                            text: "✋ MANUAL ACTIVITIES & INTERLOCKS"
+                            color: "#ffffff"
+                            font.bold: true
+                            font.pixelSize: 10
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: mediaBinRoot.manualExpanded = !mediaBinRoot.manualExpanded
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: mediaBinRoot.manualExpanded
+                    spacing: 4
+
+                    Repeater {
+                        model: [
+                            { type: "manualActivity", target: "Butterfly Valve abc123", req: "OPEN", tag: "V101", name: "Manual Butterfly Valve abc123", icon: "act_manual" },
+                            { type: "manualActivity", target: "Charging Hatch Clamp", req: "OPEN", tag: "H101", name: "Top Charging Hatch Clamp", icon: "act_hold" },
+                            { type: "manualActivity", target: "Sight Glass Window", req: "VERIFY", tag: "SG101", name: "Sight Glass Visual Inspection", icon: "icon_check" },
+                            { type: "manualActivity", target: "Sampling Valve V204", req: "OPEN", tag: "V204", name: "Manual Sampling Valve V204", icon: "act_manual" },
+                            { type: "manualActivity", target: "Powder Funnel V301", req: "OPEN", tag: "V301", name: "Powder Funnel V301 Induction", icon: "suction_funnel" }
+                        ]
+                        delegate: Rectangle {
+                            id: manCard
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 38
+                            radius: 4
+                            color: manMouse.containsMouse ? "#78350f" : "#451a03"
+                            border.color: manMouse.containsMouse ? "#fcd34d" : "#d97706"
+                            border.width: 1
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 6
+                                spacing: 8
+
+                                Rectangle {
+                                    Layout.preferredWidth: 22
+                                    Layout.preferredHeight: 22
+                                    radius: 3
+                                    color: "#78350f"
+                                    border.color: "#fbbf24"
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "✋"
+                                        font.pixelSize: 11
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 1
+                                    Text {
+                                        text: manCard.modelData.name
+                                        color: "#ffffff"
+                                        font.bold: true
+                                        font.pixelSize: 10
+                                        elide: Text.ElideRight
+                                    }
+                                    Text {
+                                        text: "Req: " + manCard.modelData.req + " | Sequence Hold Gate"
+                                        color: "#fde68a"
+                                        font.pixelSize: 9
+                                    }
+                                }
+
+                                Text {
+                                    text: "✚"
+                                    color: "#facc15"
+                                    font.bold: true
+                                    font.pixelSize: 12
+                                }
+                            }
+
+                            MouseArea {
+                                id: manMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: mediaBinRoot.resourceSelected(manCard.modelData)
                             }
                         }
                     }

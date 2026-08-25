@@ -22,12 +22,15 @@ Rectangle {
     property string stopCondition: "timer"
     property bool isSelected: false
 
-    signal configureClicked
-    signal deleteClicked
+    property string actionRequired: "OPEN" // For manual activity
+    property string actionTarget: ""
+
+    signal configureClicked()
+    signal deleteClicked()
 
     // Color gradient based on resource type
-    color: clipRoot.requireConfirm ? "#78350f" : (clipRoot.resourceType === "agitator" ? "#0369a1" : (clipRoot.resourceType === "homogenizer" ? "#7c3aed" : (clipRoot.resourceType === "vacuum" ? "#0f766e" : (clipRoot.resourceType === "heater" ? "#c2410c" : "#1e3a8a"))))
-    border.color: clipRoot.isSelected ? "#ffffff" : (clipRoot.requireConfirm ? "#facc15" : "#38bdf8")
+    color: clipRoot.resourceType === "manualActivity" ? "#78350f" : (clipRoot.requireConfirm ? "#854d0e" : (clipRoot.resourceType === "agitator" ? "#0369a1" : (clipRoot.resourceType === "homogenizer" ? "#7c3aed" : (clipRoot.resourceType === "vacuum" ? "#0f766e" : (clipRoot.resourceType === "heater" ? "#c2410c" : "#1e3a8a")))))
+    border.color: clipRoot.isSelected ? "#ffffff" : (clipRoot.resourceType === "manualActivity" ? "#fbbf24" : (clipRoot.requireConfirm ? "#facc15" : "#38bdf8"))
     border.width: clipRoot.isSelected ? 2 : 1
 
     ColumnLayout {
@@ -99,19 +102,20 @@ Rectangle {
             Layout.fillWidth: true
             spacing: 6
 
-            // Setpoint value display
+            // Setpoint value display or Manual Action
             Text {
-                text: "SP: " + clipRoot.setValue + " " + clipRoot.unit
-                color: "#facc15"
+                text: clipRoot.resourceType === "manualActivity" ? ("ACTION: <b>" + (clipRoot.actionRequired || "OPEN") + "</b>") : ("SP: " + clipRoot.setValue + " " + clipRoot.unit)
+                color: clipRoot.resourceType === "manualActivity" ? "#fbbf24" : "#facc15"
                 font.bold: true
                 font.pixelSize: 9
+                textFormat: Text.RichText
             }
 
             Item { Layout.fillWidth: true }
 
             // Duration or Hold
             Text {
-                text: clipRoot.requireConfirm ? "Manual Gate" : (Math.round(clipRoot.durationSec / 60) + " min (" + clipRoot.durationSec + "s)")
+                text: (clipRoot.resourceType === "manualActivity" || clipRoot.requireConfirm) ? "Manual Gate" : (Math.round(clipRoot.durationSec / 60) + " min (" + clipRoot.durationSec + "s)")
                 color: "#e2e8f0"
                 font.pixelSize: 9
             }

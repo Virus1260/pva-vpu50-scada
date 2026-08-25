@@ -198,6 +198,15 @@ Item {
             ui.resourceConfigModal.visible = true;
         }
 
+        function onOpenManualModalRequested(manConfig) {
+            ui.manualActivityModal.stageId = manConfig.stageId || "2.1";
+            ui.manualActivityModal.phaseName = manConfig.phaseName || "Phase B";
+            ui.manualActivityModal.actionTarget = manConfig.actionTarget || "Butterfly Valve abc123";
+            ui.manualActivityModal.actionRequired = manConfig.actionRequired || "OPEN";
+            ui.manualActivityModal.displayMessage = manConfig.displayMessage || ("Operator to confirm that " + (manConfig.actionTarget || "valve") + " is " + (manConfig.actionRequired || "OPEN") + ".");
+            ui.manualActivityModal.visible = true;
+        }
+
         function onRecipeSaved(recipePayload) {
             stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "21 CFR Part 11: Master Recipe Saved & Serialized: " + ui.activeRecipeTitle, "RECIPE_AUTHORING");
         }
@@ -287,6 +296,20 @@ Item {
             ui.resourceConfigModal.visible = false;
             ui.timelineScreen.setClipConfig(config);
             stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "Updated timeline block config: " + config.resourceName + " in " + config.phase, "RECIPE_AUTHORING");
+        }
+    }
+
+    Connections {
+        target: ui.manualActivityModal
+
+        function onCancelled() {
+            ui.manualActivityModal.visible = false;
+        }
+
+        function onAccepted(config) {
+            ui.manualActivityModal.visible = false;
+            ui.timelineScreen.setClipConfig(config);
+            stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "21 CFR Part 11: Added/Updated manual sequence interlock: " + config.actionTarget + " (" + config.actionRequired + ") in " + config.phase, "RECIPE_AUTHORING");
         }
     }
 }
