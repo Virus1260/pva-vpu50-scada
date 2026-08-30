@@ -242,13 +242,19 @@ class TestScadaCompliance(unittest.TestCase):
         qrc_file = root_dir / "PVA_VPU50_SCADA.qrc"
         qds_cmake = root_dir / "qds.cmake"
 
-        # 1. Check CMakeLists.txt for duplicates
+        # 1. Check CMakeLists.txt for duplicates and non-existent files
         if cmake_file.exists():
             text = cmake_file.read_text(encoding="utf-8")
             import re
-            qml_files = re.findall(r'"([^"]+\.qml|[^"]+\.ui\.qml)"', text)
-            duplicates = [f for f in set(qml_files) if qml_files.count(f) > 1]
-            self.assertEqual(len(duplicates), 0, f"Found duplicate QML files in CMakeLists.txt: {duplicates}")
+            all_entries = re.findall(r'"([^"]+)"', text)
+            # Filter out cmake keywords or URI names
+            entries = [e for e in all_entries if e not in ["PVA_VPU50_SCADAContent", "/qt/qml"]]
+            duplicates = [f for f in set(entries) if entries.count(f) > 1]
+            self.assertEqual(len(duplicates), 0, f"Found duplicate files in CMakeLists.txt: {duplicates}")
+            content_dir = root_dir / "PVA_VPU50_SCADAContent"
+            for e in entries:
+                full_path = content_dir / e
+                self.assertTrue(full_path.exists(), f"File in CMakeLists.txt does not exist on disk: {e}")
 
         # 2. Check PVA_VPU50_SCADA.qrc for duplicates and non-existent files
         if qrc_file.exists():
