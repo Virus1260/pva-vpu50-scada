@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import ".."
+import "../.."
 
 // Master-recipe chrome: identity, lifecycle status, and authoring actions.
 Rectangle {

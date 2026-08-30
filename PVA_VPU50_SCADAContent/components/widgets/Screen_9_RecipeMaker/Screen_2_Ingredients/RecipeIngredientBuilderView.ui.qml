@@ -6,7 +6,7 @@ Strictly declarative for Qt Design Studio. Reference: image_cf2be0.jpg
 
 import QtQuick
 import QtQuick.Layouts
-import "../../../components/widgets"
+import "../.."
 
 Rectangle {
     id: ingBuilderRoot

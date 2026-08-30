@@ -5,7 +5,7 @@ Strictly declarative for Qt Design Studio.
 
 import QtQuick
 import QtQuick.Layouts
-import "../../../components/widgets"
+import "../.."
 
 Rectangle {
     id: dashboardRoot

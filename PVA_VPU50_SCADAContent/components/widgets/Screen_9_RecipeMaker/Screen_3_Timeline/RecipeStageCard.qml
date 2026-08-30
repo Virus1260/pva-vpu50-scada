@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import ".."
+import "../.."
 
 // One ISA-88 stage (unit procedure): name, sequential lock, reorder/copy/delete.
 // Touchscreen-friendly touch targets (32px x 32px) for human finger touches.

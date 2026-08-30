@@ -7,7 +7,7 @@ Strictly declarative for Qt Design Studio. References: image_daa6f1.png, image_c
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import "../../../components/widgets"
+import "../.."
 
 Rectangle {
     id: timelineDesignerViewRoot
@@ -19,6 +19,14 @@ Rectangle {
     property string estDurationFormatted: "45 min (2700s)"
     property int totalOperationsCount: 10
     property int totalHoldsCount: 2
+
+    property var phaseHeadersModel: [
+        { title: "PHASE A: Aqueous Charge", time: "00:00 - 08:00" },
+        { title: "PHASE B: Oil Emulsification", time: "08:00 - 20:00" },
+        { title: "PHASE C: Surfactant Induction", time: "20:00 - 30:00" },
+        { title: "PHASE D: Neutralization Trim", time: "30:00 - 38:00" },
+        { title: "PHASE E: Actives & Cooling", time: "38:00 - 45:00" }
+    ]
 
     // Playback & Scrubber properties
     property bool isPlaying: false
@@ -325,13 +333,7 @@ Rectangle {
                             }
 
                             Repeater {
-                                model: [
-                                    { title: "PHASE A: Aqueous Charge", time: "00:00 - 08:00" },
-                                    { title: "PHASE B: Oil Emulsification", time: "08:00 - 20:00" },
-                                    { title: "PHASE C: Surfactant Induction", time: "20:00 - 30:00" },
-                                    { title: "PHASE D: Neutralization Trim", time: "30:00 - 38:00" },
-                                    { title: "PHASE E: Actives & Cooling", time: "38:00 - 45:00" }
-                                ]
+                                model: timelineDesignerViewRoot.phaseHeadersModel
                                 delegate: Rectangle {
                                     id: phHeader
                                     required property var modelData

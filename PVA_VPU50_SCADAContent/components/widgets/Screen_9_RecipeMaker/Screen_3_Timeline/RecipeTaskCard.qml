@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import ".."
+import "../.."
 
 // One operation inside a stage: name, activity types, live P&ID summary, add-activity.
 // Optimized for touchscreen human finger touch operation (32px action buttons & 36px activity buttons).

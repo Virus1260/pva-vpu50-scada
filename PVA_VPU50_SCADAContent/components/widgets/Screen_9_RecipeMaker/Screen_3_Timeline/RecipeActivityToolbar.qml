@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import ".."
+import "../.."
 
 // Activity types on a task: timer, manual, media, loop, schedule, hold, equipment, checklist.
 // Optimized for touchscreen human finger touch operation (36px x 36px touch targets).

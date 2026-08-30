@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "."
-import "../../../components/widgets"
+import "../.."
 
 Rectangle {
     id: trackRoot

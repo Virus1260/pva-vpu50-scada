@@ -7,8 +7,12 @@ Compliance: 21 CFR Part 11 / GAMP 5.
 import QtQuick
 import QtQuick.Layouts
 import "../components/widgets"
-import "../components/widgets/Screen_9_RecipeMaker"
-import "../components/modals/Screen_9_RecipeMaker"
+import "../components/widgets/Screen_9_RecipeMaker/Screen_1_Dashboard"
+import "../components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients"
+import "../components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline"
+import "../components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard"
+import "../components/modals/Screen_9_RecipeMaker/Screen_2_Ingredients"
+import "../components/modals/Screen_9_RecipeMaker/Screen_3_Timeline"
 
 Rectangle {
     id: recipeMakerRoot

@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../../../components/widgets"
+import "../.."
 
 Item {
     id: dashboardLogicRoot
@@ -31,7 +31,7 @@ Item {
             shelfLife: "24 Months"
             qtyType: "Fixed"
             batchSizeKg: 100.0
-            density: 1.02
+            density: 1020.0
             author: "Formulation Chemist (Level 2 - Supervisor)"
             version: 1
             status: "APPROVED"
@@ -48,7 +48,7 @@ Item {
             shelfLife: "36 Months"
             qtyType: "Variable"
             batchSizeKg: 100.0
-            density: 1.05
+            density: 1050.0
             author: "Dr. E. Vance (Level 3 - QA Officer)"
             version: 2
             status: "APPROVED"
@@ -65,7 +65,7 @@ Item {
             shelfLife: "24 Months"
             qtyType: "Fixed"
             batchSizeKg: 50.0
-            density: 0.98
+            density: 980.0
             author: "QA Tech Leader (Level 2 - Supervisor)"
             version: 1
             status: "DRAFT"
@@ -79,9 +79,12 @@ Item {
         updateActiveRecipe();
     }
 
+    property var recipeIngredientsMap: ({})
+
     function updateActiveRecipe() {
         if (recipesModel.count > 0 && currentRecipeIndex >= 0 && currentRecipeIndex < recipesModel.count) {
             var item = recipesModel.get(currentRecipeIndex);
+            var ings = recipeIngredientsMap[item.recipeId] || null;
             dashboardLogicRoot.activeRecipeData = {
                 recipeId: item.recipeId,
                 title: item.title,
@@ -94,15 +97,29 @@ Item {
                 author: item.author,
                 version: item.version,
                 status: item.status,
-                ingredientsCount: item.ingredientsCount,
+                ingredientsCount: ings ? ings.length : item.ingredientsCount,
                 durationMin: item.durationMin,
-                description: item.description
+                description: item.description,
+                ingredients: ings
             };
         }
     }
 
+    function updateRecipeIngredients(rId, ings) {
+        if (!rId) return;
+        recipeIngredientsMap[rId] = ings;
+        for (var i = 0; i < recipesModel.count; i++) {
+            var item = recipesModel.get(i);
+            if (item.recipeId === rId) {
+                item.ingredientsCount = ings ? ings.length : 0;
+                break;
+            }
+        }
+        updateActiveRecipe();
+    }
+
     function addRecipe(metadata) {
-        var newId = "REC-VPU50-" + String(recipesModel.count + 1).padStart(3, '0');
+        var newId = metadata.id || ("REC-VPU50-" + String(recipesModel.count + 1).padStart(3, '0'));
         recipesModel.append({
             recipeId: newId,
             title: metadata.title || "New Master Recipe",
@@ -111,9 +128,9 @@ Item {
             shelfLife: metadata.shelfLife || "24 Months",
             qtyType: metadata.qtyType || "Fixed",
             batchSizeKg: metadata.batchSizeKg || 100.0,
-            density: metadata.targetDensity || 1.0,
+            density: metadata.targetDensity || metadata.density || 1000.0,
             author: metadata.author || "Process Incharge (Level 2 - Supervisor)",
-            version: 1,
+            version: metadata.version || 1,
             status: "DRAFT",
             ingredientsCount: 0,
             durationMin: 0,
@@ -132,7 +149,7 @@ Item {
             item.shelfLife = metadata.shelfLife;
             item.qtyType = metadata.qtyType;
             item.batchSizeKg = metadata.batchSizeKg;
-            item.density = metadata.targetDensity || metadata.density || 1.0;
+            item.density = metadata.targetDensity || metadata.density || 1000.0;
             item.author = metadata.author || item.author;
             item.version = metadata.version || item.version;
             item.description = metadata.description || item.description;
@@ -201,7 +218,7 @@ Item {
             readonly property bool isSelected: dashboardLogicRoot.currentRecipeIndex === cardDelegate.index
 
             width: view.recipeListView.width
-            height: 94
+            height: 100
             radius: 6
             color: isSelected ? "#124373" : (cardMouse.containsMouse ? "#0e3359" : "#092442")
             border.color: isSelected ? "#38bdf8" : (cardMouse.containsMouse ? "#2563eb" : "#1d5b94")
@@ -210,13 +227,14 @@ Item {
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 10
-                spacing: 12
+                spacing: 14
 
                 // Left Icon & Code Badge
                 Rectangle {
-                    Layout.preferredWidth: 64
-                    Layout.preferredHeight: 74
-                    radius: 4
+                    Layout.preferredWidth: 68
+                    Layout.preferredHeight: 78
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 5
                     color: "#081d33"
                     border.color: "#1d5b94"
                     border.width: 1
@@ -226,15 +244,16 @@ Item {
                         spacing: 4
                         ScadaIcon {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 26
-                            Layout.preferredHeight: 26
+                            Layout.preferredWidth: 28
+                            Layout.preferredHeight: 28
                             iconName: "recipe_maker"
                         }
                         Text {
                             text: cardDelegate.recipeId
                             color: "#38bdf8"
                             font.bold: true
-                            font.pixelSize: 8
+                            font.pixelSize: 9
+                            font.family: "Segoe UI"
                         }
                     }
                 }
@@ -242,6 +261,7 @@ Item {
                 // Middle Info Column
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                     spacing: 4
 
                     RowLayout {
@@ -250,12 +270,13 @@ Item {
                             text: cardDelegate.title
                             color: "#ffffff"
                             font.bold: true
-                            font.pixelSize: 14
+                            font.pixelSize: 15
+                            font.family: "Segoe UI"
                         }
 
                         Rectangle {
-                            Layout.preferredHeight: 18
-                            Layout.preferredWidth: statusTxt.implicitWidth + 10
+                            Layout.preferredHeight: 20
+                            Layout.preferredWidth: statusTxt.implicitWidth + 12
                             radius: 3
                             color: cardDelegate.status === "APPROVED" ? "#065f46" : (cardDelegate.status === "IN_REVIEW" ? "#854d0e" : "#334155")
                             border.color: cardDelegate.status === "APPROVED" ? "#34d399" : (cardDelegate.status === "IN_REVIEW" ? "#facc15" : "#64748b")
@@ -266,13 +287,14 @@ Item {
                                 text: cardDelegate.status
                                 color: "#ffffff"
                                 font.bold: true
-                                font.pixelSize: 9
+                                font.pixelSize: 10
+                                font.family: "Segoe UI"
                             }
                         }
 
                         Rectangle {
-                            Layout.preferredHeight: 18
-                            Layout.preferredWidth: typeTxt.implicitWidth + 10
+                            Layout.preferredHeight: 20
+                            Layout.preferredWidth: typeTxt.implicitWidth + 12
                             radius: 3
                             color: cardDelegate.qtyType === "Fixed" ? "#0369a1" : "#6b21a8"
                             border.color: cardDelegate.qtyType === "Fixed" ? "#38bdf8" : "#c084fc"
@@ -283,7 +305,8 @@ Item {
                                 text: cardDelegate.qtyType + " Qty"
                                 color: "#ffffff"
                                 font.bold: true
-                                font.pixelSize: 9
+                                font.pixelSize: 10
+                                font.family: "Segoe UI"
                             }
                         }
                     }
@@ -291,36 +314,48 @@ Item {
                     Text {
                         text: cardDelegate.productName + " | Type: " + cardDelegate.productType + " | " + cardDelegate.description
                         color: "#94a3b8"
-                        font.pixelSize: 11
+                        font.pixelSize: 12
+                        font.family: "Segoe UI"
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
 
-                    // Key Metric Badges
+                    // Key Metric Badges (With Density in kg/m³)
                     RowLayout {
-                        spacing: 12
+                        spacing: 14
                         Text {
                             text: "⏱ Shelf Life: <font color='#34d399'><b>" + cardDelegate.shelfLife + "</b></font>"
                             color: "#cbd5e1"
-                            font.pixelSize: 10
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
                             textFormat: Text.RichText
                         }
                         Text {
                             text: "⚖ Batch Size: <font color='#38bdf8'><b>" + cardDelegate.batchSizeKg + " kg</b></font>"
                             color: "#cbd5e1"
-                            font.pixelSize: 10
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            textFormat: Text.RichText
+                        }
+                        Text {
+                            text: "🧪 Density: <font color='#c084fc'><b>" + cardDelegate.density + " kg/m³</b></font>"
+                            color: "#cbd5e1"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
                             textFormat: Text.RichText
                         }
                         Text {
                             text: "🧪 Formulation: <font color='#facc15'><b>" + cardDelegate.ingredientsCount + " Ingredients</b></font>"
                             color: "#cbd5e1"
-                            font.pixelSize: 10
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
                             textFormat: Text.RichText
                         }
                         Text {
                             text: "👤 Author: <font color='#e2e8f0'>" + cardDelegate.author + " (v" + cardDelegate.version + ")</font>"
                             color: "#94a3b8"
-                            font.pixelSize: 10
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
                             textFormat: Text.RichText
                         }
                     }

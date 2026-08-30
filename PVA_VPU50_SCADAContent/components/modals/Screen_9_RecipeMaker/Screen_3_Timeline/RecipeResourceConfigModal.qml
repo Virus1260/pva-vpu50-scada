@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../../widgets"
-import "../../../components/widgets/Screen_9_RecipeMaker"
+import "../../../widgets"
+import "../../../widgets/Screen_9_RecipeMaker/Screen_3_Timeline"
 
 Rectangle {
     id: resConfigRoot
