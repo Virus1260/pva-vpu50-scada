@@ -32,21 +32,54 @@ Rectangle {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: 580
-        height: 500
+        width: 680
+        height: 510
         color: "#0b2e52"
         border.color: ingModalRoot.mode === "DUPLICATE" ? "#f59e0b" : "#38bdf8"
         border.width: 2
         radius: 8
 
+        // Top-Right Corner Close Button
+        Rectangle {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 14
+            anchors.rightMargin: 14
+            width: 28
+            height: 28
+            radius: 4
+            z: 10
+            color: closeMouse.containsMouse ? "#ef4444" : "#0d365e"
+            border.color: closeMouse.containsMouse ? "#f87171" : "#1d5b94"
+            border.width: 1
+
+            Text {
+                anchors.centerIn: parent
+                text: "✕"
+                color: closeMouse.containsMouse ? "#ffffff" : "#94a3b8"
+                font.pixelSize: 13
+                font.bold: true
+                font.family: "Segoe UI"
+            }
+
+            MouseArea {
+                id: closeMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: ingModalRoot.cancelled()
+            }
+        }
+
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 16
+            anchors.margins: 18
             spacing: 12
 
             // Header Row
             RowLayout {
                 Layout.fillWidth: true
+                Layout.rightMargin: 36 // Reserve space for top-right close button
                 spacing: 10
 
                 ScadaIcon {
@@ -68,30 +101,6 @@ Rectangle {
                         text: "Formulation Sheet & ISA-88 Phase Tagging (21 CFR Part 11)"
                         color: "#94a3b8"
                         font.pixelSize: 11
-                    }
-                }
-
-                Rectangle {
-                    Layout.preferredWidth: 26
-                    Layout.preferredHeight: 26
-                    radius: 4
-                    color: closeMouse.containsMouse ? "#ef4444" : "#0d365e"
-                    border.color: "#1d5b94"
-                    border.width: 1
-
-                    ScadaIcon {
-                        anchors.centerIn: parent
-                        Layout.preferredWidth: 12
-                        Layout.preferredHeight: 12
-                        iconName: "close_x"
-                    }
-
-                    MouseArea {
-                        id: closeMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: ingModalRoot.cancelled()
                     }
                 }
             }
@@ -131,11 +140,14 @@ Rectangle {
                         TextInput {
                             id: nameInput
                             anchors.fill: parent
-                            anchors.margins: 8
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            verticalAlignment: TextInput.AlignVCenter
                             text: ingModalRoot.ingredientName
                             color: "#ffffff"
                             font.pixelSize: 12
                             font.bold: true
+                            font.family: "Segoe UI"
                             selectByMouse: true
                             onTextChanged: ingModalRoot.ingredientName = text
                         }
@@ -151,6 +163,7 @@ Rectangle {
                         color: "#cbd5e1"
                         font.pixelSize: 11
                         font.bold: true
+                        font.family: "Segoe UI"
                     }
                     RowLayout {
                         Layout.fillWidth: true
@@ -163,11 +176,11 @@ Rectangle {
                                 readonly property string pCode: phaseBtn.modelData.replace("Phase ", "")
 
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 32
+                                Layout.preferredHeight: 34
                                 radius: 4
                                 color: ingModalRoot.phase === phaseBtn.pCode ? "#164e85" : "#081d33"
                                 border.color: ingModalRoot.phase === phaseBtn.pCode ? "#38bdf8" : "#1d5b94"
-                                border.width: 1
+                                border.width: ingModalRoot.phase === phaseBtn.pCode ? 2 : 1
 
                                 Text {
                                     anchors.centerIn: parent
@@ -175,6 +188,7 @@ Rectangle {
                                     color: ingModalRoot.phase === phaseBtn.pCode ? "#ffffff" : "#94a3b8"
                                     font.pixelSize: 11
                                     font.bold: true
+                                    font.family: "Segoe UI"
                                 }
 
                                 MouseArea {
@@ -197,6 +211,7 @@ Rectangle {
                         color: "#38bdf8"
                         font.pixelSize: 11
                         font.bold: true
+                        font.family: "Segoe UI"
                     }
                     RowLayout {
                         Layout.fillWidth: true
@@ -213,10 +228,13 @@ Rectangle {
                             TextInput {
                                 id: qtyInput
                                 anchors.fill: parent
-                                anchors.margins: 8
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                verticalAlignment: TextInput.AlignVCenter
                                 text: ingModalRoot.isVariableQty ? ingModalRoot.formulaText : ingModalRoot.qtyValue
                                 color: "#ffffff"
                                 font.pixelSize: 12
+                                font.family: "Segoe UI"
                                 selectByMouse: true
                                 onTextChanged: {
                                     if (ingModalRoot.isVariableQty) {
@@ -242,6 +260,7 @@ Rectangle {
                                 color: "#cbd5e1"
                                 font.bold: true
                                 font.pixelSize: 11
+                                font.family: "Segoe UI"
                             }
                         }
                     }
@@ -257,6 +276,7 @@ Rectangle {
                         color: "#cbd5e1"
                         font.pixelSize: 11
                         font.bold: true
+                        font.family: "Segoe UI"
                     }
                     Rectangle {
                         Layout.fillWidth: true
@@ -269,10 +289,13 @@ Rectangle {
                         TextInput {
                             id: isaInput
                             anchors.fill: parent
-                            anchors.margins: 8
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            verticalAlignment: TextInput.AlignVCenter
                             text: ingModalRoot.isaParameters
                             color: "#ffffff"
                             font.pixelSize: 11
+                            font.family: "Segoe UI"
                             selectByMouse: true
                             onTextChanged: ingModalRoot.isaParameters = text
                         }

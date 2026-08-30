@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Outer Square Tile Box -->
-  <rect x="20" y="20" width="88" height="88" rx="8"/>
-  
-  <!-- Water Drop with Intake Arrow inside -->
-  <path d="M64 36 C52 52 46 62 46 74 a18 18 0 0 0 36 0 C82 62 76 52 64 36 Z" fill="#ffffff" fill-opacity="0.2"/>
-  <path d="M52 80 l12-14 l12 14"/>
-</svg>

@@ -30,6 +30,38 @@ Rectangle {
         border.width: 2
         radius: 8
 
+        // Top-Right Corner Close Button
+        Rectangle {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 12
+            anchors.rightMargin: 12
+            width: 26
+            height: 26
+            radius: 4
+            z: 10
+            color: closeMouse.containsMouse ? "#ef4444" : "#0d365e"
+            border.color: closeMouse.containsMouse ? "#f87171" : "#1d5b94"
+            border.width: 1
+
+            Text {
+                anchors.centerIn: parent
+                text: "✕"
+                color: closeMouse.containsMouse ? "#ffffff" : "#94a3b8"
+                font.pixelSize: 12
+                font.bold: true
+                font.family: "Segoe UI"
+            }
+
+            MouseArea {
+                id: closeMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: delConfirmRoot.cancelled()
+            }
+        }
+
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 18

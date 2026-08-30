@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../../widgets"
 
 Rectangle {
     id: manualModalRoot
@@ -38,21 +37,54 @@ Rectangle {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: 580
-        height: 480
+        width: 680
+        height: 500
         color: "#0b2e52"
         border.color: "#f59e0b"
         border.width: 2
         radius: 8
 
+        // Top-Right Corner Close Button
+        Rectangle {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 14
+            anchors.rightMargin: 14
+            width: 28
+            height: 28
+            radius: 4
+            z: 10
+            color: closeMouse.containsMouse ? "#ef4444" : "#0d365e"
+            border.color: closeMouse.containsMouse ? "#f87171" : "#1d5b94"
+            border.width: 1
+
+            Text {
+                anchors.centerIn: parent
+                text: "✕"
+                color: closeMouse.containsMouse ? "#ffffff" : "#94a3b8"
+                font.pixelSize: 13
+                font.bold: true
+                font.family: "Segoe UI"
+            }
+
+            MouseArea {
+                id: closeMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: manualModalRoot.cancelled()
+            }
+        }
+
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 16
+            anchors.margins: 18
             spacing: 12
 
             // Top Header Bar
             RowLayout {
                 Layout.fillWidth: true
+                Layout.rightMargin: 36 // Reserve space for top-right close button
                 spacing: 10
 
                 Rectangle {
@@ -121,30 +153,6 @@ Rectangle {
                         color: "#ffffff"
                         font.bold: true
                         font.pixelSize: 11
-                    }
-                }
-
-                Rectangle {
-                    Layout.preferredWidth: 26
-                    Layout.preferredHeight: 26
-                    radius: 4
-                    color: closeMouse.containsMouse ? "#ef4444" : "#0d365e"
-                    border.color: "#1d5b94"
-                    border.width: 1
-
-                    ScadaIcon {
-                        anchors.centerIn: parent
-                        Layout.preferredWidth: 12
-                        Layout.preferredHeight: 12
-                        iconName: "close_x"
-                    }
-
-                    MouseArea {
-                        id: closeMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: manualModalRoot.cancelled()
                     }
                 }
             }

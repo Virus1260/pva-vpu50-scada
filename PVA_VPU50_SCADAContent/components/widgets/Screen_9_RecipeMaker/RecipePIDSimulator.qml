@@ -200,25 +200,25 @@ Rectangle {
             Item {
                 anchors.fill: parent
 
-                // Background Schematic Grid Lines
-                Canvas {
+                // Background Schematic Grid Pattern (Declarative - Qt Design Studio M203 Compliant)
+                Item {
                     anchors.fill: parent
-                    opacity: 0.15
-                    onPaint: {
-                        var ctx = getContext("2d");
-                        ctx.strokeStyle = "#38bdf8";
-                        ctx.lineWidth = 0.5;
-                        for (var x = 0; x < width; x += 30) {
-                            ctx.beginPath();
-                            ctx.moveTo(x, 0);
-                            ctx.lineTo(x, height);
-                            ctx.stroke();
+                    opacity: 0.10
+
+                    Row {
+                        anchors.fill: parent
+                        spacing: 36
+                        Repeater {
+                            model: 24
+                            Rectangle { width: 1; height: parent.height; color: "#38bdf8" }
                         }
-                        for (var y = 0; y < height; y += 30) {
-                            ctx.beginPath();
-                            ctx.moveTo(0, y);
-                            ctx.lineTo(width, y);
-                            ctx.stroke();
+                    }
+                    Column {
+                        anchors.fill: parent
+                        spacing: 36
+                        Repeater {
+                            model: 14
+                            Rectangle { width: parent.width; height: 1; color: "#38bdf8" }
                         }
                     }
                 }
