@@ -17,6 +17,8 @@ Item {
     signal deleteRecipeRequested(var recipe)
     signal proceedToIngredientBuilder(var recipe)
 
+    property int recipesCount: recipesModel.count
+
     // Master Catalog ListModel containing pre-loaded pharma & cosmetic recipes
     ListModel {
         id: recipesModel
@@ -30,7 +32,7 @@ Item {
             qtyType: "Fixed"
             batchSizeKg: 100.0
             density: 1.02
-            author: "Formulation Chemist"
+            author: "Formulation Chemist (Level 2 - Supervisor)"
             version: 1
             status: "APPROVED"
             ingredientsCount: 13
@@ -47,7 +49,7 @@ Item {
             qtyType: "Variable"
             batchSizeKg: 100.0
             density: 1.05
-            author: "Dr. E. Vance"
+            author: "Dr. E. Vance (Level 3 - QA Officer)"
             version: 2
             status: "APPROVED"
             ingredientsCount: 15
@@ -64,7 +66,7 @@ Item {
             qtyType: "Fixed"
             batchSizeKg: 50.0
             density: 0.98
-            author: "QA Tech Leader"
+            author: "QA Tech Leader (Level 2 - Supervisor)"
             version: 1
             status: "DRAFT"
             ingredientsCount: 8
@@ -110,12 +112,12 @@ Item {
             qtyType: metadata.qtyType || "Fixed",
             batchSizeKg: metadata.batchSizeKg || 100.0,
             density: metadata.targetDensity || 1.0,
-            author: metadata.author || "Process Incharge",
+            author: metadata.author || "Process Incharge (Level 2 - Supervisor)",
             version: 1,
             status: "DRAFT",
             ingredientsCount: 0,
             durationMin: 0,
-            description: "Authoring draft created via Recipe Metadata Engine."
+            description: metadata.description || "New formulation recipe authored per SOP standards."
         });
         currentRecipeIndex = recipesModel.count - 1;
         updateActiveRecipe();
@@ -131,6 +133,9 @@ Item {
             item.qtyType = metadata.qtyType;
             item.batchSizeKg = metadata.batchSizeKg;
             item.density = metadata.targetDensity || metadata.density || 1.0;
+            item.author = metadata.author || item.author;
+            item.version = metadata.version || item.version;
+            item.description = metadata.description || item.description;
             updateActiveRecipe();
         }
     }
@@ -148,7 +153,7 @@ Item {
                 qtyType: src.qtyType,
                 batchSizeKg: src.batchSizeKg,
                 density: src.density,
-                author: "Process Incharge",
+                author: src.author,
                 version: 1,
                 status: "DRAFT",
                 ingredientsCount: src.ingredientsCount,

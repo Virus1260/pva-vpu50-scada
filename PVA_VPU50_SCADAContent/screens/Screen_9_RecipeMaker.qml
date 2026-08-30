@@ -9,6 +9,9 @@ Item {
 
     property string userRole: "incharge"
     property int userLevel: 2
+    property string activeUserName: "Process Incharge"
+    property string activeUserRole: "Supervisor (Level 2)"
+    property int activeUserLevel: 2
 
     ScadaStateMiddleware { id: stateMiddleware }
 
@@ -57,6 +60,7 @@ Item {
 
         function onNewRecipeRequested() {
             ui.metadataModal.mode = "NEW";
+            ui.metadataModal.recipeId = "REC-VPU50-NEW";
             ui.metadataModal.recipeTitle = "New Formulation Recipe";
             ui.metadataModal.productName = "Product Batch";
             ui.metadataModal.productType = "Emulsion / Cream";
@@ -64,6 +68,9 @@ Item {
             ui.metadataModal.qtyType = "Fixed";
             ui.metadataModal.batchSizeKg = "100.0";
             ui.metadataModal.targetDensity = "1.02";
+            ui.metadataModal.description = "High-shear de-aerated formulation with vacuum homogenization.";
+            ui.metadataModal.author = recipeMakerController.activeUserName + " (" + recipeMakerController.activeUserRole + ")";
+            ui.metadataModal.version = 1;
             ui.metadataModal.visible = true;
         }
 
@@ -77,6 +84,9 @@ Item {
             ui.metadataModal.qtyType = recipe.qtyType;
             ui.metadataModal.batchSizeKg = String(recipe.batchSizeKg);
             ui.metadataModal.targetDensity = String(recipe.density || 1.0);
+            ui.metadataModal.description = recipe.description || "";
+            ui.metadataModal.author = recipe.author || (recipeMakerController.activeUserName + " (" + recipeMakerController.activeUserRole + ")");
+            ui.metadataModal.version = recipe.version || 1;
             ui.metadataModal.visible = true;
         }
 

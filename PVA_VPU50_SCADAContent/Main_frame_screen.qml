@@ -102,6 +102,23 @@ Item {
         value: rootWindow.activeUserLevel
     }
 
+    // Bind Recipe Maker Screen author & role dynamically
+    Binding {
+        target: ui.recipeMakerScreen
+        property: "activeUserName"
+        value: rootWindow.activeUserName
+    }
+    Binding {
+        target: ui.recipeMakerScreen
+        property: "activeUserRole"
+        value: rootWindow.activeUserRole
+    }
+    Binding {
+        target: ui.recipeMakerScreen
+        property: "activeUserLevel"
+        value: rootWindow.activeUserLevel
+    }
+
     // --- Component Setup & Static Wiring ---
     Component.onCompleted: {
         var ctrl = ui.controlView;

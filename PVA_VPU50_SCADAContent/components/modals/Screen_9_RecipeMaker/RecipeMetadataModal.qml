@@ -20,7 +20,8 @@ Rectangle {
     property string qtyType: "Fixed" // "Fixed" or "Variable"
     property string batchSizeKg: "100.0"
     property string targetDensity: "1.02"
-    property string author: "Process Incharge"
+    property string description: "High-shear de-aerated barrier formulation with vacuum homogenization."
+    property string author: "QA Tech Leader (Level 2 - Supervisor)"
     property int version: 1
 
     signal saveAndNext(var metadata)
@@ -33,8 +34,8 @@ Rectangle {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: 780
-        height: 540
+        width: 820
+        height: 560
         color: "#0b2e52"
         border.color: "#38bdf8"
         border.width: 2
@@ -74,8 +75,8 @@ Rectangle {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 18
-            spacing: 10
+            anchors.margins: 16
+            spacing: 8
 
             // =================================================================
             // 1. TOP HEADER BAR
@@ -133,22 +134,22 @@ Rectangle {
             // Row 1: Recipe Title & Product Name (2 Equal Columns)
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 14
+                spacing: 12
 
                 // Recipe Title
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
                     Text {
                         text: "RECIPE TITLE *"
                         color: "#38bdf8"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                         font.family: "Segoe UI"
                     }
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: 34
                         color: "#081d33"
                         border.color: titleInput.activeFocus ? "#38bdf8" : "#1d5b94"
                         border.width: 1
@@ -174,17 +175,17 @@ Rectangle {
                 // Product Name
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
                     Text {
                         text: "PRODUCT NAME *"
                         color: "#38bdf8"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                         font.family: "Segoe UI"
                     }
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: 34
                         color: "#081d33"
                         border.color: prodInput.activeFocus ? "#38bdf8" : "#1d5b94"
                         border.width: 1
@@ -210,12 +211,12 @@ Rectangle {
             // Row 2: Product Type / Dosage Form (Full Width Row of 4 Spacious Pills)
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: 3
 
                 Text {
                     text: "PRODUCT TYPE / DOSAGE FORM *"
                     color: "#cbd5e1"
-                    font.pixelSize: 11
+                    font.pixelSize: 10
                     font.bold: true
                     font.family: "Segoe UI"
                 }
@@ -235,7 +236,7 @@ Rectangle {
                             id: typeBtn
                             required property var modelData
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 34
+                            Layout.preferredHeight: 32
                             radius: 4
                             color: metaModalRoot.productType === typeBtn.modelData.name ? "#164e85" : (typeMouse.containsMouse ? "#0f365d" : "#081d33")
                             border.color: metaModalRoot.productType === typeBtn.modelData.name ? "#38bdf8" : (typeMouse.containsMouse ? "#2563eb" : "#1d5b94")
@@ -272,14 +273,14 @@ Rectangle {
             // Row 3: Shelf Life / Expiry Duration (Full Width Row of 4 Compliant Pills)
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: 3
 
                 RowLayout {
                     spacing: 6
                     Text {
                         text: "SHELF LIFE / EXPIRY DURATION *"
                         color: "#cbd5e1"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                         font.family: "Segoe UI"
                     }
@@ -308,7 +309,7 @@ Rectangle {
                             id: shelfBtn
                             required property string modelData
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 34
+                            Layout.preferredHeight: 32
                             radius: 4
                             color: metaModalRoot.shelfLifeMonths === shelfBtn.modelData ? "#065f46" : (shelfMouse.containsMouse ? "#0f365d" : "#081d33")
                             border.color: metaModalRoot.shelfLifeMonths === shelfBtn.modelData ? "#34d399" : (shelfMouse.containsMouse ? "#059669" : "#1d5b94")
@@ -353,11 +354,11 @@ Rectangle {
                 ColumnLayout {
                     Layout.preferredWidth: 340
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
                     Text {
                         text: "QUANTITY CALCULATION MODE *"
                         color: "#38bdf8"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                         font.family: "Segoe UI"
                     }
@@ -367,7 +368,7 @@ Rectangle {
                         Rectangle {
                             id: fixedToggle
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 36
+                            Layout.preferredHeight: 34
                             radius: 4
                             color: metaModalRoot.qtyType === "Fixed" ? "#0284c7" : "#081d33"
                             border.color: metaModalRoot.qtyType === "Fixed" ? "#38bdf8" : "#1d5b94"
@@ -399,7 +400,7 @@ Rectangle {
                         Rectangle {
                             id: varToggle
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 36
+                            Layout.preferredHeight: 34
                             radius: 4
                             color: metaModalRoot.qtyType === "Variable" ? "#7c3aed" : "#081d33"
                             border.color: metaModalRoot.qtyType === "Variable" ? "#c084fc" : "#1d5b94"
@@ -432,19 +433,19 @@ Rectangle {
 
                 // Column 2: Batch Size (27% width)
                 ColumnLayout {
-                    Layout.preferredWidth: 180
+                    Layout.preferredWidth: 190
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
                     Text {
                         text: "BATCH SIZE (kg) *"
                         color: "#cbd5e1"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                         font.family: "Segoe UI"
                     }
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: 34
                         color: "#081d33"
                         border.color: batchInput.activeFocus ? "#38bdf8" : "#1d5b94"
                         border.width: 1
@@ -468,19 +469,19 @@ Rectangle {
 
                 // Column 3: Density (27% width)
                 ColumnLayout {
-                    Layout.preferredWidth: 180
+                    Layout.preferredWidth: 190
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
                     Text {
                         text: "DENSITY (g/mL) *"
                         color: "#cbd5e1"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.bold: true
                         font.family: "Segoe UI"
                     }
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 36
+                        Layout.preferredHeight: 34
                         color: "#081d33"
                         border.color: densityInput.activeFocus ? "#38bdf8" : "#1d5b94"
                         border.width: 1
@@ -502,10 +503,99 @@ Rectangle {
                 }
             }
 
-            // Row 5: Explanatory Context Box for Quantity Mode
+            // Row 5: Recipe Description & Author/Creator with User Role/Level in brackets
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                // Description Input (58% width)
+                ColumnLayout {
+                    Layout.preferredWidth: 440
+                    Layout.fillWidth: true
+                    spacing: 3
+                    Text {
+                        text: "RECIPE DESCRIPTION / PROCESS SUMMARY *"
+                        color: "#38bdf8"
+                        font.pixelSize: 10
+                        font.bold: true
+                        font.family: "Segoe UI"
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        color: "#081d33"
+                        border.color: descInput.activeFocus ? "#38bdf8" : "#1d5b94"
+                        border.width: 1
+                        radius: 4
+
+                        TextInput {
+                            id: descInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            verticalAlignment: TextInput.AlignVCenter
+                            text: metaModalRoot.description
+                            color: "#ffffff"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            selectByMouse: true
+                            onTextChanged: metaModalRoot.description = text
+                        }
+                    }
+                }
+
+                // Author / Creator with Logged-in Level in Brackets (42% width)
+                ColumnLayout {
+                    Layout.preferredWidth: 320
+                    Layout.fillWidth: true
+                    spacing: 3
+                    Text {
+                        text: "AUTHOR / CREATOR (LOGGED-IN LEVEL) *"
+                        color: "#fbbf24"
+                        font.pixelSize: 10
+                        font.bold: true
+                        font.family: "Segoe UI"
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        color: "#081d33"
+                        border.color: authorInput.activeFocus ? "#fbbf24" : "#1d5b94"
+                        border.width: 1
+                        radius: 4
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 6
+
+                            Text {
+                                text: "👤"
+                                font.pixelSize: 12
+                            }
+
+                            TextInput {
+                                id: authorInput
+                                Layout.fillWidth: true
+                                verticalAlignment: TextInput.AlignVCenter
+                                text: metaModalRoot.author
+                                color: "#ffffff"
+                                font.pixelSize: 11
+                                font.bold: true
+                                font.family: "Segoe UI"
+                                selectByMouse: true
+                                onTextChanged: metaModalRoot.author = text
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Row 6: Explanatory Context Box for Quantity Mode
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 38
+                Layout.preferredHeight: 32
                 color: metaModalRoot.qtyType === "Fixed" ? "#082f49" : "#2e1065"
                 border.color: metaModalRoot.qtyType === "Fixed" ? "#0284c7" : "#7c3aed"
                 border.width: 1
@@ -520,14 +610,14 @@ Rectangle {
                         text: "ℹ"
                         color: metaModalRoot.qtyType === "Fixed" ? "#38bdf8" : "#c084fc"
                         font.bold: true
-                        font.pixelSize: 14
+                        font.pixelSize: 13
                     }
                     Text {
                         text: metaModalRoot.qtyType === "Fixed"
                               ? "FIXED MODE: All formulation rows will accept absolute weights (e.g. 50.0 kg, 9.2 kg)."
-                              : "VARIABLE MODE: Formulation allows relational formulas (e.g. '3.45% of Phase A Glycerine' or weight-scaled speeds)."
+                              : "VARIABLE MODE: Formulation allows relational formulas (e.g. '3.45% of Phase A Glycerine' or dynamic speeds)."
                         color: metaModalRoot.qtyType === "Fixed" ? "#7dd3fc" : "#e9d5ff"
-                        font.pixelSize: 11
+                        font.pixelSize: 10
                         font.family: "Segoe UI"
                         Layout.fillWidth: true
                         elide: Text.ElideRight
@@ -555,7 +645,7 @@ Rectangle {
 
                 Rectangle {
                     Layout.preferredWidth: 110
-                    Layout.preferredHeight: 38
+                    Layout.preferredHeight: 36
                     radius: 4
                     color: cancelMouse.containsMouse ? "#334155" : "#1e293b"
                     border.color: "#475569"
@@ -581,7 +671,7 @@ Rectangle {
 
                 Rectangle {
                     Layout.preferredWidth: 160
-                    Layout.preferredHeight: 38
+                    Layout.preferredHeight: 36
                     radius: 4
                     color: nextMouse.containsMouse ? "#0284c7" : "#0284c7"
                     border.color: "#38bdf8"
@@ -620,6 +710,7 @@ Rectangle {
                                 qtyType: metaModalRoot.qtyType,
                                 batchSizeKg: parseFloat(metaModalRoot.batchSizeKg) || 100.0,
                                 targetDensity: parseFloat(metaModalRoot.targetDensity) || 1.0,
+                                description: metaModalRoot.description,
                                 author: metaModalRoot.author,
                                 version: metaModalRoot.version
                             };
