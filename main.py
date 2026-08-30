@@ -42,7 +42,6 @@ def main() -> int:
     arguments = parse_arguments()
     if arguments.verify_qml:
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    os.environ.setdefault("QT_IM_MODULE", "qtvirtualkeyboard")
     QQuickStyle.setStyle("Basic")
     app = QGuiApplication(sys.argv[:1])
     app.setOrganizationName("PVASystems")
