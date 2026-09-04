@@ -8,8 +8,13 @@ import QtQuick.Layouts
 import "../components/widgets"
 import "../components/widgets/Screen_1_Control"
 
-Item {
+Rectangle {
     id: controlRoot
+    width: 1184
+    height: 626
+    implicitWidth: 1184
+    implicitHeight: 626
+    color: "#08213b"
     clip: true
 
     // Property Aliases for Row 1 (Agitator / Mixing 1)
@@ -63,10 +68,70 @@ Item {
     property alias row6Media: r6Media
     property alias row6Runtime: r6Runtime
 
+    // --- Run-Mode Decoupling & Automatic Recipe Lockout Properties ---
+    property bool isLocked: false
+    property string lockoutBatchId: ""
+    property string lockoutRecipeName: ""
+    property int lockoutStep: 0
+    property int lockoutTotalSteps: 0
+
+    // Top Industrial Safety Lockout Banner
+    Rectangle {
+        id: lockoutBanner
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 38
+        z: 999
+        visible: controlRoot.isLocked
+        color: "#991b1b"
+        border.color: "#ef4444"
+        border.width: 1
+        radius: 4
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
+
+            Text {
+                text: "🔒"
+                font.pixelSize: 16
+            }
+
+            Text {
+                text: "AUTOMATIC RECIPE EXECUTION ACTIVE • MANUAL OVERRIDES INHIBITED"
+                color: "#ffffff"
+                font.bold: true
+                font.pixelSize: 12
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: "transparent"
+            }
+
+            Text {
+                text: "BATCH: " + (controlRoot.lockoutBatchId || "ACTIVE") + " • " + (controlRoot.lockoutRecipeName || "FORMULATION") + " (STEP " + controlRoot.lockoutStep + "/" + controlRoot.lockoutTotalSteps + ")"
+                color: "#fef08a"
+                font.bold: true
+                font.pixelSize: 12
+            }
+        }
+    }
+
     // Main 6 Process Rows Container
     ColumnLayout {
-        anchors.fill: parent
+        anchors.top: controlRoot.isLocked ? lockoutBanner.bottom : parent.top
+        anchors.topMargin: controlRoot.isLocked ? 4 : 0
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
         spacing: 4
+        enabled: !controlRoot.isLocked
+        opacity: controlRoot.isLocked ? 0.45 : 1.0
 
         // =========================================================================
         // ROW 1: AGITATOR (Mixing 1)

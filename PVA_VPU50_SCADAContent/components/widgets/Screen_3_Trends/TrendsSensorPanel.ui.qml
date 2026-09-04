@@ -9,6 +9,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: sensorPanelRoot
+    width: panelWidth
+    height: 560
+    implicitWidth: panelWidth
+    implicitHeight: 560
     Layout.preferredWidth: panelWidth
     Layout.fillHeight: true
     radius: 6

@@ -9,6 +9,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: topBarRoot
+    width: 1160
+    height: 50
+    implicitWidth: 1160
+    implicitHeight: 50
     Layout.fillWidth: true
     Layout.preferredHeight: 50
     radius: 6

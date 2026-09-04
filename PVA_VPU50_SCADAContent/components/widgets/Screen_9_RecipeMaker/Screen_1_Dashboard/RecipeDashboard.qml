@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../.."
+import "../../"
 
 Item {
     id: dashboardLogicRoot
@@ -10,35 +10,19 @@ Item {
 
     property int currentRecipeIndex: 0
     property var activeRecipeData: null
+    readonly property int recipesCount: recipesModel.count
 
+    signal createNewRecipeRequested
     signal newRecipeRequested
-    signal editRecipeRequested(var recipe)
-    signal duplicateRecipeRequested(var recipe)
-    signal deleteRecipeRequested(var recipe)
-    signal proceedToIngredientBuilder(var recipe)
+    signal editRecipeRequested(var recipeData)
+    signal duplicateRecipeRequested(var recipeData)
+    signal deleteRecipeRequested(var recipeData)
+    signal proceedToIngredientsRequested(var recipeData)
+    signal proceedToIngredientBuilder(var recipeData)
+    signal openRecipeRequested(var recipeData)
 
-    property int recipesCount: recipesModel.count
-
-    // Master Catalog ListModel containing pre-loaded pharma & cosmetic recipes
     ListModel {
         id: recipesModel
-
-        ListElement {
-            recipeId: "REC-VPU50-002"
-            title: "Body Lotion Formulation"
-            productName: "Cosmetic Intensive Body Lotion"
-            productType: "Emulsion / Cream"
-            shelfLife: "24 Months"
-            qtyType: "Fixed"
-            batchSizeKg: 100.0
-            density: 1020.0
-            author: "Formulation Chemist (Level 2 - Supervisor)"
-            version: 1
-            status: "APPROVED"
-            ingredientsCount: 13
-            durationMin: 45
-            description: "5-Phase standard body lotion formulation per SOP-VPU50-042 (Phases A, B, C, D, E)."
-        }
 
         ListElement {
             recipeId: "REC-VPU50-001"
@@ -55,6 +39,23 @@ Item {
             ingredientsCount: 15
             durationMin: 40
             description: "Surfactant-rich cleansing system with cold pearlizer dispersion."
+        }
+
+        ListElement {
+            recipeId: "REC-VPU50-002"
+            title: "Body Lotion Formulation"
+            productName: "Cosmetic Intensive Body Lotion"
+            productType: "Emulsion / Cream"
+            shelfLife: "24 Months"
+            qtyType: "Fixed"
+            batchSizeKg: 100.0
+            density: 1020.0
+            author: "Formulation Chemist (Level 2 - Supervisor)"
+            version: 1
+            status: "APPROVED"
+            ingredientsCount: 13
+            durationMin: 45
+            description: "5-Phase standard body lotion formulation per SOP-VPU50-042 (Phases A, B, C, D, E)."
         }
 
         ListElement {
@@ -129,7 +130,7 @@ Item {
             qtyType: metadata.qtyType || "Fixed",
             batchSizeKg: metadata.batchSizeKg || 100.0,
             density: metadata.targetDensity || metadata.density || 1000.0,
-            author: metadata.author || "Process Incharge (Level 2 - Supervisor)",
+            author: metadata.author || "Supervisor (Level 2)",
             version: metadata.version || 1,
             status: "DRAFT",
             ingredientsCount: 0,
@@ -218,7 +219,7 @@ Item {
             readonly property bool isSelected: dashboardLogicRoot.currentRecipeIndex === cardDelegate.index
 
             width: view.recipeListView.width
-            height: 100
+            height: 106
             radius: 6
             color: isSelected ? "#124373" : (cardMouse.containsMouse ? "#0e3359" : "#092442")
             border.color: isSelected ? "#38bdf8" : (cardMouse.containsMouse ? "#2563eb" : "#1d5b94")
@@ -226,46 +227,54 @@ Item {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 14
+                anchors.margins: 12
+                spacing: 16
 
-                // Left Icon & Code Badge
+                // 1. Left Flask Icon & Clean Recipe ID Box (Generous sizing & padding)
                 Rectangle {
-                    Layout.preferredWidth: 68
-                    Layout.preferredHeight: 78
+                    Layout.preferredWidth: 94
+                    Layout.preferredHeight: 82
                     Layout.alignment: Qt.AlignVCenter
-                    radius: 5
+                    radius: 6
                     color: "#081d33"
-                    border.color: "#1d5b94"
+                    border.color: cardDelegate.isSelected ? "#38bdf8" : "#1d5b94"
                     border.width: 1
 
                     ColumnLayout {
-                        anchors.centerIn: parent
+                        anchors.fill: parent
+                        anchors.margins: 6
                         spacing: 4
+
                         ScadaIcon {
                             Layout.alignment: Qt.AlignHCenter
-                            Layout.preferredWidth: 28
-                            Layout.preferredHeight: 28
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 32
                             iconName: "recipe_maker"
                         }
+
                         Text {
+                            Layout.fillWidth: true
                             text: cardDelegate.recipeId
                             color: "#38bdf8"
                             font.bold: true
-                            font.pixelSize: 9
+                            font.pixelSize: 10
                             font.family: "Segoe UI"
+                            horizontalAlignment: Text.AlignHCenter
+                            elide: Text.ElideRight
                         }
                     }
                 }
 
-                // Middle Info Column
+                // 2. Middle Information Hierarchy Column
                 ColumnLayout {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
                     spacing: 4
 
+                    // Header Row: Recipe Title + Status Pill + Qty Mode Pill
                     RowLayout {
                         spacing: 8
+
                         Text {
                             text: cardDelegate.title
                             color: "#ffffff"
@@ -281,6 +290,7 @@ Item {
                             color: cardDelegate.status === "APPROVED" ? "#065f46" : (cardDelegate.status === "IN_REVIEW" ? "#854d0e" : "#334155")
                             border.color: cardDelegate.status === "APPROVED" ? "#34d399" : (cardDelegate.status === "IN_REVIEW" ? "#facc15" : "#64748b")
                             border.width: 1
+
                             Text {
                                 id: statusTxt
                                 anchors.centerIn: parent
@@ -299,6 +309,7 @@ Item {
                             color: cardDelegate.qtyType === "Fixed" ? "#0369a1" : "#6b21a8"
                             border.color: cardDelegate.qtyType === "Fixed" ? "#38bdf8" : "#c084fc"
                             border.width: 1
+
                             Text {
                                 id: typeTxt
                                 anchors.centerIn: parent
@@ -311,6 +322,7 @@ Item {
                         }
                     }
 
+                    // Subtitle: Product Name & Description
                     Text {
                         text: cardDelegate.productName + " | Type: " + cardDelegate.productType + " | " + cardDelegate.description
                         color: "#94a3b8"
@@ -320,48 +332,80 @@ Item {
                         Layout.fillWidth: true
                     }
 
-                    // Key Metric Badges (With Density in kg/m³)
+                    // Clean Metrics Strip (Zero unicode emoji dependency, web-safe formatting)
                     RowLayout {
-                        spacing: 14
+                        spacing: 12
+                        Layout.fillWidth: true
+
                         Text {
-                            text: "⏱ Shelf Life: <font color='#34d399'><b>" + cardDelegate.shelfLife + "</b></font>"
-                            color: "#cbd5e1"
-                            font.pixelSize: 11
-                            font.family: "Segoe UI"
-                            textFormat: Text.RichText
-                        }
-                        Text {
-                            text: "⚖ Batch Size: <font color='#38bdf8'><b>" + cardDelegate.batchSizeKg + " kg</b></font>"
-                            color: "#cbd5e1"
-                            font.pixelSize: 11
-                            font.family: "Segoe UI"
-                            textFormat: Text.RichText
-                        }
-                        Text {
-                            text: "🧪 Density: <font color='#c084fc'><b>" + cardDelegate.density + " kg/m³</b></font>"
-                            color: "#cbd5e1"
-                            font.pixelSize: 11
-                            font.family: "Segoe UI"
-                            textFormat: Text.RichText
-                        }
-                        Text {
-                            text: "🧪 Formulation: <font color='#facc15'><b>" + cardDelegate.ingredientsCount + " Ingredients</b></font>"
-                            color: "#cbd5e1"
-                            font.pixelSize: 11
-                            font.family: "Segoe UI"
-                            textFormat: Text.RichText
-                        }
-                        Text {
-                            text: "👤 Author: <font color='#e2e8f0'>" + cardDelegate.author + " (v" + cardDelegate.version + ")</font>"
+                            text: "Shelf Life: <font color='#34d399'><b>" + cardDelegate.shelfLife + "</b></font>"
                             color: "#94a3b8"
                             font.pixelSize: 11
                             font.family: "Segoe UI"
                             textFormat: Text.RichText
                         }
+
+                        Text {
+                            text: "•"
+                            color: "#475569"
+                            font.pixelSize: 10
+                        }
+
+                        Text {
+                            text: "Batch Size: <font color='#38bdf8'><b>" + cardDelegate.batchSizeKg + " kg</b></font>"
+                            color: "#94a3b8"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            textFormat: Text.RichText
+                        }
+
+                        Text {
+                            text: "•"
+                            color: "#475569"
+                            font.pixelSize: 10
+                        }
+
+                        Text {
+                            text: "Density: <font color='#c084fc'><b>" + cardDelegate.density + " kg/m³</b></font>"
+                            color: "#94a3b8"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            textFormat: Text.RichText
+                        }
+
+                        Text {
+                            text: "•"
+                            color: "#475569"
+                            font.pixelSize: 10
+                        }
+
+                        Text {
+                            text: "Formulation: <font color='#facc15'><b>" + cardDelegate.ingredientsCount + " Ingredients</b></font>"
+                            color: "#94a3b8"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            textFormat: Text.RichText
+                        }
+
+                        Text {
+                            text: "•"
+                            color: "#475569"
+                            font.pixelSize: 10
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: "Author: <font color='#cbd5e1'>" + cardDelegate.author + " (v" + cardDelegate.version + ")</font>"
+                            color: "#94a3b8"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            textFormat: Text.RichText
+                            elide: Text.ElideRight
+                        }
                     }
                 }
 
-                // Selection Radio Indicator
+                // 3. Selection Radio Indicator
                 Rectangle {
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 24
@@ -393,60 +437,53 @@ Item {
                 onDoubleClicked: {
                     dashboardLogicRoot.currentRecipeIndex = cardDelegate.index;
                     dashboardLogicRoot.updateActiveRecipe();
-                    dashboardLogicRoot.proceedToIngredientBuilder(dashboardLogicRoot.activeRecipeData);
+                    dashboardLogicRoot.openRecipeRequested(dashboardLogicRoot.activeRecipeData);
                 }
             }
         }
     }
 
-    // Connect top & bottom action buttons
-    MouseArea {
-        parent: view.newRecipeBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: dashboardLogicRoot.newRecipeRequested()
+    // Connect View Mouse Areas to Logic Actions
+    Connections {
+        target: view.createNewRecipeMouse
+        function onClicked() {
+            dashboardLogicRoot.createNewRecipeRequested();
+            dashboardLogicRoot.newRecipeRequested();
+        }
     }
 
-    MouseArea {
-        parent: view.editRecipeBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
+    Connections {
+        target: view.editRecipeMouse
+        function onClicked() {
             if (dashboardLogicRoot.activeRecipeData) {
                 dashboardLogicRoot.editRecipeRequested(dashboardLogicRoot.activeRecipeData);
             }
         }
     }
 
-    MouseArea {
-        parent: view.duplicateRecipeBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            dashboardLogicRoot.duplicateCurrent();
+    Connections {
+        target: view.duplicateRecipeMouse
+        function onClicked() {
             if (dashboardLogicRoot.activeRecipeData) {
                 dashboardLogicRoot.duplicateRecipeRequested(dashboardLogicRoot.activeRecipeData);
             }
         }
     }
 
-    MouseArea {
-        parent: view.deleteRecipeBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
+    Connections {
+        target: view.deleteRecipeMouse
+        function onClicked() {
             if (dashboardLogicRoot.activeRecipeData) {
                 dashboardLogicRoot.deleteRecipeRequested(dashboardLogicRoot.activeRecipeData);
             }
         }
     }
 
-    MouseArea {
-        parent: view.nextStageBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
+    Connections {
+        target: view.proceedToIngredientsMouse
+        function onClicked() {
             if (dashboardLogicRoot.activeRecipeData) {
+                dashboardLogicRoot.proceedToIngredientsRequested(dashboardLogicRoot.activeRecipeData);
                 dashboardLogicRoot.proceedToIngredientBuilder(dashboardLogicRoot.activeRecipeData);
             }
         }

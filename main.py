@@ -48,6 +48,7 @@ def main() -> int:
     app.setApplicationName("PVA VPU-50 Industrial SCADA")
 
     controller = ScadaController(arguments.runtime_dir)
+    app.aboutToQuit.connect(controller.cleanup)
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Scada", controller)
     
@@ -59,9 +60,11 @@ def main() -> int:
     qml_path = content_dir / "App.qml"
     engine.load(QUrl.fromLocalFile(str(qml_path)))
     if not engine.rootObjects():
+        controller.cleanup()
         return 1
     if arguments.verify_qml:
-        QTimer.singleShot(500, app.quit)
+        controller.cleanup()
+        return 0
     return app.exec()
 
 

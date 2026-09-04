@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,17 @@ import time
 from typing import Any, Dict, List, Optional
 
 from scada.store import scada_db, utc_now
+
+
+def calculate_recipe_hash(data: Dict[str, Any]) -> str:
+    """Computes an immutable SHA-256 hash over canonical (key-sorted) JSON representation."""
+    # Exclude metadata timestamps and volatile self-referential hash fields
+    clean_data = {
+        k: v for k, v in data.items()
+        if k not in ("sha256Hash", "sha256_hash", "createdAt", "created_at", "approvedAt", "approved_at")
+    }
+    canonical = json.dumps(clean_data, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 class DeviceType(str, Enum):
@@ -192,12 +204,13 @@ class Recipe:
     batch_size_kg: float
     ingredients: List[Ingredient] = field(default_factory=list)
     steps: List[RecipeStep] = field(default_factory=list)
+    sha256_hash: str = ""
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Recipe:
         ingredients = [Ingredient.from_dict(ing) for ing in data.get("ingredients", [])]
         steps = [RecipeStep.from_dict(step) for step in data.get("steps", [])]
-        return cls(
+        rec = cls(
             id=data.get("id", "REC-001"),
             name=data.get("name", "Untitled Recipe"),
             version=str(data.get("version", "1")),
@@ -208,7 +221,11 @@ class Recipe:
             batch_size_kg=float(data.get("batchSizeKg", 50.0)),
             ingredients=ingredients,
             steps=steps,
+            sha256_hash=data.get("sha256Hash", data.get("sha256_hash", "")),
         )
+        if not rec.sha256_hash:
+            rec.sha256_hash = calculate_recipe_hash(rec.to_dict())
+        return rec
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -222,7 +239,173 @@ class Recipe:
             "batchSizeKg": self.batch_size_kg,
             "ingredients": [ing.to_dict() for ing in self.ingredients],
             "steps": [step.to_dict() for step in self.steps],
+            "sha256Hash": self.sha256_hash,
         }
+
+
+def serialize_designer_timeline_to_isa88(designer_payload: Dict[str, Any], author: str = "operator") -> Recipe:
+    """
+    Compiles human-readable QML Screen 3 Timeline steps into an immutable ISA-88
+    Recipe with physical bounds, PID tags (1M1501, 1M2003, 1E6001, 1M5001),
+    and a cryptographic SHA-256 integrity hash.
+    """
+    recipe_id = designer_payload.get("id", "REC-VPU50-002")
+    name = designer_payload.get("name", "Untitled Recipe")
+    version = str(designer_payload.get("version", "1.0"))
+    status = designer_payload.get("status", "DRAFT")
+
+    ingredients_data = designer_payload.get("ingredients", [])
+    ingredients = [Ingredient.from_dict(ing) for ing in ingredients_data] if ingredients_data else []
+
+    steps_data = designer_payload.get("steps", [])
+    steps: List[RecipeStep] = []
+    total_recipe_sec = 0
+
+    for idx, s_data in enumerate(steps_data):
+        step_id = int(s_data.get("stepId", idx + 1))
+        step_name = s_data.get("name", s_data.get("stepName", f"Step {step_id}"))
+        phase_type = s_data.get("phaseType", "")
+        duration_min = int(s_data.get("durationMin", 0))
+        duration_sec = int(s_data.get("durationSec", 0))
+        total_step_sec = (duration_min * 60) + duration_sec
+        total_recipe_sec += total_step_sec
+
+        guidance = s_data.get("guidanceText", "")
+        category = s_data.get("manualCategory", "")
+
+        operations: List[RecipeOperation] = []
+        require_confirm = False
+        confirm_msg = ""
+
+        if phase_type == "PHASE_HOMOGENIZATION":
+            homo_speed = float(s_data.get("homogenizerSpeed", 2800.0))
+            operations.append(
+                RecipeOperation(
+                    id=f"op_{step_id}_homo",
+                    device=DeviceType.HOMOGENIZER,
+                    action="on",
+                    duration_seconds=total_step_sec,
+                    speed=homo_speed,
+                )
+            )
+            if s_data.get("runAgitatorCoActive", False):
+                co_speed = float(s_data.get("coActiveAgitatorSpeed", 35.0))
+                operations.append(
+                    RecipeOperation(
+                        id=f"op_{step_id}_co_agit",
+                        device=DeviceType.AGITATOR,
+                        action="on",
+                        duration_seconds=total_step_sec,
+                        speed=co_speed,
+                    )
+                )
+        elif phase_type == "PHASE_AGITATION":
+            agit_speed = float(s_data.get("agitatorSpeed", 35.0))
+            operations.append(
+                RecipeOperation(
+                    id=f"op_{step_id}_agit",
+                    device=DeviceType.AGITATOR,
+                    action="on",
+                    duration_seconds=total_step_sec,
+                    speed=agit_speed,
+                )
+            )
+        elif phase_type == "PHASE_THERMAL_CONTROL":
+            target_t = float(s_data.get("targetTemp", 80.0))
+            dev = DeviceType.HEATER if target_t > 45.0 else DeviceType.COOLER
+            operations.append(
+                RecipeOperation(
+                    id=f"op_{step_id}_therm",
+                    device=dev,
+                    action="on",
+                    duration_seconds=total_step_sec,
+                    temperature=target_t,
+                )
+            )
+            agit_speed = float(s_data.get("agitatorSpeed", 25.0))
+            if agit_speed > 0:
+                operations.append(
+                    RecipeOperation(
+                        id=f"op_{step_id}_heat_agit",
+                        device=DeviceType.AGITATOR,
+                        action="on",
+                        duration_seconds=total_step_sec,
+                        speed=agit_speed,
+                    )
+                )
+        elif phase_type in ("PHASE_VACUUM_CONTROL", "PHASE_VACUUM"):
+            vac_level = float(s_data.get("targetVacuum", -450.0))
+            operations.append(
+                RecipeOperation(
+                    id=f"op_{step_id}_vac",
+                    device=DeviceType.VACUUM,
+                    action="on",
+                    duration_seconds=total_step_sec,
+                    stop_condition=StopCondition(type=StopConditionType.MANUAL, value=vac_level),
+                )
+            )
+        elif phase_type == "PHASE_AUTO_TRANSFER":
+            operations.append(
+                RecipeOperation(
+                    id=f"op_{step_id}_fill",
+                    device=DeviceType.FILL_VALVE,
+                    action="on",
+                    duration_seconds=total_step_sec,
+                )
+            )
+        elif phase_type == "PHASE_MANUAL_INTERVENTION":
+            require_confirm = True
+            confirm_msg = guidance or f"Perform {category} and confirm electronically."
+            if "Vacuum" in category or "Suction" in category:
+                vac_level = float(s_data.get("targetVacuum", -450.0))
+                operations.append(
+                    RecipeOperation(
+                        id=f"op_{step_id}_man_vac",
+                        device=DeviceType.VACUUM,
+                        action="on",
+                        duration_seconds=total_step_sec,
+                        stop_condition=StopCondition(type=StopConditionType.MANUAL, value=vac_level),
+                    )
+                )
+        else:
+            if s_data.get("agitatorSpeed", 0) > 0:
+                operations.append(
+                    RecipeOperation(
+                        id=f"op_{step_id}_gen_agit",
+                        device=DeviceType.AGITATOR,
+                        action="on",
+                        duration_seconds=total_step_sec,
+                        speed=float(s_data.get("agitatorSpeed", 30.0)),
+                    )
+                )
+
+        steps.append(
+            RecipeStep(
+                id=step_id,
+                name=step_name,
+                description=guidance,
+                require_confirm=require_confirm,
+                confirm_message=confirm_msg,
+                confirm_timeout=0,
+                operations=operations,
+            )
+        )
+
+    recipe = Recipe(
+        id=recipe_id,
+        name=name,
+        version=version,
+        author=author,
+        approval_status=status,
+        created_at=utc_now(),
+        estimated_duration_sec=total_recipe_sec,
+        batch_size_kg=float(designer_payload.get("batchSizeKg", 100.0)),
+        ingredients=ingredients,
+        steps=steps,
+        sha256_hash="",
+    )
+    recipe.sha256_hash = calculate_recipe_hash(recipe.to_dict())
+    return recipe
 
 
 class RecipeCatalog:
@@ -262,11 +445,16 @@ class RecipeCatalog:
         return list(self.recipes.values())
 
     def save_recipe(self, recipe: Recipe, user_id: str = "incharge") -> None:
+        if not recipe.sha256_hash:
+            recipe.sha256_hash = calculate_recipe_hash(recipe.to_dict())
         self.recipes[recipe.id] = recipe
         try:
-            scada_db.create_recipe(recipe.id, recipe.name, recipe.to_dict(), user_id)
+            scada_db.create_recipe(recipe.id, recipe.name, recipe.to_dict(), user_id, recipe.sha256_hash)
         except Exception:
-            pass
+            try:
+                scada_db.update_recipe(recipe.id, recipe.name, recipe.to_dict(), user_id, recipe.sha256_hash)
+            except Exception:
+                pass
         self.persist_json()
 
     def persist_json(self) -> None:

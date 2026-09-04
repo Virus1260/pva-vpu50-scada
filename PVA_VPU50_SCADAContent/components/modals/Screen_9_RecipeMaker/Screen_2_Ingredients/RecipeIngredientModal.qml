@@ -176,9 +176,10 @@ Rectangle {
                         anchors.rightMargin: 10
                         spacing: 8
 
-                        Text {
-                            text: "🧪"
-                            font.pixelSize: 14
+                        ScadaIcon {
+                            Layout.preferredWidth: 18
+                            Layout.preferredHeight: 18
+                            iconName: "recipes_checklist"
                         }
 
                         TextInput {
@@ -417,9 +418,10 @@ Rectangle {
                         anchors.rightMargin: 10
                         spacing: 8
 
-                        Text {
-                            text: "📝"
-                            font.pixelSize: 13
+                        ScadaIcon {
+                            Layout.preferredWidth: 18
+                            Layout.preferredHeight: 18
+                            iconName: "docs_report"
                         }
 
                         TextInput {
@@ -503,22 +505,13 @@ Rectangle {
                     border.color: "#4ade80"
                     border.width: 1
 
-                    RowLayout {
+                    Text {
                         anchors.centerIn: parent
-                        spacing: 6
-                        Text {
-                            text: ingModalRoot.mode === "DUPLICATE" ? "DUPLICATE ROW" : (ingModalRoot.mode === "EDIT" ? "SAVE CHANGES" : "ADD INGREDIENT")
-                            color: "#ffffff"
-                            font.bold: true
-                            font.pixelSize: 13
-                            font.family: "Segoe UI"
-                        }
-                        Text {
-                            text: "✓"
-                            color: "#ffffff"
-                            font.bold: true
-                            font.pixelSize: 14
-                        }
+                        text: ingModalRoot.mode === "DUPLICATE" ? "DUPLICATE ROW" : (ingModalRoot.mode === "EDIT" ? "SAVE CHANGES" : "ADD INGREDIENT")
+                        color: "#ffffff"
+                        font.bold: true
+                        font.pixelSize: 13
+                        font.family: "Segoe UI"
                     }
 
                     MouseArea {

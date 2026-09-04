@@ -49,9 +49,9 @@ Rectangle {
         // 1. SET MIN COMPARTMENT (Leftmost)
         // =====================================================================
         Rectangle {
-            Layout.preferredWidth: 54
-            Layout.minimumWidth: 46
-            Layout.maximumWidth: 58
+            Layout.preferredWidth: 60
+            Layout.minimumWidth: 54
+            Layout.maximumWidth: 64
             Layout.fillHeight: true
             color: "#0a2e50"
 
@@ -89,9 +89,9 @@ Rectangle {
         // =====================================================================
         Rectangle {
             id: decBtn
-            Layout.preferredWidth: 44
-            Layout.minimumWidth: 44
-            Layout.maximumWidth: 44
+            Layout.preferredWidth: 48
+            Layout.minimumWidth: 48
+            Layout.maximumWidth: 52
             Layout.fillHeight: true
             color: decMouse.pressed ? "#07203a" : (decMouse.containsMouse ? "#185590" : "#124373")
             enabled: speedRoot.enabled && !speedRoot.isLocked
@@ -307,9 +307,9 @@ Rectangle {
         // =====================================================================
         Rectangle {
             id: incBtn
-            Layout.preferredWidth: 44
-            Layout.minimumWidth: 44
-            Layout.maximumWidth: 44
+            Layout.preferredWidth: 48
+            Layout.minimumWidth: 48
+            Layout.maximumWidth: 52
             Layout.fillHeight: true
             color: incMouse.pressed ? "#07203a" : (incMouse.containsMouse ? "#185590" : "#124373")
             enabled: speedRoot.enabled && !speedRoot.isLocked
@@ -350,9 +350,9 @@ Rectangle {
         // 5. SET MAX COMPARTMENT (Rightmost)
         // =====================================================================
         Rectangle {
-            Layout.preferredWidth: 54
-            Layout.minimumWidth: 46
-            Layout.maximumWidth: 58
+            Layout.preferredWidth: 60
+            Layout.minimumWidth: 54
+            Layout.maximumWidth: 64
             Layout.fillHeight: true
             color: "#0a2e50"
 

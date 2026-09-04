@@ -1,761 +1,1241 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import QtQuick.Layouts
+import "../../../common"
+import "../../../design_system"
+import "../../../../theme"
+import "../../../../config"
+import "../../../modals"
+import "../../ScadaKeyboard"
 
 Item {
-    id: timelineDesignerLogicRoot
+    id: timelineLogicRoot
     implicitWidth: 1166
-    implicitHeight: 600
+    implicitHeight: 640
 
     property string recipeId: "REC-VPU50-002"
     property string recipeTitle: "Body Lotion Formulation"
-    property var ingredientsList: []
+    property string recipeStatus: "DRAFT"
+    property string recipeBatchMode: "Fixed (100 kg)"
+    property string recipeVersion: "v1.0"
+    property int selectedIndex: 0
+    property var activeIngredientsList: []
+
+    property string activeModalTarget: ""
+    property var keypadCallback: null
+    property var textKeyboardCallback: null
+
+    function openNumericKeypad(initialVal, title, tag, unit, minV, maxV, callback) {
+        keypadCallback = callback;
+        numpadModal.targetInput = null;
+        numpadModal.title = title || "Parameter Setpoint";
+        numpadModal.targetTag = tag || "";
+        numpadModal.unit = unit || "";
+        numpadModal.minVal = (minV !== undefined && minV !== null) ? minV : null;
+        numpadModal.maxVal = (maxV !== undefined && maxV !== null) ? maxV : null;
+        numpadModal.currentInput = (initialVal !== undefined && initialVal !== null) ? String(initialVal) : "0";
+        numpadModal.validateInput();
+        numpadModal.visible = true;
+        numpadModal.forceActiveFocus();
+    }
+
+    function openTextKeyboard(targetItem, title) {
+        textKeyboard.openFor(targetItem ? targetItem : view.stepNameInput, title ? title : "EDIT STEP TITLE");
+    }
+
+    TextInput {
+        id: guidanceHiddenInput
+        visible: false
+        text: view.inspectorGuidanceText
+        onTextChanged: {
+            if (textKeyboard.visible && textKeyboard.targetInput === guidanceHiddenInput) {
+                view.inspectorGuidanceText = text;
+            }
+        }
+    }
+
+    // Centralized Hardware Definitions & Constraint Catalog
+    HardwareDefinitions {
+        id: hwDefs
+    }
 
     signal backToIngredientsRequested
-    signal openConfigModalRequested(var config)
-    signal openManualModalRequested(var config)
-    signal recipeSaved(var recipePayload)
-    signal recipeSubmittedForReview(var recipePayload)
-    signal nodeRedExportGenerated(string jsonText)
+    signal submitForApprovalRequested(var recipeData)
+    signal recipeSaved(var recipeData)
+    signal launchManualModalRequested(var stepData)
 
-    // Dynamic In-memory data store for operations on each track and phase
-    property var agitatorOps: ({})
-    property var homoOps: ({})
-    property var vacuumOps: ({})
-    property var thermalOps: ({})
-    property var valveOps: ({})
-    property var manualOps: ({})
+    // ISA-88 Sequence Model
+    ListModel {
+        id: timelineModel
 
-    property bool manualHoldEncountered: false
+        ListElement {
+            stepId: 1
+            stepName: "Charge Aqueous Phase A"
+            phaseType: "PHASE_AUTO_TRANSFER"
+            targetUnit: "MAIN_VESSEL_VPU50"
+            linkedPhase: "Phase A"
+            targetTemp: 25.0
+            tempGradient: 12.0
+            thermalMode: "heat_mode_heating"
+            agitatorSpeed: 0.0
+            agitatorMode: "agitator_cw"
+            agitatorCwSec: 30
+            agitatorCcwSec: 30
+            homogenizerSpeed: 0.0
+            homogenizerMode: "homo_permanent"
+            homoPulseOnSec: 30
+            homoPulseOffSec: 10
+            runAgitatorCoActive: false
+            coActiveAgitatorSpeed: 25.0
+            coActiveAgitatorMode: "agitator_cw"
+            targetVacuum: 0.0
+            vacStart: 0.0
+            vacEnd: 0.0
+            vacuumMode: "vac_auto_drawdown"
+            durationMin: 5
+            durationSec: 0
+            manualCategory: "Auto Metering"
+            guidanceText: "Pump Phase A water and glycerin into vessel."
+            colorStrip: "#0284c7"
+            pillParams: "Pump P-101 • 9.2 kg • Phase A"
+        }
 
-    function refreshTracks() {
-        view.agitatorTrack.phaseAClipped = agitatorOps["Phase A"] || null;
-        view.agitatorTrack.phaseBClipped = agitatorOps["Phase B"] || null;
-        view.agitatorTrack.phaseCClipped = agitatorOps["Phase C"] || null;
-        view.agitatorTrack.phaseDClipped = agitatorOps["Phase D"] || null;
-        view.agitatorTrack.phaseEClipped = agitatorOps["Phase E"] || null;
+        ListElement {
+            stepId: 2
+            stepName: "Heat Phase A to Emulsification Temp"
+            phaseType: "PHASE_THERMAL_CONTROL"
+            targetUnit: "MAIN_VESSEL_VPU50"
+            linkedPhase: "Phase A"
+            targetTemp: 82.5
+            tempGradient: 12.0
+            thermalMode: "heat_mode_heating"
+            agitatorSpeed: 25.0
+            agitatorMode: "agitator_cw"
+            agitatorCwSec: 30
+            agitatorCcwSec: 30
+            homogenizerSpeed: 0.0
+            homogenizerMode: "homo_permanent"
+            homoPulseOnSec: 30
+            homoPulseOffSec: 10
+            runAgitatorCoActive: false
+            coActiveAgitatorSpeed: 25.0
+            coActiveAgitatorMode: "agitator_cw"
+            targetVacuum: 0.0
+            vacStart: 0.0
+            vacEnd: 0.0
+            vacuumMode: "vac_auto_drawdown"
+            durationMin: 20
+            durationSec: 0
+            manualCategory: "Thermal Jacket"
+            guidanceText: "Heat vessel jacket to 82.5°C with anchor running."
+            colorStrip: "#ea580c"
+            pillParams: "82.5°C • 25 RPM • Ramp 12.0°C/h"
+        }
 
-        view.homoTrack.phaseAClipped = homoOps["Phase A"] || null;
-        view.homoTrack.phaseBClipped = homoOps["Phase B"] || null;
-        view.homoTrack.phaseCClipped = homoOps["Phase C"] || null;
-        view.homoTrack.phaseDClipped = homoOps["Phase D"] || null;
-        view.homoTrack.phaseEClipped = homoOps["Phase E"] || null;
+        ListElement {
+            stepId: 3
+            stepName: "Manual Vacuum Transfer: Phase B Wax"
+            phaseType: "PHASE_MANUAL_INTERVENTION"
+            targetUnit: "MAIN_VESSEL_VPU50"
+            linkedPhase: "Phase B (Wax Phase)"
+            targetTemp: 82.5
+            tempGradient: 12.0
+            thermalMode: "heat_mode_heating"
+            agitatorSpeed: 15.0
+            agitatorMode: "agitator_cw"
+            agitatorCwSec: 30
+            agitatorCcwSec: 30
+            homogenizerSpeed: 0.0
+            homogenizerMode: "homo_permanent"
+            homoPulseOnSec: 30
+            homoPulseOffSec: 10
+            runAgitatorCoActive: false
+            coActiveAgitatorSpeed: 25.0
+            coActiveAgitatorMode: "agitator_cw"
+            targetVacuum: -450.0
+            vacStart: -400.0
+            vacEnd: -450.0
+            vacuumMode: "vac_manual_hose"
+            durationMin: 8
+            durationSec: 0
+            manualCategory: "Manual Vacuum Suction"
+            guidanceText: "Connect suction hose to Phase B Wax Tank. Open manual valve MV-101. Modulate vacuum to suck 11.5 kg wax."
+            colorStrip: "#d97706"
+            pillParams: "✋ Vacuum -450 mbar • MV-101 • PIN Sign-off"
+        }
 
-        view.vacuumTrack.phaseAClipped = vacuumOps["Phase A"] || null;
-        view.vacuumTrack.phaseBClipped = vacuumOps["Phase B"] || null;
-        view.vacuumTrack.phaseCClipped = vacuumOps["Phase C"] || null;
-        view.vacuumTrack.phaseDClipped = vacuumOps["Phase D"] || null;
-        view.vacuumTrack.phaseEClipped = vacuumOps["Phase E"] || null;
+        ListElement {
+            stepId: 4
+            stepName: "Emulsification & Homogenization"
+            phaseType: "PHASE_HOMOGENIZATION"
+            targetUnit: "MAIN_VESSEL_VPU50"
+            linkedPhase: "Emulsion"
+            targetTemp: 82.0
+            tempGradient: 12.0
+            thermalMode: "heat_mode_heating"
+            agitatorSpeed: 35.0
+            agitatorMode: "agitator_cw"
+            agitatorCwSec: 30
+            agitatorCcwSec: 30
+            homogenizerSpeed: 2800.0
+            homogenizerMode: "homo_permanent"
+            homoPulseOnSec: 30
+            homoPulseOffSec: 10
+            runAgitatorCoActive: true
+            coActiveAgitatorSpeed: 35.0
+            coActiveAgitatorMode: "agitator_cw"
+            targetVacuum: -450.0
+            vacStart: -400.0
+            vacEnd: -450.0
+            vacuumMode: "vac_auto_drawdown"
+            durationMin: 15
+            durationSec: 0
+            manualCategory: "High Shear"
+            guidanceText: "High shear rotor-stator homogenization with seal flush active."
+            colorStrip: "#9333ea"
+            pillParams: "2800 RPM • Anchor 35 RPM • 15 Mins"
+        }
 
-        view.thermalTrack.phaseAClipped = thermalOps["Phase A"] || null;
-        view.thermalTrack.phaseBClipped = thermalOps["Phase B"] || null;
-        view.thermalTrack.phaseCClipped = thermalOps["Phase C"] || null;
-        view.thermalTrack.phaseDClipped = thermalOps["Phase D"] || null;
-        view.thermalTrack.phaseEClipped = thermalOps["Phase E"] || null;
+        ListElement {
+            stepId: 5
+            stepName: "Cooling to Phase C Addition Temp"
+            phaseType: "PHASE_THERMAL_CONTROL"
+            targetUnit: "MAIN_VESSEL_VPU50"
+            linkedPhase: "Cooling"
+            targetTemp: 55.0
+            tempGradient: 15.0
+            thermalMode: "heat_mode_cooling"
+            agitatorSpeed: 30.0
+            agitatorMode: "agitator_cw"
+            agitatorCwSec: 30
+            agitatorCcwSec: 30
+            homogenizerSpeed: 0.0
+            homogenizerMode: "homo_permanent"
+            homoPulseOnSec: 30
+            homoPulseOffSec: 10
+            runAgitatorCoActive: false
+            coActiveAgitatorSpeed: 25.0
+            coActiveAgitatorMode: "agitator_cw"
+            targetVacuum: 0.0
+            vacStart: 0.0
+            vacEnd: 0.0
+            vacuumMode: "vac_auto_drawdown"
+            durationMin: 25
+            durationSec: 0
+            manualCategory: "Cooling Jacket"
+            guidanceText: "Circulate cooling tower water to drop temperature to 55°C."
+            colorStrip: "#075985"
+            pillParams: "55.0°C • 30 RPM • Cooling Tower"
+        }
+    }
 
-        view.valveTrack.phaseAClipped = valveOps["Phase A"] || null;
-        view.valveTrack.phaseBClipped = valveOps["Phase B"] || null;
-        view.valveTrack.phaseCClipped = valveOps["Phase C"] || null;
-        view.valveTrack.phaseDClipped = valveOps["Phase D"] || null;
-        view.valveTrack.phaseEClipped = valveOps["Phase E"] || null;
+    // Embed Declarative UI View
+    RecipeTimelineDesignerView {
+        id: view
+        objectName: "view"
+        anchors.fill: parent
 
-        view.manualTrack.phaseAClipped = manualOps["Phase A"] || null;
-        view.manualTrack.phaseBClipped = manualOps["Phase B"] || null;
-        view.manualTrack.phaseCClipped = manualOps["Phase C"] || null;
-        view.manualTrack.phaseDClipped = manualOps["Phase D"] || null;
-        view.manualTrack.phaseEClipped = manualOps["Phase E"] || null;
+        recipeId: timelineLogicRoot.recipeId
+        recipeTitle: timelineLogicRoot.recipeTitle
+        recipeStatus: timelineLogicRoot.recipeStatus
+        recipeBatchMode: timelineLogicRoot.recipeBatchMode
+        recipeVersion: timelineLogicRoot.recipeVersion
+        selectedStepIndex: timelineLogicRoot.selectedIndex
+        totalStepsCount: timelineModel.count
+
+        sequenceListView.model: timelineModel
+        sequenceListView.delegate: Component {
+            id: stepCardDelegate
+
+            Rectangle {
+                id: cardItem
+                required property int index
+                required property int stepId
+                required property string stepName
+                required property string phaseType
+                required property string linkedPhase
+                required property real targetTemp
+                required property real agitatorSpeed
+                required property real homogenizerSpeed
+                required property real targetVacuum
+                required property int durationMin
+                required property string manualCategory
+                required property string guidanceText
+                required property string colorStrip
+                required property string pillParams
+
+                width: ListView.view.width
+                height: 68
+                radius: 6
+                color: timelineLogicRoot.selectedIndex === index ? "#0f365e" : "#092442"
+                border.color: timelineLogicRoot.selectedIndex === index ? "#38bdf8" : "#1d5b94"
+                border.width: timelineLogicRoot.selectedIndex === index ? 2 : 1
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    spacing: 8
+
+                    // Left Phase Color Stripe
+                    Rectangle {
+                        Layout.preferredWidth: 6
+                        Layout.fillHeight: true
+                        radius: 3
+                        color: cardItem.colorStrip
+                    }
+
+                    // Monospace Step Index
+                    Rectangle {
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 32
+                        radius: 4
+                        color: "#081d33"
+                        border.color: cardItem.colorStrip
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "STEP " + String(cardItem.index + 1).padStart(2, '0')
+                            color: "#ffffff"
+                            font.bold: true
+                            font.pixelSize: 11
+                            font.family: "Consolas"
+                        }
+                    }
+
+                    // Step Name & Pill Params
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            Text {
+                                text: cardItem.stepName
+                                color: "#ffffff"
+                                font.bold: true
+                                font.pixelSize: 12
+                                font.family: "Segoe UI"
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+
+                            TouchBadge {
+                                text: cardItem.phaseType.replace("PHASE_", "")
+                                badgeColor: cardItem.colorStrip
+                                isMonospace: true
+                                horizontalPadding: 6
+                                implicitHeight: 22
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
+
+                        Text {
+                            text: cardItem.pillParams
+                            color: "#38bdf8"
+                            font.pixelSize: 11
+                            font.family: "Segoe UI"
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    // In-Card Reordering & Action Controls
+                    RowLayout {
+                        spacing: 4
+
+                        // Move Up
+                        Rectangle {
+                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
+                            color: "#1e293b"; border.color: "#334155"; border.width: 1
+                            Text { anchors.centerIn: parent; text: "↑"; color: "#ffffff"; font.bold: true; font.pixelSize: 12 }
+                            MouseArea {
+                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                onClicked: timelineLogicRoot.moveStepUp(cardItem.index)
+                            }
+                        }
+
+                        // Move Down
+                        Rectangle {
+                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
+                            color: "#1e293b"; border.color: "#334155"; border.width: 1
+                            Text { anchors.centerIn: parent; text: "↓"; color: "#ffffff"; font.bold: true; font.pixelSize: 12 }
+                            MouseArea {
+                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                onClicked: timelineLogicRoot.moveStepDown(cardItem.index)
+                            }
+                        }
+
+                        // Duplicate
+                        Rectangle {
+                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
+                            color: "#1e293b"; border.color: "#334155"; border.width: 1
+                            Text { anchors.centerIn: parent; text: "⎘"; color: "#38bdf8"; font.bold: true; font.pixelSize: 13 }
+                            MouseArea {
+                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                onClicked: timelineLogicRoot.duplicateStep(cardItem.index)
+                            }
+                        }
+
+                        // Delete
+                        Rectangle {
+                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
+                            color: "#450a0a"; border.color: "#ef4444"; border.width: 1
+                            Text { anchors.centerIn: parent; text: "✕"; color: "#fca5a5"; font.bold: true; font.pixelSize: 12 }
+                            MouseArea {
+                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                onClicked: timelineLogicRoot.removeStep(cardItem.index)
+                            }
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    z: -1
+                    onClicked: {
+                        timelineLogicRoot.selectStep(cardItem.index);
+                    }
+                }
+            }
+        }
+    }
+
+    // =========================================================================
+    // MODAL DIALOG: SHARED SUBSYSTEM RUN MODE SELECTOR
+    // =========================================================================
+    SubsystemModeSelectorModal {
+        id: modeModal
+        objectName: "modeModal"
+        anchors.fill: parent
+        visible: false
+
+        onModeSelected: function(modeId) {
+            if (timelineLogicRoot.activeModalTarget === "agitator") {
+                view.inspectorAgitatorMode = modeId;
+                var aDef = hwDefs.getAgitatorMode(modeId);
+                view.inspectorAgitatorModeTitle = aDef.title;
+                view.inspectorAgitatorModeSubtitle = aDef.subtitle;
+            } else if (timelineLogicRoot.activeModalTarget === "homogenizer") {
+                view.inspectorHomogenizerMode = modeId;
+                var hDef = hwDefs.getHomogenizerMode(modeId);
+                view.inspectorHomogenizerModeTitle = hDef.title;
+                view.inspectorHomogenizerModeSubtitle = hDef.subtitle;
+            } else if (timelineLogicRoot.activeModalTarget === "jacket") {
+                view.inspectorThermalMode = modeId;
+                var jDef = hwDefs.getJacketMode(modeId);
+                view.inspectorThermalModeTitle = jDef.title;
+                view.inspectorThermalModeSubtitle = jDef.subtitle;
+            } else if (timelineLogicRoot.activeModalTarget === "vacuum") {
+                view.inspectorVacuumMode = modeId;
+                var vDef = hwDefs.getVacuumMode(modeId);
+                view.inspectorVacuumModeTitle = vDef.title;
+                view.inspectorVacuumModeSubtitle = vDef.subtitle;
+            } else if (timelineLogicRoot.activeModalTarget === "coActiveAgitator") {
+                view.inspectorCoActiveAgitatorMode = modeId;
+            }
+        }
+
+        onClosed: {
+            modeModal.visible = false;
+        }
+    }
+
+    function openSubsystemModeModal(target) {
+        timelineLogicRoot.activeModalTarget = target;
+        if (target === "agitator") {
+            modeModal.title = "SELECT AGITATOR ROTATION MODE";
+            modeModal.modeList = hwDefs.agitator.modes;
+            modeModal.selectedModeId = view.inspectorAgitatorMode;
+        } else if (target === "homogenizer") {
+            modeModal.title = "SELECT HOMOGENIZER RUN MODE";
+            modeModal.modeList = hwDefs.homogenizer.modes;
+            modeModal.selectedModeId = view.inspectorHomogenizerMode;
+        } else if (target === "coActiveAgitator") {
+            modeModal.title = "SELECT CO-ACTIVE AGITATOR MODE";
+            modeModal.modeList = hwDefs.agitator.modes;
+            modeModal.selectedModeId = view.inspectorCoActiveAgitatorMode;
+        } else if (target === "jacket") {
+            modeModal.title = "SELECT THERMAL CONTROL MODE";
+            modeModal.modeList = hwDefs.jacket.modes;
+            modeModal.selectedModeId = view.inspectorThermalMode;
+        } else if (target === "vacuum") {
+            modeModal.title = "SELECT VACUUM SYSTEM MODE";
+            modeModal.modeList = hwDefs.vacuum.modes;
+            modeModal.selectedModeId = view.inspectorVacuumMode;
+        }
+        modeModal.visible = true;
+    }
+
+    // =========================================================================
+    // STEP SELECTION & INSPECTOR SYNCHRONIZATION
+    // =========================================================================
+    function selectStep(idx) {
+        if (idx >= 0 && idx < timelineModel.count) {
+            timelineLogicRoot.selectedIndex = idx;
+            var item = timelineModel.get(idx);
+            view.inspectorStepName = item.stepName || "";
+            view.inspectorPhaseType = item.phaseType || "PHASE_HOMOGENIZATION";
+            view.inspectorPhaseTypeDisplay = (item.phaseType || "PHASE_HOMOGENIZATION").replace("PHASE_", "");
+            view.inspectorTargetUnit = item.targetUnit || "MAIN_VESSEL_VPU50";
+            view.inspectorLinkedPhase = item.linkedPhase || "";
+
+            // Agitator
+            view.inspectorAgitatorSpeed = (item.agitatorSpeed !== undefined) ? item.agitatorSpeed : 25.0;
+            view.inspectorAgitatorMode = item.agitatorMode || "agitator_cw";
+            var agitDef = hwDefs.getAgitatorMode(view.inspectorAgitatorMode);
+            view.inspectorAgitatorModeTitle = agitDef.title;
+            view.inspectorAgitatorModeSubtitle = agitDef.subtitle;
+            view.inspectorAgitatorCwSec = item.agitatorCwSec || 30;
+            view.inspectorAgitatorCcwSec = item.agitatorCcwSec || 30;
+
+            // Homogenizer
+            view.inspectorHomogenizerSpeed = (item.homogenizerSpeed !== undefined) ? item.homogenizerSpeed : 2800.0;
+            view.inspectorHomogenizerMode = item.homogenizerMode || "homo_permanent";
+            var homoDef = hwDefs.getHomogenizerMode(view.inspectorHomogenizerMode);
+            view.inspectorHomogenizerModeTitle = homoDef.title;
+            view.inspectorHomogenizerModeSubtitle = homoDef.subtitle;
+            view.inspectorHomoPulseOnSec = item.homoPulseOnSec || 30;
+            view.inspectorHomoPulseOffSec = item.homoPulseOffSec || 10;
+            view.inspectorRunAgitatorCoActive = (item.runAgitatorCoActive !== undefined) ? item.runAgitatorCoActive : true;
+            view.inspectorCoActiveAgitatorSpeed = (item.coActiveAgitatorSpeed !== undefined) ? item.coActiveAgitatorSpeed : 35.0;
+            view.inspectorCoActiveAgitatorMode = item.coActiveAgitatorMode || "agitator_cw";
+
+            // Thermal
+            view.inspectorTargetTemp = (item.targetTemp !== undefined) ? item.targetTemp : 82.5;
+            view.inspectorTempGradient = (item.tempGradient !== undefined) ? item.tempGradient : 12.0;
+            view.inspectorThermalMode = item.thermalMode || "heat_mode_heating";
+            var thermDef = hwDefs.getJacketMode(view.inspectorThermalMode);
+            view.inspectorThermalModeTitle = thermDef.title;
+            view.inspectorThermalModeSubtitle = thermDef.subtitle;
+
+            // Vacuum
+            view.inspectorTargetVacuum = (item.targetVacuum !== undefined) ? item.targetVacuum : -450.0;
+            view.inspectorVacStart = (item.vacStart !== undefined) ? item.vacStart : -400.0;
+            view.inspectorVacEnd = (item.vacEnd !== undefined) ? item.vacEnd : -450.0;
+            view.inspectorVacuumMode = item.vacuumMode || "vac_auto_drawdown";
+            var vacDef = hwDefs.getVacuumMode(view.inspectorVacuumMode);
+            view.inspectorVacuumModeTitle = vacDef.title;
+            view.inspectorVacuumModeSubtitle = vacDef.subtitle;
+
+            // Duration & Guidance
+            view.inspectorDurationMin = item.durationMin || 15;
+            view.inspectorDurationSec = item.durationSec || 0;
+            view.inspectorManualCategory = item.manualCategory || "Manual Action";
+            view.inspectorGuidanceText = item.guidanceText || "";
+        }
+    }
+
+    // =========================================================================
+    // APPLY PARAMETERS TO ACTIVE STEP
+    // =========================================================================
+    function applyParametersToActiveStep() {
+        if (timelineLogicRoot.selectedIndex >= 0 && timelineLogicRoot.selectedIndex < timelineModel.count) {
+            var idx = timelineLogicRoot.selectedIndex;
+            var newName = view.stepNameInput.text.trim() || view.inspectorStepName;
+
+            // Build dynamic pill params
+            var pills = "";
+            if (view.inspectorPhaseType === "PHASE_HOMOGENIZATION") {
+                pills = Math.round(view.inspectorHomogenizerSpeed) + " RPM • " +
+                        (view.inspectorRunAgitatorCoActive ? ("Anchor " + Math.round(view.inspectorCoActiveAgitatorSpeed) + " RPM • ") : "") +
+                        view.inspectorDurationMin + " Mins";
+            } else if (view.inspectorPhaseType === "PHASE_AGITATION") {
+                pills = "Anchor " + Math.round(view.inspectorAgitatorSpeed) + " RPM • " + view.inspectorAgitatorModeTitle + " • " + view.inspectorDurationMin + " Mins";
+            } else if (view.inspectorPhaseType === "PHASE_THERMAL_CONTROL") {
+                pills = view.inspectorTargetTemp.toFixed(1) + "°C • Ramp " + view.inspectorTempGradient.toFixed(1) + "°C/h • " + view.inspectorDurationMin + " Mins";
+            } else if (view.inspectorPhaseType === "PHASE_VACUUM_CONTROL" || view.inspectorPhaseType === "PHASE_VACUUM") {
+                pills = "Vacuum " + Math.round(view.inspectorVacEnd) + " mbar • " + view.inspectorDurationMin + " Mins";
+            } else if (view.inspectorPhaseType === "PHASE_MANUAL_INTERVENTION") {
+                pills = "✋ " + view.inspectorManualCategory + " • " + view.inspectorLinkedPhase;
+            } else {
+                pills = newName + " • " + view.inspectorDurationMin + " Mins";
+            }
+
+            timelineModel.setProperty(idx, "stepName", newName);
+            timelineModel.setProperty(idx, "targetTemp", view.inspectorTargetTemp);
+            timelineModel.setProperty(idx, "tempGradient", view.inspectorTempGradient);
+            timelineModel.setProperty(idx, "thermalMode", view.inspectorThermalMode);
+            timelineModel.setProperty(idx, "agitatorSpeed", view.inspectorAgitatorSpeed);
+            timelineModel.setProperty(idx, "agitatorMode", view.inspectorAgitatorMode);
+            timelineModel.setProperty(idx, "agitatorCwSec", view.inspectorAgitatorCwSec);
+            timelineModel.setProperty(idx, "agitatorCcwSec", view.inspectorAgitatorCcwSec);
+            timelineModel.setProperty(idx, "homogenizerSpeed", view.inspectorHomogenizerSpeed);
+            timelineModel.setProperty(idx, "homogenizerMode", view.inspectorHomogenizerMode);
+            timelineModel.setProperty(idx, "homoPulseOnSec", view.inspectorHomoPulseOnSec);
+            timelineModel.setProperty(idx, "homoPulseOffSec", view.inspectorHomoPulseOffSec);
+            timelineModel.setProperty(idx, "runAgitatorCoActive", view.inspectorRunAgitatorCoActive);
+            timelineModel.setProperty(idx, "coActiveAgitatorSpeed", view.inspectorCoActiveAgitatorSpeed);
+            timelineModel.setProperty(idx, "coActiveAgitatorMode", view.inspectorCoActiveAgitatorMode);
+            timelineModel.setProperty(idx, "targetVacuum", view.inspectorTargetVacuum);
+            timelineModel.setProperty(idx, "vacStart", view.inspectorVacStart);
+            timelineModel.setProperty(idx, "vacEnd", view.inspectorVacEnd);
+            timelineModel.setProperty(idx, "vacuumMode", view.inspectorVacuumMode);
+            timelineModel.setProperty(idx, "durationMin", view.inspectorDurationMin);
+            timelineModel.setProperty(idx, "durationSec", view.inspectorDurationSec);
+            timelineModel.setProperty(idx, "guidanceText", view.inspectorGuidanceText);
+            timelineModel.setProperty(idx, "pillParams", pills);
+
+            runPreFlightCompiler();
+        }
+    }
+
+    // =========================================================================
+    // STEP MANIPULATION: INSERT, MOVE, DUPLICATE, DELETE
+    // =========================================================================
+    function moveStepUp(idx) {
+        if (idx > 0) {
+            timelineModel.move(idx, idx - 1, 1);
+            timelineLogicRoot.selectedIndex = idx - 1;
+            runPreFlightCompiler();
+        }
+    }
+
+    function moveStepDown(idx) {
+        if (idx >= 0 && idx < timelineModel.count - 1) {
+            timelineModel.move(idx, idx + 1, 1);
+            timelineLogicRoot.selectedIndex = idx + 1;
+            runPreFlightCompiler();
+        }
+    }
+
+    function duplicateStep(idx) {
+        if (idx >= 0 && idx < timelineModel.count) {
+            var orig = timelineModel.get(idx);
+            timelineModel.insert(idx + 1, {
+                stepId: timelineModel.count + 1,
+                stepName: orig.stepName + " (Copy)",
+                phaseType: orig.phaseType,
+                targetUnit: orig.targetUnit,
+                linkedPhase: orig.linkedPhase,
+                targetTemp: orig.targetTemp,
+                tempGradient: orig.tempGradient,
+                thermalMode: orig.thermalMode,
+                agitatorSpeed: orig.agitatorSpeed,
+                agitatorMode: orig.agitatorMode,
+                agitatorCwSec: orig.agitatorCwSec,
+                agitatorCcwSec: orig.agitatorCcwSec,
+                homogenizerSpeed: orig.homogenizerSpeed,
+                homogenizerMode: orig.homogenizerMode,
+                homoPulseOnSec: orig.homoPulseOnSec,
+                homoPulseOffSec: orig.homoPulseOffSec,
+                runAgitatorCoActive: orig.runAgitatorCoActive,
+                coActiveAgitatorSpeed: orig.coActiveAgitatorSpeed,
+                coActiveAgitatorMode: orig.coActiveAgitatorMode,
+                targetVacuum: orig.targetVacuum,
+                vacStart: orig.vacStart,
+                vacEnd: orig.vacEnd,
+                vacuumMode: orig.vacuumMode,
+                durationMin: orig.durationMin,
+                durationSec: orig.durationSec,
+                manualCategory: orig.manualCategory,
+                guidanceText: orig.guidanceText,
+                colorStrip: orig.colorStrip,
+                pillParams: orig.pillParams
+            });
+            timelineLogicRoot.selectedIndex = idx + 1;
+            runPreFlightCompiler();
+        }
+    }
+
+    function removeStep(idx) {
+        if (timelineModel.count > 1 && idx >= 0 && idx < timelineModel.count) {
+            timelineModel.remove(idx);
+            if (timelineLogicRoot.selectedIndex >= timelineModel.count) {
+                timelineLogicRoot.selectedIndex = timelineModel.count - 1;
+            }
+            selectStep(timelineLogicRoot.selectedIndex);
+            runPreFlightCompiler();
+        }
+    }
+
+    function insertPhase(phaseType, name, color, pills, defTemp, defAgit, defHom, defVac, defMin, defCat, defGuide) {
+        timelineModel.append({
+            stepId: timelineModel.count + 1,
+            stepName: name,
+            phaseType: phaseType,
+            targetUnit: "MAIN_VESSEL_VPU50",
+            linkedPhase: "Phase " + String.fromCharCode(65 + Math.min(timelineModel.count, 4)),
+            targetTemp: defTemp,
+            tempGradient: 12.0,
+            thermalMode: defTemp > 45.0 ? "heat_mode_heating" : "heat_mode_cooling",
+            agitatorSpeed: defAgit,
+            agitatorMode: "agitator_cw",
+            agitatorCwSec: 30,
+            agitatorCcwSec: 30,
+            homogenizerSpeed: defHom,
+            homogenizerMode: "homo_permanent",
+            homoPulseOnSec: 30,
+            homoPulseOffSec: 10,
+            runAgitatorCoActive: defHom > 0,
+            coActiveAgitatorSpeed: 35.0,
+            coActiveAgitatorMode: "agitator_cw",
+            targetVacuum: defVac,
+            vacStart: defVac < 0 ? -400.0 : 0.0,
+            vacEnd: defVac,
+            vacuumMode: defVac < 0 ? "vac_auto_drawdown" : "vac_vent_atm",
+            durationMin: defMin,
+            durationSec: 0,
+            manualCategory: defCat,
+            guidanceText: defGuide,
+            colorStrip: color,
+            pillParams: pills
+        });
+        timelineLogicRoot.selectedIndex = timelineModel.count - 1;
+        selectStep(timelineLogicRoot.selectedIndex);
+        runPreFlightCompiler();
+    }
+
+    // =========================================================================
+    // PRE-FLIGHT COMPILER / GUARDRAIL ENGINE (ISA-88 & MACHINE INTEGRITY)
+    // =========================================================================
+    function runPreFlightCompiler() {
+        var hasHeatingWithoutAgitation = false;
+        var hasHomogenizerDry = false;
+        var hasLiquidChargeBeforeHomogenizer = false;
+        var stepCount = timelineModel.count;
+
+        for (var i = 0; i < stepCount; i++) {
+            var st = timelineModel.get(i);
+
+            // Track liquid charge
+            if (st.phaseType === "PHASE_AUTO_TRANSFER" || (st.phaseType === "PHASE_MANUAL_INTERVENTION" && st.manualCategory.indexOf("Suction") !== -1)) {
+                hasLiquidChargeBeforeHomogenizer = true;
+            }
+
+            // Guardrail 1: Heating requires Agitator >= 15 RPM
+            if (st.phaseType === "PHASE_THERMAL_CONTROL" && st.targetTemp > 45.0 && st.agitatorSpeed < 15.0) {
+                hasHeatingWithoutAgitation = true;
+            }
+
+            // Guardrail 2: Homogenizer > 2000 RPM requires prior liquid charge
+            if (st.phaseType === "PHASE_HOMOGENIZATION" && st.homogenizerSpeed > 2000.0 && !hasLiquidChargeBeforeHomogenizer) {
+                hasHomogenizerDry = true;
+            }
+        }
+
+        if (hasHeatingWithoutAgitation) {
+            view.validationPassed = false;
+            view.validationStatusText = "⚠ Pre-Flight Warning: Wall Charring Risk";
+            view.validationDetails = "Heating block requires Agitator speed ≥ 15 RPM to prevent product burn onto vessel walls.";
+            return false;
+        } else if (hasHomogenizerDry) {
+            view.validationPassed = false;
+            view.validationStatusText = "⚠ Pre-Flight Warning: Seal Burn Risk";
+            view.validationDetails = "Homogenizer set > 2000 RPM before liquid addition. Mechanical seal dry run detected.";
+            return false;
+        } else {
+            view.validationPassed = true;
+            view.validationStatusText = "✓ Pre-Flight Checklist: " + stepCount + "/" + stepCount + " Guardrails Valid";
+            view.validationDetails = "All ISA-88 phases reconciled. Thermal shock and mechanical seal interlocks verified.";
+            return true;
+        }
+    }
+
+    // =========================================================================
+    // EXTERNAL RECIPE LOADING (CALLED FROM STAGE 2 TRANSITION)
+    // =========================================================================
+    function loadRecipe(recipe, ingredients) {
+        if (recipe) {
+            timelineLogicRoot.recipeId = recipe.recipeId || "REC-VPU50-002";
+            timelineLogicRoot.recipeTitle = recipe.title || "Body Lotion Formulation";
+            timelineLogicRoot.recipeStatus = recipe.status || "DRAFT";
+            timelineLogicRoot.recipeBatchMode = (recipe.qtyType || "Fixed") + " (" + (recipe.batchSizeKg || 100) + " kg)";
+            timelineLogicRoot.recipeVersion = "v" + (recipe.version || "1.0");
+        }
+        if (ingredients && ingredients.length > 0) {
+            timelineLogicRoot.activeIngredientsList = ingredients;
+        }
+        selectStep(0);
+        runPreFlightCompiler();
+    }
+
+    // =========================================================================
+    // STEPPER CONNECTIONS & NUMERIC KEYPAD INTEGRATION
+    // =========================================================================
+    Connections {
+        target: view.agitatorStepper
+        function onValueModified(newVal) {
+            view.inspectorAgitatorSpeed = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.agitatorStepper.applyValue(val);
+                view.inspectorAgitatorSpeed = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.homoStepper
+        function onValueModified(newVal) {
+            view.inspectorHomogenizerSpeed = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.homoStepper.applyValue(val);
+                view.inspectorHomogenizerSpeed = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.coActiveAgitatorStepper
+        function onValueModified(newVal) {
+            view.inspectorCoActiveAgitatorSpeed = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.coActiveAgitatorStepper.applyValue(val);
+                view.inspectorCoActiveAgitatorSpeed = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.tempStepper
+        function onValueModified(newVal) {
+            view.inspectorTargetTemp = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.tempStepper.applyValue(val);
+                view.inspectorTargetTemp = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.rampStepper
+        function onValueModified(newVal) {
+            view.inspectorTempGradient = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.rampStepper.applyValue(val);
+                view.inspectorTempGradient = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.vacStartStepper
+        function onValueModified(newVal) {
+            view.inspectorVacStart = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.vacStartStepper.applyValue(val);
+                view.inspectorVacStart = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.vacEndStepper
+        function onValueModified(newVal) {
+            view.inspectorVacEnd = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.vacEndStepper.applyValue(val);
+                view.inspectorVacEnd = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.manualVacStepper
+        function onValueModified(newVal) {
+            view.inspectorTargetVacuum = newVal;
+        }
+        function onSetpointRequested(title, tag, current, min, max, unit) {
+            timelineLogicRoot.openNumericKeypad(current, title, tag, unit, min, max, function(val) {
+                view.manualVacStepper.applyValue(val);
+                view.inspectorTargetVacuum = val;
+            });
+        }
+    }
+
+    Connections {
+        target: view.coActiveToggleMouse
+        function onClicked() {
+            view.inspectorRunAgitatorCoActive = !view.inspectorRunAgitatorCoActive;
+        }
+    }
+
+    Connections {
+        target: view.durationMinMouse
+        function onClicked() {
+            timelineLogicRoot.openNumericKeypad(view.inspectorDurationMin, "Step Duration Minutes", "DURATION", "min", 0, 999, function(val) {
+                view.inspectorDurationMin = Math.round(val);
+            });
+        }
+    }
+
+    Connections {
+        target: view.durationSecMouse
+        function onClicked() {
+            timelineLogicRoot.openNumericKeypad(view.inspectorDurationSec, "Step Duration Seconds", "DURATION", "sec", 0, 59, function(val) {
+                view.inspectorDurationSec = Math.round(val);
+            });
+        }
+    }
+
+    Connections {
+        target: view.pulseOnMouse
+        function onClicked() {
+            timelineLogicRoot.openNumericKeypad(view.inspectorHomoPulseOnSec, "Pulse ON Duration", "PULSE-ON", "sec", 1, 300, function(val) {
+                view.inspectorHomoPulseOnSec = Math.round(val);
+            });
+        }
+    }
+
+    Connections {
+        target: view.pulseOffMouse
+        function onClicked() {
+            timelineLogicRoot.openNumericKeypad(view.inspectorHomoPulseOffSec, "Pulse OFF Duration", "PULSE-OFF", "sec", 1, 300, function(val) {
+                view.inspectorHomoPulseOffSec = Math.round(val);
+            });
+        }
+    }
+
+    Connections {
+        target: view.stepNameKeyboardMouse
+        function onClicked() {
+            textKeyboard.openFor(view.stepNameInput, "EDIT STEP TITLE");
+        }
+    }
+
+    Connections {
+        target: view.guidanceKeyboardMouse
+        function onClicked() {
+            guidanceHiddenInput.text = view.inspectorGuidanceText;
+            timelineLogicRoot.textKeyboardCallback = function(val) {
+                view.inspectorGuidanceText = val;
+            };
+            textKeyboard.openFor(guidanceHiddenInput, "EDIT GUIDANCE INSTRUCTIONS");
+        }
+    }
+
+    // =========================================================================
+    // SUBSYSTEM MODE BUTTON TRIGGER CONNECTIONS
+    // =========================================================================
+    Connections {
+        target: view.agitatorModeBtn
+        function onClicked() {
+            timelineLogicRoot.openSubsystemModeModal("agitator");
+        }
+    }
+
+    Connections {
+        target: view.homoModeBtn
+        function onClicked() {
+            timelineLogicRoot.openSubsystemModeModal("homogenizer");
+        }
+    }
+
+    Connections {
+        target: view.coActiveAgitatorModeBtn
+        function onClicked() {
+            timelineLogicRoot.openSubsystemModeModal("coActiveAgitator");
+        }
+    }
+
+    Connections {
+        target: view.thermalModeBtn
+        function onClicked() {
+            timelineLogicRoot.openSubsystemModeModal("jacket");
+        }
+    }
+
+    Connections {
+        target: view.vacModeBtn
+        function onClicked() {
+            timelineLogicRoot.openSubsystemModeModal("vacuum");
+        }
+    }
+
+    // Apply Parameters button
+    Connections {
+        target: view.applyInspectorMouse
+        function onClicked() {
+            timelineLogicRoot.applyParametersToActiveStep();
+        }
+    }
+
+    // =========================================================================
+    // CONNECT VIEW ACTIONS
+    // =========================================================================
+    Connections {
+        target: view.backToIngredientsMouse
+        function onClicked() {
+            timelineLogicRoot.backToIngredientsRequested();
+        }
+    }
+
+    function serializeTimelineToJson() {
+        var stepsList = [];
+        for (var i = 0; i < timelineModel.count; i++) {
+            var s = timelineModel.get(i);
+            stepsList.push({
+                stepId: s.stepId || (i + 1),
+                stepName: s.stepName,
+                phaseType: s.phaseType,
+                targetUnit: s.targetUnit || "MAIN_VESSEL_VPU50",
+                linkedPhase: s.linkedPhase || "",
+                targetTemp: s.targetTemp,
+                tempGradient: s.tempGradient,
+                thermalMode: s.thermalMode,
+                agitatorSpeed: s.agitatorSpeed,
+                agitatorMode: s.agitatorMode,
+                agitatorCwSec: s.agitatorCwSec,
+                agitatorCcwSec: s.agitatorCcwSec,
+                homogenizerSpeed: s.homogenizerSpeed,
+                homogenizerMode: s.homogenizerMode,
+                homoPulseOnSec: s.homoPulseOnSec,
+                homoPulseOffSec: s.homoPulseOffSec,
+                runAgitatorCoActive: s.runAgitatorCoActive,
+                coActiveAgitatorSpeed: s.coActiveAgitatorSpeed,
+                coActiveAgitatorMode: s.coActiveAgitatorMode,
+                targetVacuum: s.targetVacuum,
+                vacStart: s.vacStart,
+                vacEnd: s.vacEnd,
+                vacuumMode: s.vacuumMode,
+                durationMin: s.durationMin,
+                durationSec: s.durationSec,
+                manualCategory: s.manualCategory,
+                guidanceText: s.guidanceText,
+                colorStrip: s.colorStrip,
+                pillParams: s.pillParams
+            });
+        }
+        return JSON.stringify({
+            id: timelineLogicRoot.recipeId,
+            name: timelineLogicRoot.recipeTitle,
+            version: timelineLogicRoot.recipeVersion,
+            status: timelineLogicRoot.recipeStatus,
+            batchMode: timelineLogicRoot.recipeBatchMode,
+            ingredients: timelineLogicRoot.activeIngredientsList,
+            steps: stepsList
+        });
+    }
+
+    Connections {
+        target: view.saveDraftMouse
+        function onClicked() {
+            var payload = serializeTimelineToJson();
+            if (typeof Scada !== "undefined" && Scada.saveRecipeFromDesigner) {
+                var res = JSON.parse(Scada.saveRecipeFromDesigner(timelineLogicRoot.recipeId, timelineLogicRoot.recipeTitle, payload, "DRAFT"));
+                if (res.sha256) {
+                    view.validationStatusText = "✓ Draft Saved (SHA-256: " + res.sha256.substring(0, 8) + "...)";
+                }
+            }
+            timelineLogicRoot.recipeSaved({
+                recipeId: timelineLogicRoot.recipeId,
+                title: timelineLogicRoot.recipeTitle,
+                status: "DRAFT",
+                stepsCount: timelineModel.count
+            });
+        }
+    }
+
+    Connections {
+        target: view.validateMouse
+        function onClicked() {
+            timelineLogicRoot.runPreFlightCompiler();
+        }
+    }
+
+    Connections {
+        target: view.submitReviewMouse
+        function onClicked() {
+            if (timelineLogicRoot.runPreFlightCompiler()) {
+                timelineLogicRoot.recipeStatus = "UNDER REVIEW";
+                var payload = serializeTimelineToJson();
+                if (typeof Scada !== "undefined" && Scada.saveRecipeFromDesigner) {
+                    var res = JSON.parse(Scada.saveRecipeFromDesigner(timelineLogicRoot.recipeId, timelineLogicRoot.recipeTitle, payload, "UNDER REVIEW"));
+                    if (res.sha256) {
+                        view.validationStatusText = "✓ Submitted for QA (SHA-256: " + res.sha256.substring(0, 8) + "...)";
+                    }
+                }
+                timelineLogicRoot.submitForApprovalRequested({
+                    recipeId: timelineLogicRoot.recipeId,
+                    title: timelineLogicRoot.recipeTitle,
+                    status: "UNDER REVIEW",
+                    stepsCount: timelineModel.count
+                });
+            }
+        }
+    }
+
+    Connections {
+        target: view.moveUpMouse
+        function onClicked() {
+            timelineLogicRoot.moveStepUp(timelineLogicRoot.selectedIndex);
+        }
+    }
+
+    Connections {
+        target: view.moveDownMouse
+        function onClicked() {
+            timelineLogicRoot.moveStepDown(timelineLogicRoot.selectedIndex);
+        }
+    }
+
+    Connections {
+        target: view.deleteStepMouse
+        function onClicked() {
+            timelineLogicRoot.removeStep(timelineLogicRoot.selectedIndex);
+        }
+    }
+
+    Connections {
+        target: view.launchManualSimMouse
+        function onClicked() {
+            if (timelineLogicRoot.selectedIndex >= 0 && timelineLogicRoot.selectedIndex < timelineModel.count) {
+                var cur = timelineModel.get(timelineLogicRoot.selectedIndex);
+                timelineLogicRoot.launchManualModalRequested({
+                    stepNumber: "STEP " + String(timelineLogicRoot.selectedIndex + 1).padStart(2, '0'),
+                    stepTitle: cur.stepName,
+                    instructions: cur.guidanceText,
+                    linkedPhase: cur.linkedPhase,
+                    targetVacuum: cur.targetVacuum || -450.0,
+                    currentTemp: cur.targetTemp || 82.5
+                });
+            }
+        }
+    }
+
+    // Palette insertion connections
+    Connections {
+        target: view.addAutoTransferMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_AUTO_TRANSFER", "Charge Liquid Phase", "#0284c7", "Pump P-101 • Auto-Dose", 25.0, 0.0, 0.0, 0.0, 5, "Auto Metering", "Auto-dose liquid phase from supply tank.");
+        }
+    }
+
+    Connections {
+        target: view.addManualAddMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_MANUAL_INTERVENTION", "Manual Ingredient Addition", "#0284c7", "Hatch Open • Confirm Scale", 25.0, 10.0, 0.0, 0.0, 5, "Hatch Loading", "Open manhole hatch and load pre-weighed powder.");
+        }
+    }
+
+    Connections {
+        target: view.addHeatMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_THERMAL_CONTROL", "Heat Vessel Jacket", "#ea580c", "80.0°C • 25 RPM • Steam", 80.0, 25.0, 0.0, 0.0, 15, "Thermal Jacket", "Open steam valve and ramp to 80°C with agitator active.");
+        }
+    }
+
+    Connections {
+        target: view.addCoolMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_THERMAL_CONTROL", "Cool Jacket to Setpoint", "#075985", "45.0°C • 25 RPM • Cooling", 45.0, 25.0, 0.0, 0.0, 20, "Cooling Jacket", "Circulate cooling water to lower vessel temperature.");
+        }
+    }
+
+    Connections {
+        target: view.addHoldMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_THERMAL_CONTROL", "Soak / Temperature Hold", "#78350f", "Hold 80°C • 15 Mins", 80.0, 20.0, 0.0, 0.0, 15, "Thermal Soak", "Maintain batch at constant temperature.");
+        }
+    }
+
+    Connections {
+        target: view.addAgitatorMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_AGITATION", "Main Anchor Stirring", "#7e22ce", "Anchor 35 RPM • Steady Blend", 50.0, 35.0, 0.0, 0.0, 10, "Agitator", "Run anchor paddle to ensure uniform bulk mixing.");
+        }
+    }
+
+    Connections {
+        target: view.addHomogenizerMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_HOMOGENIZATION", "High-Shear Emulsification", "#9333ea", "2800 RPM • 15 Mins • Seal Flow", 80.0, 35.0, 2800.0, -450.0, 15, "High Shear", "Run homogenizer rotor-stator for tight particle dispersion.");
+        }
+    }
+
+    Connections {
+        target: view.addVacuumMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_VACUUM_CONTROL", "Draw Vessel Vacuum", "#0f766e", "-450 mbar • De-aerate", 50.0, 15.0, 0.0, -450.0, 10, "Vacuum Header", "Evacuate vessel to pull out micro air bubbles.");
+        }
+    }
+
+    Connections {
+        target: view.addVentMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_VACUUM_CONTROL", "Vent to Atmospheric", "#334155", "0 mbar • Pressure Equalize", 40.0, 10.0, 0.0, 0.0, 3, "Atmospheric Vent", "Open sterile vent filter to equalize pressure.");
+        }
+    }
+
+    Connections {
+        target: view.addManualActionMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_MANUAL_INTERVENTION", "Manual Vacuum Transfer: Phase B Wax", "#d97706", "✋ Vacuum Suction • MV-101 • PIN", 82.5, 15.0, 0.0, -450.0, 8, "Manual Vacuum Suction", "Connect suction hose to Phase B Wax Tank. Open valve MV-101. Use vacuum pulse to transfer.");
+        }
+    }
+
+    Connections {
+        target: view.addQcSampleMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_MANUAL_INTERVENTION", "QC Lab Sample Verification", "#475569", "Lab Sample • pH & Viscosity Check", 45.0, 10.0, 0.0, 0.0, 15, "QC Lab Sample", "Draw 100ml sample from bottom valve for lab test.");
+        }
+    }
+
+    Connections {
+        target: view.addDischargeMouse
+        function onClicked() {
+            timelineLogicRoot.insertPhase("PHASE_DISCHARGE", "Transfer Product to Storage Tank", "#991b1b", "Discharge Pump • Temp < 45°C", 38.0, 10.0, 0.0, 0.0, 15, "Discharge Valve", "Open bottom flush valve and start transfer pump.");
+        }
+    }
+
+    // =========================================================================
+    // MODAL DIALOGS: ON-SCREEN NUMERIC KEYPAD & FULL QWERTY KEYBOARD
+    // =========================================================================
+    NumericKeypadModal {
+        id: numpadModal
+        objectName: "numpadModal"
+        anchors.fill: parent
+        z: 10000
+        visible: false
+
+        onAccepted: function(val) {
+            if (timelineLogicRoot.keypadCallback) {
+                timelineLogicRoot.keypadCallback(val);
+                timelineLogicRoot.keypadCallback = null;
+            }
+        }
+        onRejected: {
+            timelineLogicRoot.keypadCallback = null;
+        }
+        onClosed: {
+            timelineLogicRoot.keypadCallback = null;
+        }
+    }
+
+    ScadaTextKeyboard {
+        id: textKeyboard
+        objectName: "textKeyboard"
+        z: 10000
+        visible: false
+
+        onSubmitted: function(val) {
+            if (timelineLogicRoot.textKeyboardCallback) {
+                timelineLogicRoot.textKeyboardCallback(val);
+                timelineLogicRoot.textKeyboardCallback = null;
+            }
+        }
+        onClosed: {
+            timelineLogicRoot.textKeyboardCallback = null;
+        }
     }
 
     Component.onCompleted: {
-        loadBodyLotionOperations();
-        refreshTracks();
-        updateSimulationState();
-    }
-
-    function formatTimecode(totalSec) {
-        var h = Math.floor(totalSec / 3600);
-        var m = Math.floor((totalSec % 3600) / 60);
-        var s = totalSec % 60;
-        var hh = h < 10 ? "0" + h : "" + h;
-        var mm = m < 10 ? "0" + m : "" + m;
-        var ss = s < 10 ? "0" + s : "" + s;
-        return hh + ":" + mm + ":" + ss;
-    }
-
-    // =========================================================================
-    // RECIPE SPECIFIC TIMELINE DATA LOADERS
-    // =========================================================================
-
-    function loadBodyLotionOperations() {
-        recipeId = "REC-VPU50-002";
-        recipeTitle = "Body Lotion Formulation";
-        view.recipeTitle = "Body Lotion Formulation";
-        view.totalDurationSec = 2700;
-        view.estDurationFormatted = "45 min (2700s)";
-        view.totalTimecode = "00:45:00";
-        view.totalOperationsCount = 10;
-        view.totalHoldsCount = 2;
-
-        view.phaseHeadersModel = [
-            { title: "PHASE A: Aqueous Charge", time: "00:00 - 08:00" },
-            { title: "PHASE B: Oil Emulsification", time: "08:00 - 20:00" },
-            { title: "PHASE C: Surfactant Induction", time: "20:00 - 30:00" },
-            { title: "PHASE D: Neutralization Trim", time: "30:00 - 38:00" },
-            { title: "PHASE E: Actives & Cooling", time: "38:00 - 45:00" }
-        ];
-
-        agitatorOps = {
-            "Phase A": { stageId: "1.1", setValue: 25.0, unit: "RPM", purpose: "Material Loading", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "temp_above", materials: ["WATER (9.2 KG)", "GLYCERINE"] },
-            "Phase B": { stageId: "2.1", setValue: 35.0, unit: "RPM", purpose: "Emulsification", requireConfirm: false, confirmMessage: "", durationSec: 720, stopCondition: "timer", materials: ["LIGHT LIQUID PARAFFIN", "STEARIC ACID"] },
-            "Phase C": { stageId: "3.1", setValue: 45.0, unit: "RPM", purpose: "Material Loading", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: ["SLES 70%"] },
-            "Phase D": { stageId: "4.1", setValue: 20.0, unit: "RPM", purpose: "Gel Neutralization", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "timer", materials: ["TRIETHANOLAMINE"] },
-            "Phase E": { stageId: "5.1", setValue: 15.0, unit: "RPM", purpose: "Cooling & Actives", requireConfirm: false, confirmMessage: "", durationSec: 420, stopCondition: "timer", materials: ["DMDM HYDANTOIN"] }
-        };
-
-        homoOps = {
-            "Phase B": { stageId: "2.2", setValue: 2400.0, unit: "RPM", purpose: "High-Shear Emulsification", requireConfirm: false, confirmMessage: "", durationSec: 360, stopCondition: "timer", materials: [] },
-            "Phase C": { stageId: "3.2", setValue: 3000.0, unit: "RPM", purpose: "Micro-Droplet Dispersion", requireConfirm: false, confirmMessage: "", durationSec: 420, stopCondition: "timer", materials: [] }
-        };
-
-        vacuumOps = {
-            "Phase B": { stageId: "2.3", setValue: -350.0, unit: "mbar", purpose: "De-aeration", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: [] },
-            "Phase C": { stageId: "3.3", setValue: -450.0, unit: "mbar", purpose: "Vacuum Suction & De-aeration", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: ["SLES 70%"] }
-        };
-
-        thermalOps = {
-            "Phase A": { stageId: "1.2", setValue: 85.0, unit: "°C", purpose: "Aqueous Phase Heating", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "temp_above", materials: [] },
-            "Phase B": { stageId: "2.4", setValue: 85.0, unit: "°C", purpose: "Emulsion Temperature Soak", requireConfirm: false, confirmMessage: "", durationSec: 720, stopCondition: "timer", materials: [] },
-            "Phase D": { stageId: "4.2", setValue: 50.0, unit: "°C", purpose: "Controlled Cooling", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "temp_below", materials: [] },
-            "Phase E": { stageId: "5.2", setValue: 40.0, unit: "°C", purpose: "Final Product Cooling", requireConfirm: false, confirmMessage: "", durationSec: 420, stopCondition: "temp_below", materials: [] }
-        };
-
-        valveOps = {
-            "Phase A": { stageId: "1.3", setValue: 100.0, unit: "% Open", purpose: "Water Charge", requireConfirm: false, confirmMessage: "", durationSec: 180, stopCondition: "level_above", materials: ["WATER (9.2 KG)"] }
-        };
-
-        manualOps = {
-            "Phase B": { stageId: "2.5", actionTarget: "Butterfly Valve 1V01", actionRequired: "OPEN", confirmMessage: "Operator to confirm that valve 1V01 is OPEN for Phase B oil induction.", requireConfirm: true, durationSec: 0, stopCondition: "manual" },
-            "Phase E": { stageId: "5.3", actionTarget: "Sight Glass Window", actionRequired: "VERIFY", confirmMessage: "Operator visual inspection: Verify emulsion uniformity and gloss.", requireConfirm: true, durationSec: 0, stopCondition: "manual" }
-        };
-    }
-
-    function loadShampooOperations() {
-        recipeId = "REC-VPU50-001";
-        recipeTitle = "Industrial Shampoo Formulation";
-        view.recipeTitle = "Industrial Shampoo Formulation";
-        view.totalDurationSec = 2400;
-        view.estDurationFormatted = "40 min (2400s)";
-        view.totalTimecode = "00:40:00";
-        view.totalOperationsCount = 9;
-        view.totalHoldsCount = 1;
-
-        view.phaseHeadersModel = [
-            { title: "PHASE A: Surfactant Base", time: "00:00 - 10:00" },
-            { title: "PHASE B: Pearlizer Dispersion", time: "10:00 - 22:00" },
-            { title: "PHASE C: Conditioning Polymers", time: "22:00 - 32:00" },
-            { title: "PHASE D: pH & Viscosity Trim", time: "32:00 - 40:00" },
-            { title: "PHASE E: Cold Discharge", time: "Completed" }
-        ];
-
-        agitatorOps = {
-            "Phase A": { stageId: "1.1", setValue: 30.0, unit: "RPM", purpose: "Water & SLES Base", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: ["DM WATER", "SLES 70%"] },
-            "Phase B": { stageId: "2.1", setValue: 40.0, unit: "RPM", purpose: "Pearlizer Melting", requireConfirm: false, confirmMessage: "", durationSec: 720, stopCondition: "timer", materials: ["EGDS", "CAPB 30%"] },
-            "Phase C": { stageId: "3.1", setValue: 35.0, unit: "RPM", purpose: "Polymer Dispersion", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: ["POLYQUATERNIUM-7", "ZPT"] },
-            "Phase D": { stageId: "4.1", setValue: 20.0, unit: "RPM", purpose: "Viscosity Trim", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "timer", materials: ["NaCl", "CITRIC ACID"] }
-        };
-
-        homoOps = {
-            "Phase B": { stageId: "2.2", setValue: 1800.0, unit: "RPM", purpose: "Pearlizer Micronization", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "timer", materials: ["EGDS"] }
-        };
-
-        vacuumOps = {
-            "Phase C": { stageId: "3.2", setValue: -300.0, unit: "mbar", purpose: "Surfactant De-aeration", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: [] }
-        };
-
-        thermalOps = {
-            "Phase A": { stageId: "1.2", setValue: 60.0, unit: "°C", purpose: "Water Preheating", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "temp_above", materials: [] },
-            "Phase B": { stageId: "2.3", setValue: 70.0, unit: "°C", purpose: "Pearlizer Dissolution", requireConfirm: false, confirmMessage: "", durationSec: 720, stopCondition: "temp_above", materials: [] },
-            "Phase D": { stageId: "4.2", setValue: 35.0, unit: "°C", purpose: "Cold Addition & Trim", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "temp_below", materials: [] }
-        };
-
-        valveOps = {
-            "Phase A": { stageId: "1.3", setValue: 100.0, unit: "% Open", purpose: "DM Water Inflow", requireConfirm: false, confirmMessage: "", durationSec: 240, stopCondition: "level_above", materials: ["DM WATER"] }
-        };
-
-        manualOps = {
-            "Phase D": { stageId: "4.3", actionTarget: "Sampling Port 1S01", actionRequired: "VERIFY", confirmMessage: "Operator to draw QC sample and verify batch viscosity & pH.", requireConfirm: true, durationSec: 0, stopCondition: "manual" }
-        };
-    }
-
-    function loadBarrierGelOperations() {
-        recipeId = "REC-VPU50-003";
-        recipeTitle = "Barrier Hydro-Gel Emulsion";
-        view.recipeTitle = "Barrier Hydro-Gel Emulsion";
-        view.totalDurationSec = 1800;
-        view.estDurationFormatted = "30 min (1800s)";
-        view.totalTimecode = "00:30:00";
-        view.totalOperationsCount = 7;
-        view.totalHoldsCount = 1;
-
-        view.phaseHeadersModel = [
-            { title: "PHASE A: Polymer Hydration", time: "00:00 - 10:00" },
-            { title: "PHASE B: Lipid Barrier Base", time: "10:00 - 22:00" },
-            { title: "PHASE C: Gel Setting & Trim", time: "22:00 - 30:00" },
-            { title: "PHASE D: Hold", time: "Ready" },
-            { title: "PHASE E: Discharge", time: "Ready" }
-        ];
-
-        agitatorOps = {
-            "Phase A": { stageId: "1.1", setValue: 35.0, unit: "RPM", purpose: "Carbopol Hydration", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: ["PURIFIED WATER USP", "CARBOPOL ULTREZ 20"] },
-            "Phase B": { stageId: "2.1", setValue: 40.0, unit: "RPM", purpose: "Lipid Matrix Blending", requireConfirm: false, confirmMessage: "", durationSec: 720, stopCondition: "timer", materials: ["WHITE PETROLATUM", "DIMETHICONE"] },
-            "Phase C": { stageId: "3.1", setValue: 20.0, unit: "RPM", purpose: "Gel Network Setting", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "timer", materials: ["TRIETHANOLAMINE 99%"] }
-        };
-
-        homoOps = {
-            "Phase B": { stageId: "2.2", setValue: 2800.0, unit: "RPM", purpose: "High-Shear Vacuum Emulsification", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: ["WHITE PETROLATUM"] }
-        };
-
-        vacuumOps = {
-            "Phase A": { stageId: "1.2", setValue: -400.0, unit: "mbar", purpose: "Polymer De-aeration", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: [] },
-            "Phase B": { stageId: "2.3", setValue: -500.0, unit: "mbar", purpose: "Vacuum Homogenization", requireConfirm: false, confirmMessage: "", durationSec: 600, stopCondition: "timer", materials: [] }
-        };
-
-        thermalOps = {
-            "Phase B": { stageId: "2.4", setValue: 75.0, unit: "°C", purpose: "Petrolatum Melting", requireConfirm: false, confirmMessage: "", durationSec: 720, stopCondition: "temp_above", materials: [] },
-            "Phase C": { stageId: "3.2", setValue: 30.0, unit: "°C", purpose: "Gel Stabilization Cooling", requireConfirm: false, confirmMessage: "", durationSec: 480, stopCondition: "temp_below", materials: [] }
-        };
-
-        valveOps = {
-            "Phase A": { stageId: "1.3", setValue: 100.0, unit: "% Open", purpose: "Water Charging", requireConfirm: false, confirmMessage: "", durationSec: 180, stopCondition: "level_above", materials: ["PURIFIED WATER USP"] }
-        };
-
-        manualOps = {
-            "Phase B": { stageId: "2.5", actionTarget: "Silicone Port 1V03", actionRequired: "OPEN", confirmMessage: "Operator to connect Dimethicone hose and open port 1V03 under vacuum.", requireConfirm: true, durationSec: 0, stopCondition: "manual" }
-        };
-    }
-
-    function loadCustomRecipeOperations(recipe, ingredients) {
-        recipeId = (recipe && (recipe.recipeId || recipe.id)) || "REC-VPU50-NEW";
-        recipeTitle = (recipe && recipe.title) || "New Master Recipe";
-        view.recipeTitle = recipeTitle;
-
-        // Collect phases present in ingredients
-        var phases = {};
-        if (ingredients && ingredients.length > 0) {
-            for (var i = 0; i < ingredients.length; i++) {
-                var ing = ingredients[i];
-                var p = String(ing.phase || "Phase A").trim();
-                if (!phases[p]) phases[p] = [];
-                phases[p].push(ing.name);
-            }
-        }
-
-        var phaseKeys = Object.keys(phases);
-        if (phaseKeys.length === 0) {
-            // Fresh clean slate: Empty tracks
-            view.totalDurationSec = 1800;
-            view.estDurationFormatted = "30 min (1800s)";
-            view.totalTimecode = "00:30:00";
-            view.totalOperationsCount = 0;
-            view.totalHoldsCount = 0;
-
-            view.phaseHeadersModel = [
-                { title: "PHASE A: Formulation Base", time: "00:00 - 10:00" },
-                { title: "PHASE B: Active Dispersion", time: "10:00 - 20:00" },
-                { title: "PHASE C: Finishing & Trim", time: "20:00 - 30:00" },
-                { title: "PHASE D: Empty", time: "--:--" },
-                { title: "PHASE E: Empty", time: "--:--" }
-            ];
-
-            agitatorOps = {};
-            homoOps = {};
-            vacuumOps = {};
-            thermalOps = {};
-            valveOps = {};
-            manualOps = {};
-        } else {
-            // Build dynamically from the user's custom ingredients
-            var pHeaders = [];
-            var newAgitator = {};
-            var newThermal = {};
-            var newValve = {};
-            var opCount = 0;
-
-            var letters = ["Phase A", "Phase B", "Phase C", "Phase D", "Phase E"];
-            for (var k = 0; k < 5; k++) {
-                var pName = letters[k];
-                var mats = phases[pName] || phases[String(k + 1)] || phases["Phase " + (k + 1)] || [];
-                if (mats.length > 0) {
-                    pHeaders.push({ title: pName.toUpperCase() + ": " + mats[0], time: (k * 10) + ":00 - " + ((k + 1) * 10) + ":00" });
-                    newAgitator[pName] = {
-                        stageId: (k + 1) + ".1",
-                        setValue: 30.0 + (k * 5),
-                        unit: "RPM",
-                        purpose: "Agitation & Blending",
-                        requireConfirm: false,
-                        confirmMessage: "",
-                        durationSec: 600,
-                        stopCondition: "timer",
-                        materials: mats
-                    };
-                    newThermal[pName] = {
-                        stageId: (k + 1) + ".2",
-                        setValue: k === 0 ? 60.0 : (k === 1 ? 75.0 : 40.0),
-                        unit: "°C",
-                        purpose: "Thermal Processing",
-                        requireConfirm: false,
-                        confirmMessage: "",
-                        durationSec: 600,
-                        stopCondition: "timer",
-                        materials: []
-                    };
-                    opCount += 2;
-                } else {
-                    pHeaders.push({ title: pName.toUpperCase() + ": Unallocated", time: "--:--" });
-                }
-            }
-
-            if (newAgitator["Phase A"]) {
-                newValve["Phase A"] = {
-                    stageId: "1.3",
-                    setValue: 100.0,
-                    unit: "% Open",
-                    purpose: "Main Liquid Charge",
-                    requireConfirm: false,
-                    confirmMessage: "",
-                    durationSec: 180,
-                    stopCondition: "timer",
-                    materials: phases["Phase A"] || []
-                };
-                opCount += 1;
-            }
-
-            view.totalDurationSec = Math.max(1800, phaseKeys.length * 600);
-            var durMin = Math.round(view.totalDurationSec / 60);
-            view.estDurationFormatted = durMin + " min (" + view.totalDurationSec + "s)";
-            view.totalTimecode = formatTimecode(view.totalDurationSec);
-            view.totalOperationsCount = opCount;
-            view.totalHoldsCount = 0;
-            view.phaseHeadersModel = pHeaders;
-
-            agitatorOps = newAgitator;
-            homoOps = {};
-            vacuumOps = {};
-            thermalOps = newThermal;
-            valveOps = newValve;
-            manualOps = {};
-        }
-    }
-
-    function loadRecipe(recipe, ingredients) {
-        if (!recipe) {
-            loadBodyLotionOperations();
-            refreshTracks();
-            view.currentPlayheadSec = 0;
-            updateSimulationState();
-            return;
-        }
-
-        var rId = recipe.recipeId || recipe.id || "";
-        if (rId === "REC-VPU50-001") {
-            loadShampooOperations();
-        } else if (rId === "REC-VPU50-002") {
-            loadBodyLotionOperations();
-        } else if (rId === "REC-VPU50-003") {
-            loadBarrierGelOperations();
-        } else {
-            loadCustomRecipeOperations(recipe, ingredients);
-        }
-
-        refreshTracks();
-        view.currentPlayheadSec = 0;
-        view.isPlaying = false;
-        manualHoldEncountered = false;
-        updateSimulationState();
-    }
-
-    // =========================================================================
-    // DYNAMIC P&ID SIMULATION STATE ENGINE
-    // =========================================================================
-
-    function updateSimulationState() {
-        var sec = view.currentPlayheadSec;
-        view.playheadTimecode = formatTimecode(sec);
-
-        var total = view.totalDurationSec || 2700;
-        var progress = Math.min(1.0, sec / Math.max(1, total));
-
-        // Determine current phase based on progress and active recipe
-        if (recipeId === "REC-VPU50-001") {
-            // Industrial Shampoo
-            if (sec < 600) {
-                view.currentPhaseName = "Phase A";
-                view.currentStageId = "1.1";
-                view.pidSimulator.activePhase = "Phase A";
-                view.pidSimulator.activeStage = "1.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase A"] ? agitatorOps["Phase A"].setValue : 30.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 25.0 + ((60.0 - 25.0) * (sec / 600.0));
-                view.pidSimulator.liquidLevelPct = 50.0;
-                view.pidSimulator.isHeating = true;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = (sec < 240);
-                view.pidSimulator.fluidColor = "#0284c7"; // Translucent blue surfactant base
-            } else if (sec < 1320) {
-                view.currentPhaseName = "Phase B";
-                view.currentStageId = "2.1";
-                view.pidSimulator.activePhase = "Phase B";
-                view.pidSimulator.activeStage = "2.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase B"] ? agitatorOps["Phase B"].setValue : 40.0;
-                view.pidSimulator.homoRpm = homoOps["Phase B"] ? homoOps["Phase B"].setValue : 1800.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 70.0;
-                view.pidSimulator.liquidLevelPct = 80.0;
-                view.pidSimulator.isHeating = true;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#e0f2fe"; // Pearlescent white shampoo
-            } else if (sec < 1920) {
-                view.currentPhaseName = "Phase C";
-                view.currentStageId = "3.1";
-                view.pidSimulator.activePhase = "Phase C";
-                view.pidSimulator.activeStage = "3.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase C"] ? agitatorOps["Phase C"].setValue : 35.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = vacuumOps["Phase C"] ? vacuumOps["Phase C"].setValue : -300.0;
-                view.pidSimulator.vesselTemp = 50.0;
-                view.pidSimulator.liquidLevelPct = 90.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = true;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#f0f9ff";
-            } else {
-                view.currentPhaseName = "Phase D";
-                view.currentStageId = "4.1";
-                view.pidSimulator.activePhase = "Phase D";
-                view.pidSimulator.activeStage = "4.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase D"] ? agitatorOps["Phase D"].setValue : 20.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 35.0;
-                view.pidSimulator.liquidLevelPct = 95.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#bae6fd";
-            }
-        } else if (recipeId === "REC-VPU50-003") {
-            // Barrier Hydro-Gel Emulsion
-            if (sec < 600) {
-                view.currentPhaseName = "Phase A";
-                view.currentStageId = "1.1";
-                view.pidSimulator.activePhase = "Phase A";
-                view.pidSimulator.activeStage = "1.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase A"] ? agitatorOps["Phase A"].setValue : 35.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = vacuumOps["Phase A"] ? vacuumOps["Phase A"].setValue : -400.0;
-                view.pidSimulator.vesselTemp = 25.0;
-                view.pidSimulator.liquidLevelPct = 40.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = (sec < 180);
-                view.pidSimulator.fluidColor = "#38bdf8"; // Clear hydro-gel
-            } else if (sec < 1320) {
-                view.currentPhaseName = "Phase B";
-                view.currentStageId = "2.1";
-                view.pidSimulator.activePhase = "Phase B";
-                view.pidSimulator.activeStage = "2.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase B"] ? agitatorOps["Phase B"].setValue : 40.0;
-                view.pidSimulator.homoRpm = homoOps["Phase B"] ? homoOps["Phase B"].setValue : 2800.0;
-                view.pidSimulator.vacuumMbar = vacuumOps["Phase B"] ? vacuumOps["Phase B"].setValue : -500.0;
-                view.pidSimulator.vesselTemp = 75.0;
-                view.pidSimulator.liquidLevelPct = 70.0;
-                view.pidSimulator.isHeating = true;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#f1f5f9"; // Dense translucent gel
-            } else {
-                view.currentPhaseName = "Phase C";
-                view.currentStageId = "3.1";
-                view.pidSimulator.activePhase = "Phase C";
-                view.pidSimulator.activeStage = "3.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase C"] ? agitatorOps["Phase C"].setValue : 20.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 30.0;
-                view.pidSimulator.liquidLevelPct = 75.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = true;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#e2e8f0";
-            }
-        } else {
-            // Body Lotion & Default Recipes
-            if (sec < 480) {
-                view.currentPhaseName = "Phase A";
-                view.currentStageId = "1.1";
-                view.pidSimulator.activePhase = "Phase A";
-                view.pidSimulator.activeStage = "1.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase A"] ? agitatorOps["Phase A"].setValue : 25.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 25.0 + ((85.0 - 25.0) * (sec / 480.0));
-                view.pidSimulator.liquidLevelPct = 45.0;
-                view.pidSimulator.isHeating = true;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = (sec < 180);
-                view.pidSimulator.fluidColor = "#38bdf8";
-            } else if (sec < 1200) {
-                view.currentPhaseName = "Phase B";
-                view.currentStageId = "2.1";
-                view.pidSimulator.activePhase = "Phase B";
-                view.pidSimulator.activeStage = "2.1";
-
-                if (manualOps["Phase B"] && sec >= 480 && sec <= 520 && !manualHoldEncountered && view.isPlaying) {
-                    view.isPlaying = false;
-                    playTimer.stop();
-                    manualHoldEncountered = true;
-                    view.pidSimulator.manualHoldMessage = manualOps["Phase B"].confirmMessage;
-                    view.pidSimulator.manualTargetAsset = manualOps["Phase B"].actionTarget;
-                    view.pidSimulator.isManualHoldActive = true;
-                    return;
-                }
-
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase B"] ? agitatorOps["Phase B"].setValue : 35.0;
-                view.pidSimulator.homoRpm = homoOps["Phase B"] ? homoOps["Phase B"].setValue : 2400.0;
-                view.pidSimulator.vacuumMbar = vacuumOps["Phase B"] ? vacuumOps["Phase B"].setValue : -350.0;
-                view.pidSimulator.vesselTemp = 85.0;
-                view.pidSimulator.liquidLevelPct = 75.0;
-                view.pidSimulator.isHeating = true;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#f8fafc";
-            } else if (sec < 1800) {
-                view.currentPhaseName = "Phase C";
-                view.currentStageId = "3.1";
-                view.pidSimulator.activePhase = "Phase C";
-                view.pidSimulator.activeStage = "3.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase C"] ? agitatorOps["Phase C"].setValue : 45.0;
-                view.pidSimulator.homoRpm = homoOps["Phase C"] ? homoOps["Phase C"].setValue : 1200.0;
-                view.pidSimulator.vacuumMbar = vacuumOps["Phase C"] ? vacuumOps["Phase C"].setValue : -450.0;
-                view.pidSimulator.vesselTemp = 75.0;
-                view.pidSimulator.liquidLevelPct = 80.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = false;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#f1f5f9";
-            } else if (sec < 2280) {
-                view.currentPhaseName = "Phase D";
-                view.currentStageId = "4.1";
-                view.pidSimulator.activePhase = "Phase D";
-                view.pidSimulator.activeStage = "4.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase D"] ? agitatorOps["Phase D"].setValue : 20.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 50.0;
-                view.pidSimulator.liquidLevelPct = 85.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = true;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#f8fafc";
-            } else {
-                view.currentPhaseName = "Phase E";
-                view.currentStageId = "5.1";
-                view.pidSimulator.activePhase = "Phase E";
-                view.pidSimulator.activeStage = "5.1";
-                view.pidSimulator.agitatorRpm = agitatorOps["Phase E"] ? agitatorOps["Phase E"].setValue : 15.0;
-                view.pidSimulator.homoRpm = 0.0;
-                view.pidSimulator.vacuumMbar = 0.0;
-                view.pidSimulator.vesselTemp = 40.0;
-                view.pidSimulator.liquidLevelPct = 88.0;
-                view.pidSimulator.isHeating = false;
-                view.pidSimulator.isCooling = true;
-                view.pidSimulator.valveChargeOpen = false;
-                view.pidSimulator.fluidColor = "#ffffff";
-            }
-        }
-    }
-
-    Timer {
-        id: playTimer
-        interval: 100 // 10x real-time simulation step
-        repeat: true
-        running: false
-        onTriggered: {
-            if (view.currentPlayheadSec < view.totalDurationSec) {
-                view.currentPlayheadSec += 5;
-                timelineDesignerLogicRoot.updateSimulationState();
-            } else {
-                view.isPlaying = false;
-                playTimer.stop();
-            }
-        }
-    }
-
-    function setClipConfig(config) {
-        if (!config || !config.phaseName) return;
-        var p = config.phaseName;
-        var rType = String(config.resourceType || "").toLowerCase();
-
-        if (rType.indexOf("agitator") !== -1 || rType.indexOf("stirrer") !== -1) {
-            timelineDesignerLogicRoot.agitatorOps[p] = config;
-        } else if (rType.indexOf("homo") !== -1) {
-            timelineDesignerLogicRoot.homoOps[p] = config;
-        } else if (rType.indexOf("vacuum") !== -1) {
-            timelineDesignerLogicRoot.vacuumOps[p] = config;
-        } else if (rType.indexOf("heat") !== -1 || rType.indexOf("thermal") !== -1) {
-            timelineDesignerLogicRoot.thermalOps[p] = config;
-        } else if (rType.indexOf("valve") !== -1 || rType.indexOf("dosing") !== -1) {
-            timelineDesignerLogicRoot.valveOps[p] = config;
-        } else if (rType.indexOf("manual") !== -1 || config.actionTarget) {
-            timelineDesignerLogicRoot.manualOps[p] = config;
-        }
-        timelineDesignerLogicRoot.refreshTracks();
-        timelineDesignerLogicRoot.updateSimulationState();
-    }
-
-    // Interactive View Bindings
-    RecipeTimelineDesignerView {
-        id: view
-        anchors.fill: parent
-
-        timelineScrubber.onMoved: {
-            view.currentPlayheadSec = Math.round(view.timelineScrubber.value);
-            timelineDesignerLogicRoot.updateSimulationState();
-        }
-
-        // Connect Track Clip Configuration Dialogs
-        agitatorTrack.onConfigureClipRequested: function(clipData) {
-            timelineDesignerLogicRoot.openConfigModalRequested(clipData);
-        }
-        homoTrack.onConfigureClipRequested: function(clipData) {
-            timelineDesignerLogicRoot.openConfigModalRequested(clipData);
-        }
-        vacuumTrack.onConfigureClipRequested: function(clipData) {
-            timelineDesignerLogicRoot.openConfigModalRequested(clipData);
-        }
-        thermalTrack.onConfigureClipRequested: function(clipData) {
-            timelineDesignerLogicRoot.openConfigModalRequested(clipData);
-        }
-        valveTrack.onConfigureClipRequested: function(clipData) {
-            timelineDesignerLogicRoot.openConfigModalRequested(clipData);
-        }
-        manualTrack.onConfigureClipRequested: function(clipData) {
-            timelineDesignerLogicRoot.openManualModalRequested(clipData);
-        }
-
-        // Manual interlock confirmation in Simulator
-        pidSimulator.onManualConfirmed: {
-            view.pidSimulator.isManualHoldActive = false;
-            view.isPlaying = true;
-            playTimer.start();
-        }
-    }
-
-    // Action Bar Button Handlers
-    MouseArea {
-        parent: view.backToIngredientsBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: timelineDesignerLogicRoot.backToIngredientsRequested()
-    }
-
-    MouseArea {
-        parent: view.exportNodeRedBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            var payload = {
-                recipeId: timelineDesignerLogicRoot.recipeId,
-                recipeTitle: timelineDesignerLogicRoot.recipeTitle,
-                totalDurationSec: view.totalDurationSec,
-                phases: view.phaseHeadersModel,
-                tracks: {
-                    agitator: timelineDesignerLogicRoot.agitatorOps,
-                    homogenizer: timelineDesignerLogicRoot.homoOps,
-                    vacuum: timelineDesignerLogicRoot.vacuumOps,
-                    thermal: timelineDesignerLogicRoot.thermalOps,
-                    valves: timelineDesignerLogicRoot.valveOps,
-                    manual: timelineDesignerLogicRoot.manualOps
-                }
-            };
-            timelineDesignerLogicRoot.nodeRedExportGenerated(JSON.stringify(payload, null, 2));
-        }
-    }
-
-    MouseArea {
-        parent: view.saveRecipeBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            var payload = {
-                recipeId: timelineDesignerLogicRoot.recipeId,
-                recipeTitle: timelineDesignerLogicRoot.recipeTitle,
-                totalDurationSec: view.totalDurationSec,
-                tracks: {
-                    agitator: timelineDesignerLogicRoot.agitatorOps,
-                    homogenizer: timelineDesignerLogicRoot.homoOps,
-                    vacuum: timelineDesignerLogicRoot.vacuumOps,
-                    thermal: timelineDesignerLogicRoot.thermalOps,
-                    valves: timelineDesignerLogicRoot.valveOps,
-                    manual: timelineDesignerLogicRoot.manualOps
-                }
-            };
-            timelineDesignerLogicRoot.recipeSaved(payload);
-        }
-    }
-
-    MouseArea {
-        parent: view.submitForApprovalBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            var payload = {
-                recipeId: timelineDesignerLogicRoot.recipeId,
-                recipeTitle: timelineDesignerLogicRoot.recipeTitle,
-                totalDurationSec: view.totalDurationSec,
-                tracks: {
-                    agitator: timelineDesignerLogicRoot.agitatorOps,
-                    homogenizer: timelineDesignerLogicRoot.homoOps,
-                    vacuum: timelineDesignerLogicRoot.vacuumOps,
-                    thermal: timelineDesignerLogicRoot.thermalOps,
-                    valves: timelineDesignerLogicRoot.valveOps,
-                    manual: timelineDesignerLogicRoot.manualOps
-                }
-            };
-            timelineDesignerLogicRoot.recipeSubmittedForReview(payload);
-        }
-    }
-
-    // Transport Control Handlers
-    MouseArea {
-        parent: view.playBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            view.isPlaying = !view.isPlaying;
-            if (view.isPlaying) {
-                if (view.currentPlayheadSec >= view.totalDurationSec) {
-                    view.currentPlayheadSec = 0;
-                }
-                playTimer.start();
-            } else {
-                playTimer.stop();
-            }
-        }
-    }
-
-    MouseArea {
-        parent: view.resetPlayheadBtn
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            view.isPlaying = false;
-            playTimer.stop();
-            view.currentPlayheadSec = 0;
-            timelineDesignerLogicRoot.manualHoldEncountered = false;
-            view.pidSimulator.isManualHoldActive = false;
-            timelineDesignerLogicRoot.updateSimulationState();
-        }
+        selectStep(0);
+        runPreFlightCompiler();
     }
 }

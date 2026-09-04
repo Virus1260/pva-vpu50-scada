@@ -9,6 +9,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: toolbarRoot
+    width: 1160
+    height: 52
+    implicitWidth: 1160
+    implicitHeight: 52
     Layout.fillWidth: true
     Layout.preferredHeight: 52
     radius: 5

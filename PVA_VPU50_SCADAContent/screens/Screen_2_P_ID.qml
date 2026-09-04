@@ -6,6 +6,10 @@ import "../config"
 
 Rectangle {
     id: pidScreenRoot
+    width: 1440
+    height: 840
+    implicitWidth: 1440
+    implicitHeight: 840
     color: "#0a2d52"
     clip: true
 

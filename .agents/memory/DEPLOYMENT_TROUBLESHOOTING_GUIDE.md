@@ -181,3 +181,76 @@
 ## 4. Complete, Production-Ready GitHub Actions Workflow
 
 File location: [`.github/workflows/deploy_vercel.yml`](file:///C:/Users/Shekhar/Desktop/QT%20DESIGNER%20PROJECTS/PVA_VPU50_SCADA/.github/workflows/deploy_vercel.yml)
+
+---
+
+## 5. Local SCADA Builder & Deployment Simulator (`scada_deploy_simulator.py`)
+
+To eliminate "random" remote CI/CD build failures on GitHub Actions and broken Vercel deployments, the project incorporates a comprehensive **Local Builder & Deployment Simulator**.
+
+### Why Local Simulation is Critical
+- **Untracked File Blindspot**: During iterative development, newly created components or themes (e.g. `theme/`, `components/design_system/`) exist locally on disk, so local Python runs succeed. However, if not explicitly staged in Git (`git add`), GitHub Actions checks out only committed files, leading to immediate CMake/QRC missing file errors.
+- **Header Isolation Verification**: Vercel deployments need specific COOP/COEP HTTP headers (`same-origin`, `require-corp`) to enable `SharedArrayBuffer` for 60 FPS WebAssembly canvas rendering.
+- **Fail Fast Locally**: Prevents burning GitHub Actions minutes or pushing broken commits to the production branch.
+
+### Quick Start Commands
+
+Use the cross-platform launcher scripts:
+```cmd
+:: Windows CMD
+sim.bat
+sim.bat serve
+sim.bat stage
+```
+```powershell
+# Windows PowerShell
+.\sim.ps1
+.\sim.ps1 serve
+.\sim.ps1 stage
+```
+
+Or invoke the Python engine directly:
+```bash
+# Run all 6 gates
+python scada_deploy_simulator.py --all
+
+# Auto-stage newly created untracked QML/C++/CMake files to git
+python scada_deploy_simulator.py --auto-stage
+
+# Launch local 60 FPS industrial web simulator with Vercel COOP/COEP headers (port 8080)
+python scada_deploy_simulator.py --serve
+
+# Run synthetic HTTP header probe on the Vercel packaging
+python scada_deploy_simulator.py --probe
+
+# Install or re-install the Git pre-push hook
+python scada_deploy_simulator.py --install-hook
+```
+
+### The 6 Pre-Push Validation Gates
+
+| Gate | Name | Validation Responsibility |
+| :--- | :--- | :--- |
+| **Stage 1** | **Git Trackability & Staging Healthcheck** | Scans git working tree for untracked/unstaged QML, CMake, C++, or asset files that would be missing on GitHub Actions checkout. |
+| **Stage 2** | **CMake, QRC & Manifest Invariants** | Checks 199+ CMake files and 217+ QRC entries. Ensures 0 missing files, 0 duplicate entries, 0 scratch paths, and valid QML singleton definitions. |
+| **Stage 3** | **QML Static & Headless Sanity** | Parses QML syntax and executes an offscreen headless instantiation via `QQmlApplicationEngine` without requiring a display. |
+| **Stage 4** | **Automated Test Suite** | Runs the full SCADA compliance suite (`python -m unittest discover tests -v`) verifying all 16 test modules pass. |
+| **Stage 5** | **Vercel Packaging Simulator** | Validates `vercel.json` and stages the static distribution bundle into `dist/` (`index.html`, `favicon.svg`, icons). |
+| **Stage 6** | **Synthetic Vercel Header Probe** | Spins up an ephemeral local server, sends synthetic HTTP HEAD requests, and asserts `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`. |
+
+### Automated Git Pre-Push Hook
+
+The simulator installs a pre-push hook at `.git/hooks/pre-push`. 
+Every time you run `git push origin main`, git automatically invokes:
+```bash
+python scada_deploy_simulator.py --all
+```
+If any gate fails, the push is **aborted immediately**, keeping GitHub Actions and Vercel green.
+
+### Extensible Rules Engine (`DEPLOYMENT_SIMULATOR_RULES.json`)
+
+All failure signatures are defined in [`.agents/memory/DEPLOYMENT_SIMULATOR_RULES.json`](file:///c:/Users/Shekhar/Desktop/QT%20DESIGNER%20PROJECTS/PVA_VPU50_SCADA/.agents/memory/DEPLOYMENT_SIMULATOR_RULES.json).
+When new deployment edge cases are encountered in the future:
+1. Add a new rule with `id`, `category`, `pattern`, `root_cause`, and `mitigation`.
+2. The simulator dynamically reads this knowledge base on every run.
+

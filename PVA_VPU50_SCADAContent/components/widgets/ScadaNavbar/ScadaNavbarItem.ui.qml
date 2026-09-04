@@ -1,15 +1,16 @@
 import QtQuick
 import QtQuick.Layouts
 import ".."
+import "../../../theme"
 
-// Perfect Square Navigation Tile (96px x 96px)
+// Ergonomic Square Navigation Tile
 Rectangle {
     id: navBtn
     implicitWidth: 96
     implicitHeight: 96
     width: 96
     height: 96
-    radius: 6
+    radius: Dimensions.cornerRadiusMd
 
     property int itemId: 0
     property string itemIcon: "status_stack"
@@ -21,47 +22,53 @@ Rectangle {
 
     property alias mouseArea: navMouse
 
-    color: navBtn.isActive ? "#155590" : (navBtn.isPressed ? "#07203a" : (navBtn.isHovered ? "#103f6d" : "#0d365e"))
-    border.color: navBtn.isActive ? "#00d2ff" : (navBtn.isHovered ? "#38bdf8" : "#1a5286")
-    border.width: navBtn.isActive ? 2.0 : 1.0
+    color: navBtn.isActive ? Theme.accentHover : (navBtn.isPressed ? Theme.bgInput : (navBtn.isHovered ? Theme.bgCardHover : Theme.bgCard))
+    border.color: navBtn.isActive ? Theme.primaryGlow : (navBtn.isHovered ? Theme.primary : Theme.borderDim)
+    border.width: navBtn.isActive ? Dimensions.borderWidthThick : Dimensions.borderWidthThin
+
+    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on border.color { ColorAnimation { duration: 120 } }
 
     // Active Left Neon Indicator Strip
     Rectangle {
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.margins: 4
+        anchors.margins: Dimensions.spaceXs
         width: 4
         radius: 2
-        color: "#00d2ff"
+        color: Theme.primaryGlow
         visible: navBtn.isActive
     }
 
+    property int iconBoxSize: navBtn.height < 84 ? 34 : 42
+
     ColumnLayout {
         anchors.centerIn: parent
-        spacing: 4
+        spacing: navBtn.height < 84 ? 2 : Dimensions.spaceXs
 
         Item {
-            Layout.preferredWidth: 36
-            Layout.preferredHeight: 36
+            Layout.preferredWidth: navBtn.iconBoxSize
+            Layout.preferredHeight: navBtn.iconBoxSize
             Layout.alignment: Qt.AlignHCenter
 
             ScadaIcon {
                 anchors.centerIn: parent
-                width: 36
-                height: 36
+                width: navBtn.iconBoxSize - 2
+                height: navBtn.iconBoxSize - 2
                 iconName: (navBtn.itemIcon === "alarms_bell" && navBtn.badgeCount === 0) ? "alarms_bell_green" : navBtn.itemIcon
-                iconColor: "#ffffff"
+                iconColor: navBtn.isActive ? Theme.textPrimary : (navBtn.isHovered ? Theme.textHighlight : Theme.textSecondary)
             }
         }
 
         Text {
-            Layout.preferredWidth: 84
+            Layout.preferredWidth: 88
             Layout.alignment: Qt.AlignHCenter
             text: navBtn.itemLabel
-            color: navBtn.isActive ? "#ffffff" : (navBtn.isHovered ? "#e0f2fe" : "#94a3b8")
+            color: navBtn.isActive ? Theme.textPrimary : (navBtn.isHovered ? Theme.textPrimary : Theme.textSecondary)
             font.bold: true
-            font.pixelSize: 10
+            font.pointSize: Typography.sizeBadge
+            font.family: Typography.fontDisplay
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             maximumLineCount: 2

@@ -312,6 +312,37 @@ class TestScadaCompliance(unittest.TestCase):
         oee_res = cortex.efficiency_agent.calculate_oee(3600, 3400, 0)
         self.assertGreater(oee_res["oee_pct"], 80.0)
 
+    def test_hardware_definitions_and_shared_components(self):
+        """Verify HardwareDefinitions.qml single source of truth and shared UI components."""
+        root_dir = Path(__file__).resolve().parent.parent
+        content_dir = root_dir / "PVA_VPU50_SCADAContent"
+        hw_defs_file = content_dir / "config" / "HardwareDefinitions.qml"
+        self.assertTrue(hw_defs_file.exists(), "HardwareDefinitions.qml must exist in config/")
+
+        content = hw_defs_file.read_text(encoding="utf-8")
+        # Ensure key hardware constraints are defined
+        self.assertIn('"minSpeed": 25.0', content)
+        self.assertIn('"maxSpeed": 120.0', content)
+        self.assertIn('"minSpeed": 600.0', content)
+        self.assertIn('"maxSpeed": 4800.0', content)
+        self.assertIn('"minPressure": -800.0', content)
+        self.assertIn('"maxPressure": 0.0', content)
+        self.assertIn('"minTemp": 15.0', content)
+        self.assertIn('"maxTemp": 95.0', content)
+        self.assertIn('FS-102', content)
+
+        # Verify shared UI components exist
+        common_dir = content_dir / "components" / "common"
+        expected_components = [
+            "DeviceSetpointStepper.qml",
+            "SubsystemModeButton.qml",
+            "SubsystemModeSelectorModal.qml",
+            "SafetyInterlockBadge.qml"
+        ]
+        for comp in expected_components:
+            comp_file = common_dir / comp
+            self.assertTrue(comp_file.exists(), f"Shared component {comp} must exist in components/common/")
+
 
 if __name__ == "__main__":
     unittest.main()

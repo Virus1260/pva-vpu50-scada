@@ -16,6 +16,10 @@ import "../components/modals/Screen_9_RecipeMaker/Screen_3_Timeline"
 
 Rectangle {
     id: recipeMakerRoot
+    width: 1166
+    height: 630
+    implicitWidth: 1166
+    implicitHeight: 630
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#08213b"
@@ -38,7 +42,7 @@ Rectangle {
     property alias metadataModal: metaModal
     property alias ingredientModal: ingModal
     property alias deleteConfirmModal: delModal
-    property alias resourceConfigModal: resModal
+    property alias manualActionModal: manModal
     property alias manualActivityModal: manModal
 
     ColumnLayout {
@@ -232,12 +236,7 @@ Rectangle {
         anchors.fill: parent
     }
 
-    RecipeResourceConfigModal {
-        id: resModal
-        anchors.fill: parent
-    }
-
-    RecipeManualActivityModal {
+    RecipeManualActionModal {
         id: manModal
         anchors.fill: parent
     }

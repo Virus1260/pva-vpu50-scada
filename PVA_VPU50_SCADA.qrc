@@ -89,6 +89,15 @@
         <file>PVA_VPU50_SCADAContent/assets/pid_schema.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_body.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_jacket.svg</file>
+        <file>PVA_VPU50_SCADAContent/components/common/DeviceSetpointStepper.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/common/SafetyInterlockBadge.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/common/SubsystemModeButton.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/common/SubsystemModeSelectorModal.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/design_system/TouchBadge.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/design_system/TouchButton.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/design_system/TouchCard.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/design_system/TouchScrollContainer.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/design_system/TouchStepper.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/ConfirmationModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/LoginModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/NumericKeypadModal.qml</file>
@@ -107,9 +116,7 @@
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDeleteConfirmModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeMetadataModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeCollaboratorsModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeManualActivityModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeResourceConfigModal.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeManualActionModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/PvaLogo.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaButton.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader.qml</file>
@@ -173,31 +180,15 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeBomPanel.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientBuilder.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientBuilderView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeActivityToolbar.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeFlowTagSelector.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeGovernancePanel.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeInterlockPanel.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeInterlockRow.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeMakerHeader.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeMakerKpiCard.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeMakerKpiStrip.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeMakerTabBar.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeMakerWorkspace.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeMediaBin.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeParameterPanel.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipePIDSimulator.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeStageCard.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTaskCard.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTaskInspector.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineClip.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineDesigner.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineDesignerView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineTrack.qml</file>
+        <file>PVA_VPU50_SCADAContent/config/HardwareDefinitions.qml</file>
         <file>PVA_VPU50_SCADAContent/config/ScadaConfig.qml</file>
         <file>PVA_VPU50_SCADAContent/config/ScadaStateMiddleware.qml</file>
         <file>PVA_VPU50_SCADAContent/Main_frame_screen.qml</file>
         <file>PVA_VPU50_SCADAContent/Main_frame_screenView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_1_Control.ui.qml</file>
+        <file>PVA_VPU50_SCADAContent/screens/Screen_1_Control.qml</file>
+        <file>PVA_VPU50_SCADAContent/screens/Screen_1_ControlView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_2_P_ID.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_2_P_IDView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_3_Trends.qml</file>
@@ -208,12 +199,15 @@
         <file>PVA_VPU50_SCADAContent/screens/Screen_5_RecipesView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_6_Audit.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_6_AuditView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_7_Playback.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_7_PlaybackView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_8_Diagnostics.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_8_DiagnosticsView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_9_RecipeMaker.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_9_RecipeMakerView.ui.qml</file>
+        <file>PVA_VPU50_SCADAContent/theme/AppConstants.qml</file>
+        <file>PVA_VPU50_SCADAContent/theme/Dimensions.qml</file>
+        <file>PVA_VPU50_SCADAContent/theme/qmldir</file>
+        <file>PVA_VPU50_SCADAContent/theme/Theme.qml</file>
+        <file>PVA_VPU50_SCADAContent/theme/Typography.qml</file>
         <file>qtquickcontrols2.conf</file>
         <file>scada/config/alarm_catalog.json</file>
         <file>scada/config/opcua.production.example.json</file>

@@ -5,6 +5,10 @@ import "../config"
 
 Item {
     id: recipesContainer
+    width: 1184
+    height: 626
+    implicitWidth: 1184
+    implicitHeight: 626
     Layout.fillWidth: true
     Layout.fillHeight: true
 

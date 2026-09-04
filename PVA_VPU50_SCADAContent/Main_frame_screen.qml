@@ -118,13 +118,52 @@ Item {
         value: rootWindow.activeUserLevel
     }
 
+    // Bind Screen 1 Control Screen run-mode decoupling / recipe lockout
+    Binding {
+        target: ui.controlView
+        property: "isLocked"
+        value: typeof Scada !== "undefined" && Scada.recipeRunning
+    }
+    Binding {
+        target: ui.controlView
+        property: "lockoutBatchId"
+        value: typeof Scada !== "undefined" ? Scada.activeBatchId : ""
+    }
+    Binding {
+        target: ui.controlView
+        property: "lockoutRecipeName"
+        value: typeof Scada !== "undefined" ? Scada.activeRecipeName : ""
+    }
+    Binding {
+        target: ui.controlView
+        property: "lockoutStep"
+        value: typeof Scada !== "undefined" ? Scada.currentStepIndex : 0
+    }
+    Binding {
+        target: ui.controlView
+        property: "lockoutTotalSteps"
+        value: typeof Scada !== "undefined" ? Scada.totalSteps : 0
+    }
+
     // --- Component Setup & Static Wiring ---
     Component.onCompleted: {
         var ctrl = ui.controlView;
         if (!ctrl) return;
 
-        // --- SAFETY INTERLOCK HELPER ---
+        // --- RUN-MODE DECOUPLING & SAFETY INTERLOCK HELPERS ---
+        function checkRecipeLockout() {
+            if (typeof Scada !== "undefined" && Scada.recipeRunning) {
+                if (ui.header) {
+                    ui.header.alarmMessage = "SAFETY INTERLOCK: Automatic recipe active - manual controls locked out.";
+                    ui.header.isAlarmActive = true;
+                }
+                return true;
+            }
+            return false;
+        }
+
         function checkProcessRunning(equipmentName, isRunning) {
+            if (checkRecipeLockout()) return true;
             if (isRunning) {
                 if (ui.header) {
                     ui.header.alarmMessage = "SAFETY INTERLOCK: Stop " + equipmentName + " before modifying mode or setpoint parameters.";

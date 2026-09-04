@@ -6,6 +6,8 @@ import QtQuick
 
 Item {
     id: pipeRoot
+    implicitWidth: 200
+    implicitHeight: 100
 
     // =========================================================================
     // 1. GEOMETRY & COORDINATES (Pixel-Perfect Orthogonal Routing)

@@ -78,6 +78,10 @@ Item {
             }, false);
         }
 
+        function onCreateNewRecipeRequested() {
+            onNewRecipeRequested();
+        }
+
         function onEditRecipeRequested(recipe) {
             ui.metadataModal.currentUserRole = recipeMakerController.activeUserRole;
             ui.metadataModal.currentUserLevel = recipeMakerController.activeUserLevel;
@@ -92,6 +96,10 @@ Item {
             ui.deleteConfirmModal.targetItemTitle = recipe.title;
             ui.deleteConfirmModal.targetItemType = "recipe";
             ui.deleteConfirmModal.visible = true;
+        }
+
+        function onProceedToIngredientsRequested(recipe) {
+            onProceedToIngredientBuilder(recipe);
         }
 
         function onProceedToIngredientBuilder(recipe) {
@@ -182,52 +190,22 @@ Item {
             ui.currentStage = 1;
         }
 
-        function onOpenConfigModalRequested(config) {
-            ui.resourceConfigModal.stageId = config.stageId;
-            ui.resourceConfigModal.phaseName = config.phaseName;
-            ui.resourceConfigModal.resourceType = config.resourceType;
-            ui.resourceConfigModal.resourceName = config.resourceName;
-            ui.resourceConfigModal.unit = config.unit;
-            ui.resourceConfigModal.minLimit = config.minLimit;
-            ui.resourceConfigModal.maxLimit = config.maxLimit;
-            ui.resourceConfigModal.setValue = config.setValue;
-            ui.resourceConfigModal.purpose = config.purpose;
-            ui.resourceConfigModal.selectedMaterials = config.selectedMaterials || [];
-
-            // Populate available materials from Screen 2
-            var avail = [];
-            var rawList = ui.ingredientScreen.getIngredientsArray();
-            for (var i = 0; i < rawList.length; i++) {
-                avail.push(rawList[i].name);
-            }
-            ui.resourceConfigModal.availableMaterials = avail;
-
-            ui.resourceConfigModal.manualConfirm = config.manualConfirm;
-            ui.resourceConfigModal.hmiMessage = config.hmiMessage || "Material loaded. Close Valve.";
-            ui.resourceConfigModal.durationSec = config.durationSec || 180;
-            ui.resourceConfigModal.stopConditionType = config.stopConditionType || "timer";
-            ui.resourceConfigModal.visible = true;
-        }
-
-        function onOpenManualModalRequested(manConfig) {
-            ui.manualActivityModal.stageId = manConfig.stageId || "2.1";
-            ui.manualActivityModal.phaseName = manConfig.phaseName || "Phase B";
-            ui.manualActivityModal.actionTarget = manConfig.actionTarget || "Butterfly Valve abc123";
-            ui.manualActivityModal.actionRequired = manConfig.actionRequired || "OPEN";
-            ui.manualActivityModal.displayMessage = manConfig.displayMessage || ("Operator to confirm that " + (manConfig.actionTarget || "valve") + " is " + (manConfig.actionRequired || "OPEN") + ".");
-            ui.manualActivityModal.visible = true;
+        function onLaunchManualModalRequested(stepData) {
+            ui.manualActionModal.stepNumberStr = stepData.stepNumber || "STEP 03";
+            ui.manualActionModal.stepTitle = stepData.stepTitle || "CHARGING PHASE B (WAX PHASE)";
+            ui.manualActionModal.instructions = stepData.instructions || "Open manual valve MV-101 and modulate vacuum.";
+            ui.manualActionModal.linkedPhase = stepData.linkedPhase || "Phase B";
+            ui.manualActionModal.targetVacuum = stepData.targetVacuum || -0.60;
+            ui.manualActionModal.currentTemp = stepData.currentTemp || 82.4;
+            ui.manualActionModal.visible = true;
         }
 
         function onRecipeSaved(recipePayload) {
             stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "21 CFR Part 11: Master Recipe Saved & Serialized: " + ui.activeRecipeTitle, "RECIPE_AUTHORING");
         }
 
-        function onRecipeSubmittedForReview(recipePayload) {
+        function onSubmitForApprovalRequested(recipePayload) {
             stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "21 CFR Part 11: Submitted Master Recipe for QA / Supervisor Approval: " + ui.activeRecipeTitle, "ELECTRONIC_SIGNATURE");
-        }
-
-        function onNodeRedExportGenerated(jsonText) {
-            stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "Exported Node-RED PLC batch execution package for: " + ui.activeRecipeTitle, "RECIPE_AUTHORING");
         }
     }
 
@@ -301,30 +279,15 @@ Item {
     }
 
     Connections {
-        target: ui.resourceConfigModal
+        target: ui.manualActionModal
 
-        function onCancelled() {
-            ui.resourceConfigModal.visible = false;
+        function onActionCancelled() {
+            ui.manualActionModal.visible = false;
         }
 
-        function onAccepted(config) {
-            ui.resourceConfigModal.visible = false;
-            ui.timelineScreen.setClipConfig(config);
-            stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "Updated timeline block config: " + config.resourceName + " in " + config.phase, "RECIPE_AUTHORING");
-        }
-    }
-
-    Connections {
-        target: ui.manualActivityModal
-
-        function onCancelled() {
-            ui.manualActivityModal.visible = false;
-        }
-
-        function onAccepted(config) {
-            ui.manualActivityModal.visible = false;
-            ui.timelineScreen.setClipConfig(config);
-            stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), "incharge", "21 CFR Part 11: Added/Updated manual sequence interlock: " + config.actionTarget + " (" + config.actionRequired + ") in " + config.phase, "RECIPE_AUTHORING");
+        function onActionCompleted(opId, stepNum, finalVac, finalTemp) {
+            ui.manualActionModal.visible = false;
+            stateMiddleware.auditLogEmitted(new Date().toLocaleTimeString(), opId, "21 CFR Part 11: Manual vacuum suction verified for " + stepNum + " | Final Vacuum: " + finalVac.toFixed(2) + " bar, Temp: " + finalTemp.toFixed(1) + "°C", "ELECTRONIC_SIGNATURE");
         }
     }
 }

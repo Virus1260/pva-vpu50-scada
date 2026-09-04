@@ -115,9 +115,9 @@ Rectangle {
 
             Text {
                 anchors.centerIn: parent
-                text: "✕"
+                text: "X"
                 color: closeMouse.containsMouse ? "#ffffff" : "#94a3b8"
-                font.pixelSize: 13
+                font.pixelSize: 12
                 font.bold: true
                 font.family: "Segoe UI"
             }
@@ -703,9 +703,10 @@ Rectangle {
                             anchors.rightMargin: 8
                             spacing: 6
 
-                            Text {
-                                text: "👤"
-                                font.pixelSize: 12
+                            ScadaIcon {
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
+                                iconName: "user"
                             }
 
                             TextInput {

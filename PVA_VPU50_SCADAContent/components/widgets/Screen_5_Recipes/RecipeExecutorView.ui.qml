@@ -11,6 +11,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: executorRoot
+    width: 1160
+    height: 550
+    implicitWidth: 1160
+    implicitHeight: 550
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"

@@ -9,6 +9,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: historyTableRoot
+    width: 1160
+    height: 560
+    implicitWidth: 1160
+    implicitHeight: 560
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"

@@ -58,6 +58,7 @@ class ScadaDatabaseStore(SqliteStore):
                     version INTEGER NOT NULL DEFAULT 1,
                     status TEXT NOT NULL CHECK(status IN ('draft', 'approved', 'deprecated')) DEFAULT 'draft',
                     body_json TEXT NOT NULL,
+                    sha256_hash TEXT,
                     created_by TEXT,
                     created_at TEXT NOT NULL,
                     approved_by TEXT,
@@ -111,6 +112,10 @@ class ScadaDatabaseStore(SqliteStore):
                     ON samples(batch_id, tag_id, captured_at_utc);
                 """
             )
+            try:
+                conn.execute("ALTER TABLE recipes ADD COLUMN sha256_hash TEXT")
+            except Exception:
+                pass
             self._seed_default_users(conn)
             self._seed_default_recipes(conn)
 
@@ -171,15 +176,15 @@ class ScadaDatabaseStore(SqliteStore):
 
     # --- Recipe Master CRUD ---
 
-    def create_recipe(self, recipe_id: str, name: str, body_dict: dict[str, Any], created_by: str) -> dict[str, Any]:
+    def create_recipe(self, recipe_id: str, name: str, body_dict: dict[str, Any], created_by: str, sha256_hash: str = "") -> dict[str, Any]:
         now = utc_now()
         with self.connection() as conn:
             conn.execute(
                 """
-                INSERT INTO recipes (id, name, version, status, body_json, created_by, created_at)
-                VALUES (?, ?, 1, 'draft', ?, ?, ?)
+                INSERT INTO recipes (id, name, version, status, body_json, sha256_hash, created_by, created_at)
+                VALUES (?, ?, 1, 'draft', ?, ?, ?, ?)
                 """,
-                (recipe_id, name, json.dumps(body_dict), created_by, now),
+                (recipe_id, name, json.dumps(body_dict), sha256_hash, created_by, now),
             )
             conn.execute(
                 """
@@ -190,7 +195,7 @@ class ScadaDatabaseStore(SqliteStore):
             )
         return self.get_recipe(recipe_id) or {}
 
-    def update_recipe(self, recipe_id: str, name: str, body_dict: dict[str, Any], updated_by: str) -> bool:
+    def update_recipe(self, recipe_id: str, name: str, body_dict: dict[str, Any], updated_by: str, sha256_hash: str = "") -> bool:
         now = utc_now()
         with self.connection() as conn:
             existing = conn.execute("SELECT version, status FROM recipes WHERE id = ?", (recipe_id,)).fetchone()
@@ -200,10 +205,10 @@ class ScadaDatabaseStore(SqliteStore):
             conn.execute(
                 """
                 UPDATE recipes
-                SET name = ?, version = ?, status = 'draft', body_json = ?, created_by = ?, created_at = ?
+                SET name = ?, version = ?, status = 'draft', body_json = ?, sha256_hash = ?, created_by = ?, created_at = ?
                 WHERE id = ?
                 """,
-                (name, new_version, json.dumps(body_dict), updated_by, now, recipe_id),
+                (name, new_version, json.dumps(body_dict), sha256_hash, updated_by, now, recipe_id),
             )
             conn.execute(
                 """
@@ -271,6 +276,7 @@ class ScadaDatabaseStore(SqliteStore):
                 "version": row["version"],
                 "status": row["status"],
                 "body": json.loads(row["body_json"]),
+                "sha256Hash": row["sha256_hash"] if "sha256_hash" in row.keys() and row["sha256_hash"] else "",
                 "createdBy": row["created_by"],
                 "createdAt": row["created_at"],
                 "approvedBy": row["approved_by"],
@@ -293,6 +299,7 @@ class ScadaDatabaseStore(SqliteStore):
                     "version": r["version"],
                     "status": r["status"],
                     "body": json.loads(r["body_json"]),
+                    "sha256Hash": r["sha256_hash"] if "sha256_hash" in r.keys() and r["sha256_hash"] else "",
                     "createdBy": r["created_by"],
                     "createdAt": r["created_at"],
                     "approvedBy": r["approved_by"],
@@ -509,6 +516,7 @@ class RecipeStore(SqliteStore):
                     name TEXT NOT NULL,
                     status TEXT NOT NULL,
                     payload_json TEXT NOT NULL,
+                    sha256_hash TEXT,
                     created_at_utc TEXT NOT NULL,
                     created_by TEXT NOT NULL,
                     approved_at_utc TEXT,
@@ -517,16 +525,20 @@ class RecipeStore(SqliteStore):
                 )
                 """
             )
+            try:
+                connection.execute("ALTER TABLE recipes ADD COLUMN sha256_hash TEXT")
+            except Exception:
+                pass
 
-    def save_recipe(self, recipe_id: str, version: int, name: str, payload: dict[str, Any], created_by: str) -> None:
+    def save_recipe(self, recipe_id: str, version: int, name: str, payload: dict[str, Any], created_by: str, sha256_hash: str = "") -> None:
         with self.connection() as connection:
             connection.execute(
                 """
                 INSERT OR REPLACE INTO recipes (
-                    id, version, name, status, payload_json, created_at_utc, created_by
-                ) VALUES (?, ?, ?, 'approved', ?, ?, ?)
+                    id, version, name, status, payload_json, sha256_hash, created_at_utc, created_by
+                ) VALUES (?, ?, ?, 'approved', ?, ?, ?, ?)
                 """,
-                (recipe_id, version, name, json.dumps(payload), utc_now(), created_by),
+                (recipe_id, version, name, json.dumps(payload), sha256_hash, utc_now(), created_by),
             )
 
     def list_recipes(self) -> list[dict[str, Any]]:
@@ -539,6 +551,7 @@ class RecipeStore(SqliteStore):
                     "name": row["name"],
                     "status": row["status"],
                     "payload": json.loads(row["payload_json"]),
+                    "sha256Hash": row["sha256_hash"] if "sha256_hash" in row.keys() and row["sha256_hash"] else "",
                     "createdAtUtc": row["created_at_utc"],
                     "createdBy": row["created_by"],
                 }

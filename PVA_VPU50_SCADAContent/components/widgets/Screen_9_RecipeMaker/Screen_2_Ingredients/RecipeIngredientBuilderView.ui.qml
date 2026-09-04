@@ -10,6 +10,10 @@ import "../.."
 
 Rectangle {
     id: ingBuilderRoot
+    width: 1166
+    height: 630
+    implicitWidth: 1166
+    implicitHeight: 630
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#08213b"

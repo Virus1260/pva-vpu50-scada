@@ -86,19 +86,21 @@ Rectangle {
         Column {
             id: itemsColumn
             width: scrollArea.width
-            spacing: 6
+            spacing: 4
+
+            readonly property int dynamicItemHeight: Math.min(96, Math.max(72, Math.floor((scrollArea.height - 8 - (navbarRoot.navItems.length - 1) * itemsColumn.spacing) / navbarRoot.navItems.length)))
 
             Repeater {
                 model: navbarRoot.navItems
 
                 delegate: Item {
                     width: itemsColumn.width
-                    height: 96
+                    height: itemsColumn.dynamicItemHeight
 
                     ScadaNavbarItem {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 96
-                        height: 96
+                        height: itemsColumn.dynamicItemHeight
                         itemId: modelData.id
                         itemIcon: modelData.icon
                         itemLabel: modelData.label

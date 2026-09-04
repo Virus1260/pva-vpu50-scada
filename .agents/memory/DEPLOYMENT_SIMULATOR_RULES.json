@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PVA Systems SCADA - Deployment Simulator Rules & Failure Signatures",
+  "description": "Knowledge base of all known CI/CD, WebAssembly, and Vercel deployment failure modes, their detection patterns, and mitigation strategies.",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "RULE-001",
+      "name": "Git Untracked File Invariant",
+      "severity": "CRITICAL",
+      "category": "git_hygiene",
+      "description": "Files referenced in CMakeLists.txt or PVA_VPU50_SCADA.qrc must be tracked in Git. Untracked files exist locally but are missing on GitHub Actions checkout.",
+      "failure_symptom": "fatal error: <file>: No such file or directory during GitHub Actions build_wasm step",
+      "detection": "Check git status --porcelain for '??' on any file registered in CMakeLists.txt or PVA_VPU50_SCADA.qrc.",
+      "remediation": "Run 'git add <file>' to track the file before pushing."
+    },
+    {
+      "id": "RULE-002",
+      "name": "Zero Duplicate QML/Resource Entries",
+      "severity": "CRITICAL",
+      "category": "cmake_integrity",
+      "description": "Every file entry in PVA_VPU50_SCADAContent/CMakeLists.txt and PVA_VPU50_SCADA.qrc must appear exactly once.",
+      "failure_symptom": "error: redefinition of 'unit' during qmlcachegen WebAssembly compilation",
+      "detection": "Parse all quoted strings in CMakeLists.txt QML_FILES/RESOURCES and all <file> tags in PVA_VPU50_SCADA.qrc and assert set(files) == files.",
+      "remediation": "Remove duplicate file entries from the corresponding CMakeLists.txt or .qrc file."
+    },
+    {
+      "id": "RULE-003",
+      "name": "Zero Ephemeral or Scratch Paths",
+      "severity": "CRITICAL",
+      "category": "cmake_integrity",
+      "description": "Never include files from scratch/, tmp/, .temp/, or output_frames/ in CMakeLists.txt, PVA_VPU50_SCADA.qrc, or qds.cmake.",
+      "failure_symptom": "CMake Error: File does not exist: scratch/<filename>",
+      "detection": "Regex scan for 'scratch/' or 'tmp/' in all CMake and QRC manifests.",
+      "remediation": "Remove scratch references or relocate production code into components/ or screens/."
+    },
+    {
+      "id": "RULE-004",
+      "name": "Zero Non-Existent File References",
+      "severity": "CRITICAL",
+      "category": "build_manifest",
+      "description": "Every file declared in CMakeLists.txt and PVA_VPU50_SCADA.qrc must physically exist on the local disk.",
+      "failure_symptom": "ninja: error: '<file>', needed by '<target>', missing and no known rule to make it",
+      "detection": "Verify os.path.exists() for every declared file relative to the project root.",
+      "remediation": "Either create the missing file or remove its declaration from the build manifest."
+    },
+    {
+      "id": "RULE-005",
+      "name": "CMake Root Project Target Collision Invariant",
+      "severity": "HIGH",
+      "category": "cmake_architecture",
+      "description": "The root CMakeLists.txt project name must not collide with subdirectory target library names.",
+      "failure_symptom": "add_library cannot create target 'PVA_VPU50_SCADA' because another target with the same name already exists",
+      "detection": "Verify root project() is named 'PVA_VPU50_SCADAApp' rather than 'PVA_VPU50_SCADA'.",
+      "remediation": "Set project(PVA_VPU50_SCADAApp LANGUAGES CXX) in root CMakeLists.txt."
+    },
+    {
+      "id": "RULE-006",
+      "name": "Vercel WebAssembly Security Headers",
+      "severity": "CRITICAL",
+      "category": "vercel_security",
+      "description": "vercel.json must include Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp, plus Content-Type: application/wasm.",
+      "failure_symptom": "SharedArrayBuffer is not defined; WebAssembly 60 FPS canvas fails to initialize in modern browsers",
+      "detection": "Parse vercel.json headers array and verify COOP, COEP, and wasm MIME type rules exist.",
+      "remediation": "Update vercel.json with the required security headers."
+    },
+    {
+      "id": "RULE-007",
+      "name": "Vercel Dist Packaging Structure",
+      "severity": "CRITICAL",
+      "category": "packaging",
+      "description": "The distribution directory (dist/) must contain index.html, valid web assets, favicon, and vercel.json.",
+      "failure_symptom": "CRITICAL: dist/index.html was not generated! Aborting deployment on GitHub Actions runner",
+      "detection": "Verify dist/index.html exists, is > 100 bytes, and contains HTML markup.",
+      "remediation": "Ensure build output copy script copies html, js, wasm, and renames target to index.html."
+    },
+    {
+      "id": "RULE-008",
+      "name": "QML Declarative Rule in .ui.qml",
+      "severity": "HIGH",
+      "category": "qml_declarative",
+      "description": "Files ending with .ui.qml must be strictly declarative. No imperative functions, loops, or complex JS constructors.",
+      "failure_symptom": "Qt Design Studio Error M222 or compilation failure in qmlcachegen",
+      "detection": "Regex scan .ui.qml files for 'function ' declarations or forbidden JS calls.",
+      "remediation": "Move imperative logic into the corresponding .qml logic wrapper."
+    },
+    {
+      "id": "RULE-009",
+      "name": "QML File Shadowing Invariant",
+      "severity": "HIGH",
+      "category": "qml_architecture",
+      "description": "Never have identical base names for a .ui.qml file and a .qml file in the same directory (e.g. Foo.ui.qml and Foo.qml).",
+      "failure_symptom": "The declarative .ui.qml shadows the .qml logic file; timers and signals are bypassed in WebAssembly",
+      "detection": "Check for files with the exact same base name differing only by .ui.qml vs .qml.",
+      "remediation": "Name the declarative file FooView.ui.qml and instantiate it inside Foo.qml."
+    },
+    {
+      "id": "RULE-010",
+      "name": "QML Headless Engine Clean Instantiation",
+      "severity": "CRITICAL",
+      "category": "qml_runtime",
+      "description": "The entire QML tree rooted at App.qml must instantiate headlessly with PySide6 QQmlApplicationEngine with ZERO fatal warnings or missing singletons.",
+      "failure_symptom": "Module 'theme' does not contain a type... or ReferenceError: Foo is not defined at runtime",
+      "detection": "Run QQmlApplicationEngine offscreen, capture QML warnings, and assert engine.rootObjects() has count > 0.",
+      "remediation": "Fix missing singleton registration in qmldir or broken import paths."
+    }
+  ]
+}

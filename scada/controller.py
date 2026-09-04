@@ -51,6 +51,7 @@ class ScadaController(QObject):
 
         # Active Batch & Recipe Execution State
         self._active_batch_id: str | None = None
+        self._recipe_running: bool = False
         self._recipe_exec_state: dict[str, Any] = {
             "loaded": False,
             "recipeId": "",
@@ -76,6 +77,26 @@ class ScadaController(QObject):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._on_tick)
         self.timer.start(500)
+
+        # Delta AS332T-A Modbus TCP Background Polling Worker
+        from scada.modbus.worker import ModbusWorker
+        self.modbus_worker = ModbusWorker(
+            host="192.168.1.5",
+            port=502,
+            poll_interval_ms=100,
+            enable_simulation_fallback=True,
+            parent=self,
+        )
+        self.modbus_worker.telemetryPolled.connect(self._on_modbus_telemetry)
+        self.modbus_worker.stepDoneSignaled.connect(self._on_modbus_step_done)
+        self.modbus_worker.start()
+
+    def _on_modbus_telemetry(self, telemetry: dict[str, Any]) -> None:
+        self._telemetry.update({k: v for k, v in telemetry.items() if isinstance(v, (int, float))})
+        self.telemetryUpdated.emit()
+
+    def _on_modbus_step_done(self, completed_step: int) -> None:
+        self.next_recipe_step(f"PLC_STEP_DONE_M34 (Step {completed_step})")
 
     def _seed_initial_recipes(self) -> None:
         if not self.recipe_store.list_recipes():
@@ -135,6 +156,27 @@ class ScadaController(QObject):
         self.telemetryUpdated.emit()
         self.alarmsUpdated.emit()
 
+    # --- Reactive Properties for QML Screen Binding & Lockout ---
+    @Property(bool, notify=recipeStateUpdated)
+    def recipeRunning(self) -> bool:
+        return bool(self._recipe_running or (self._recipe_exec_state and self._recipe_exec_state.get("status") == "RUNNING"))
+
+    @Property(str, notify=recipeStateUpdated)
+    def activeBatchId(self) -> str:
+        return self._active_batch_id or ""
+
+    @Property(str, notify=recipeStateUpdated)
+    def activeRecipeName(self) -> str:
+        return self._recipe_exec_state.get("recipeName", "")
+
+    @Property(int, notify=recipeStateUpdated)
+    def currentStepIndex(self) -> int:
+        return self._recipe_exec_state.get("currentStep", 0)
+
+    @Property(int, notify=recipeStateUpdated)
+    def totalSteps(self) -> int:
+        return self._recipe_exec_state.get("totalSteps", 0)
+
     # --- QML Invocable Slots ---
 
     @Slot(str, str, result=bool)
@@ -159,6 +201,23 @@ class ScadaController(QObject):
 
     @Slot(str, float, str, result=bool)
     def setProcessSetpoint(self, tag_id: str, value: float, reason: str) -> bool:
+        if self.recipeRunning:
+            self.audit_store.append(
+                AuditEvent(
+                    timestamp_utc=utc_now(),
+                    actor_id=self._current_user,
+                    action="SECURITY_VIOLATION",
+                    object_type="PROCESS_TAG",
+                    object_id=tag_id,
+                    reason=f"Attempted manual override while recipe active (Batch {self._active_batch_id})",
+                    before={"value": self._telemetry.get(tag_id, 0.0)},
+                    after={"rejected_value": value},
+                    context={"violation": "RECIPE_LOCKOUT_ENFORCED"},
+                )
+            )
+            self.auditUpdated.emit()
+            raise PermissionError("Manual setpoint modifications are locked out while an automatic batch recipe is running.")
+
         tag = self.registry.get_tag(tag_id)
         if not tag:
             return False
@@ -171,6 +230,7 @@ class ScadaController(QObject):
             raise ValueError(msg)
 
         old_val = self._telemetry.get(tag_id, 0.0)
+        self._telemetry[tag_id] = value
         if tag_id == "vpu.main.agitator_speed":
             self.simulator.target_agitator_speed = value
         elif tag_id == "vpu.main.homogenizer_speed":
@@ -215,6 +275,13 @@ class ScadaController(QObject):
         r_name = selected["name"] if selected else "Standard Batch"
         batch = self.historian.start_batch(recipe_id, r_name, 1, self._current_user)
         self._active_batch_id = batch["id"]
+        self._recipe_running = True
+        self._recipe_exec_state["status"] = "RUNNING"
+        self._recipe_exec_state["recipeId"] = recipe_id
+        self._recipe_exec_state["recipeName"] = r_name
+        self._recipe_exec_state["currentStep"] = 1
+        steps = selected.get("payload", {}).get("steps", []) if selected else []
+        self._recipe_exec_state["totalSteps"] = len(steps) if steps else 6
         self.audit_store.append(
             AuditEvent(
                 timestamp_utc=utc_now(),
@@ -229,6 +296,7 @@ class ScadaController(QObject):
             )
         )
         self.batchListUpdated.emit()
+        self.recipeStateUpdated.emit()
         self.auditUpdated.emit()
         return batch["id"]
 
@@ -237,6 +305,8 @@ class ScadaController(QObject):
         self.security.enforce(self._current_user, self._current_role, "batch.execute", f"End batch {batch_id}")
         self.historian.end_batch(batch_id, status)
         self._active_batch_id = None
+        self._recipe_running = False
+        self._recipe_exec_state["status"] = "IDLE"
         self.audit_store.append(
             AuditEvent(
                 timestamp_utc=utc_now(),
@@ -251,6 +321,7 @@ class ScadaController(QObject):
             )
         )
         self.batchListUpdated.emit()
+        self.recipeStateUpdated.emit()
         self.auditUpdated.emit()
         return True
 
@@ -279,6 +350,70 @@ class ScadaController(QObject):
     @Slot(result=str)
     def getRecipesJson(self) -> str:
         return json.dumps(self.recipe_store.list_recipes())
+
+    @Slot(str, str, str, str, result=str)
+    def saveRecipeFromDesigner(self, recipe_id: str, name: str, payload_json: str, target_status: str = "draft") -> str:
+        try:
+            payload = json.loads(payload_json) if payload_json else {}
+            payload["id"] = recipe_id
+            payload["name"] = name
+            payload["status"] = target_status
+
+            from scada.recipes import serialize_designer_timeline_to_isa88
+            from scada.store import scada_db
+
+            recipe = serialize_designer_timeline_to_isa88(payload, self._current_user)
+
+            version_int = 1
+            try:
+                clean_v = str(recipe.version).lower().replace("v", "").strip()
+                version_int = int(float(clean_v)) if clean_v else 1
+            except Exception:
+                version_int = 1
+
+            self.recipe_store.save_recipe(
+                recipe.id, version_int, recipe.name, recipe.to_dict(), self._current_user, recipe.sha256_hash
+            )
+
+            try:
+                scada_db.create_recipe(recipe.id, recipe.name, recipe.to_dict(), self._current_user, recipe.sha256_hash)
+            except Exception:
+                try:
+                    scada_db.update_recipe(recipe.id, recipe.name, recipe.to_dict(), self._current_user, recipe.sha256_hash)
+                except Exception:
+                    pass
+
+            self.audit_store.append(
+                AuditEvent(
+                    timestamp_utc=utc_now(),
+                    actor_id=self._current_user,
+                    action="RECIPE_SAVED",
+                    object_type="RECIPE",
+                    object_id=recipe.id,
+                    reason=f"Master recipe saved from visual designer ({target_status})",
+                    before={},
+                    after={
+                        "recipe_id": recipe.id,
+                        "version": recipe.version,
+                        "status": target_status,
+                        "sha256": recipe.sha256_hash,
+                    },
+                    context={"steps": len(recipe.steps), "estimatedDurationSec": recipe.estimated_duration_sec},
+                )
+            )
+            self.auditUpdated.emit()
+            self.recipeStateUpdated.emit()
+            return json.dumps({
+                "success": True,
+                "recipeId": recipe.id,
+                "version": recipe.version,
+                "status": target_status,
+                "sha256": recipe.sha256_hash,
+                "stepsCount": len(recipe.steps),
+                "message": f"Recipe {recipe.id} saved with SHA-256 integrity hash: {recipe.sha256_hash[:16]}..."
+            })
+        except Exception as e:
+            return json.dumps({"success": False, "error": str(e)})
 
     @Slot(str, result=str)
     def getCortexReviewReportJson(self, batch_id: str) -> str:
@@ -311,5 +446,36 @@ class ScadaController(QObject):
 
     @Slot(str)
     def next_recipe_step(self, reason: str) -> None:
-        # State machine transition
-        self.recipeStateUpdated.emit()
+        if self._recipe_exec_state.get("status") == "RUNNING":
+            cur_step = self._recipe_exec_state.get("currentStep", 1)
+            tot_steps = self._recipe_exec_state.get("totalSteps", 1)
+            if cur_step < tot_steps:
+                next_step = cur_step + 1
+                self._recipe_exec_state["currentStep"] = next_step
+                self._recipe_exec_state["elapsedSec"] = 0
+                self.audit_store.append(
+                    AuditEvent(
+                        timestamp_utc=utc_now(),
+                        actor_id=self._current_user,
+                        action="RECIPE_STEP_ADVANCED",
+                        object_type="RECIPE_STEP",
+                        object_id=str(next_step),
+                        reason=reason or "Automatic transition to next phase",
+                        before={"step": cur_step},
+                        after={"step": next_step},
+                        context={"batch_id": self._active_batch_id},
+                    )
+                )
+                self.auditUpdated.emit()
+            else:
+                self.endBatch(self._active_batch_id or "B1", "completed")
+            self.recipeStateUpdated.emit()
+
+    @Slot()
+    def cleanup(self) -> None:
+        """Gracefully stop background timers and worker threads on application exit."""
+        if hasattr(self, "timer") and self.timer.isActive():
+            self.timer.stop()
+        if hasattr(self, "modbus_worker") and self.modbus_worker.isRunning():
+            self.modbus_worker.stop()
+

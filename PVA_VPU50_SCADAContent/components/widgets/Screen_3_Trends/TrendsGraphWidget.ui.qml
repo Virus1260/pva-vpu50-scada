@@ -9,6 +9,10 @@ import QtQuick.Layouts
 
 Rectangle {
     id: graphWidgetRoot
+    width: 800
+    height: 560
+    implicitWidth: 800
+    implicitHeight: 560
     Layout.fillWidth: true
     Layout.fillHeight: true
     color: "#06182c"
