@@ -91,6 +91,7 @@
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_jacket.svg</file>
         <file>PVA_VPU50_SCADAContent/components/common/DeviceSetpointStepper.qml</file>
         <file>PVA_VPU50_SCADAContent/components/common/SafetyInterlockBadge.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/common/ScadaIcon.qml</file>
         <file>PVA_VPU50_SCADAContent/components/common/SubsystemModeButton.qml</file>
         <file>PVA_VPU50_SCADAContent/components/common/SubsystemModeSelectorModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/design_system/TouchBadge.qml</file>
@@ -117,13 +118,11 @@
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeMetadataModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeManualActionModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/PvaLogo.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaButton.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderAnnunciator.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderMachineCluster.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderUserCluster.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaIcon.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/PvaLogo.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/ScadaHeader.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaKeyboardKey.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaNumericKeypad.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaNumericKeypadView.ui.qml</file>
@@ -132,7 +131,6 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbar.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarItem.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarModel.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaSidebar.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaCard.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaMediaControls.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaModeSelector.qml</file>

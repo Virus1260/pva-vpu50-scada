@@ -1,6 +1,6 @@
 import QtQuick
 
-QtObject {
+Item {
     id: scadaConfigRoot
 
     // =========================================================================

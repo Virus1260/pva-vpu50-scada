@@ -1,6 +1,6 @@
 import QtQuick
 
-QtObject {
+Item {
     id: middlewareRoot
 
     property ScadaConfig config: ScadaConfig {}

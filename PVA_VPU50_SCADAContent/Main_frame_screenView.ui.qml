@@ -8,7 +8,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import PVA_VPU50_SCADA
 import "screens"
-import "components/widgets"
+import "components/widgets/ScadaNavbar"
+import "components/widgets/ScadaHeader"
 import "components/widgets/Screen_1_Control"
 import "components/modals"
 import "components/modals/Screen_1_Control"
@@ -63,7 +64,7 @@ Rectangle {
     }
 
     // 2. RIGHT-SIDE SCADA NAVIGATION DOCK (110px Width, Large Touch Ergonomics)
-    ScadaSidebar {
+    ScadaNavbar {
         id: rightSidebar
         anchors.top: scadaHeader.bottom
         anchors.bottom: parent.bottom

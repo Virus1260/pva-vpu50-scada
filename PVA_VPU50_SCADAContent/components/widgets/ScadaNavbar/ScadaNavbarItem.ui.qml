@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import ".."
+import "../../common"
 import "../../../theme"
 
 // Ergonomic Square Navigation Tile

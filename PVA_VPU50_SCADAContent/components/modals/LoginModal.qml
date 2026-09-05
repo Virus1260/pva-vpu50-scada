@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import "../widgets"
+import "../common"
 import "../../config"
 
 Rectangle {

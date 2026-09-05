@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import ".."
+import "../../common"
 
 Rectangle {
     id: selectorRoot
