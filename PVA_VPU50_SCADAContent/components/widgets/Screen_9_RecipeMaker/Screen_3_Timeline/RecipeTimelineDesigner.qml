@@ -265,32 +265,38 @@ Item {
                 required property string pillParams
 
                 width: ListView.view.width
-                height: 68
-                radius: 6
-                color: timelineLogicRoot.selectedIndex === index ? "#0f365e" : "#092442"
-                border.color: timelineLogicRoot.selectedIndex === index ? "#38bdf8" : "#1d5b94"
+                height: Dimensions.cardHeightStandard
+                radius: Dimensions.cardBorderRadius
+                color: timelineLogicRoot.selectedIndex === index ? Theme.cardBgSelected : (cardHoverMouse.containsMouse ? Theme.cardBgHover : Theme.cardBg)
+                border.color: timelineLogicRoot.selectedIndex === index ? Theme.cardBorderSelected : (cardHoverMouse.containsMouse ? Theme.cardBorderHover : Theme.cardBorder)
                 border.width: timelineLogicRoot.selectedIndex === index ? 2 : 1
+
+                property color stripCol: cardItem.colorStrip
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 8
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    anchors.topMargin: 8
+                    anchors.bottomMargin: 8
+                    spacing: 12
 
-                    // Left Phase Color Stripe
+                    // 1. Left Phase Color Stripe
                     Rectangle {
                         Layout.preferredWidth: 6
                         Layout.fillHeight: true
                         radius: 3
-                        color: cardItem.colorStrip
+                        color: cardItem.stripCol
                     }
 
-                    // Monospace Step Index
+                    // 2. Monospace Step Index Badge
                     Rectangle {
-                        Layout.preferredWidth: 64
-                        Layout.preferredHeight: 32
-                        radius: 4
+                        Layout.preferredWidth: 68
+                        Layout.preferredHeight: Dimensions.controlButtonSize
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: Dimensions.controlButtonRadius
                         color: "#081d33"
-                        border.color: cardItem.colorStrip
+                        border.color: cardItem.stripCol
                         border.width: 1
 
                         Text {
@@ -298,92 +304,164 @@ Item {
                             text: "STEP " + String(cardItem.index + 1).padStart(2, '0')
                             color: "#ffffff"
                             font.bold: true
-                            font.pixelSize: 11
+                            font.pixelSize: 12
                             font.family: "Consolas"
                         }
                     }
 
-                    // Step Name & Pill Params
+                    // 3. Step Name & Parameter Details
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 3
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: 4
 
-                        RowLayout {
+                        Text {
+                            text: cardItem.stepName
+                            color: "#ffffff"
+                            font.bold: true
+                            font.pixelSize: 14
+                            font.family: "Segoe UI"
+                            elide: Text.ElideRight
                             Layout.fillWidth: true
-                            spacing: 6
-                            Text {
-                                text: cardItem.stepName
-                                color: "#ffffff"
-                                font.bold: true
-                                font.pixelSize: 12
-                                font.family: "Segoe UI"
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            TouchBadge {
-                                text: cardItem.phaseType.replace("PHASE_", "")
-                                badgeColor: cardItem.colorStrip
-                                isMonospace: true
-                                horizontalPadding: 6
-                                implicitHeight: 22
-                                Layout.alignment: Qt.AlignVCenter
-                            }
                         }
 
                         Text {
                             text: cardItem.pillParams
                             color: "#38bdf8"
-                            font.pixelSize: 11
+                            font.pixelSize: 12
                             font.family: "Segoe UI"
                             elide: Text.ElideRight
+                            Layout.fillWidth: true
                         }
                     }
 
-                    // In-Card Reordering & Action Controls
-                    RowLayout {
-                        spacing: 4
+                    // 4. Middle Aligned Phase Tile Badge (Uniform width, vertically & horizontally aligned)
+                    Rectangle {
+                        Layout.preferredWidth: Dimensions.phaseBadgeWidth
+                        Layout.preferredHeight: Dimensions.phaseBadgeHeight
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: Dimensions.controlButtonRadius
+                        color: Qt.rgba(cardItem.stripCol.r, cardItem.stripCol.g, cardItem.stripCol.b, 0.18)
+                        border.color: cardItem.stripCol
+                        border.width: 1
 
-                        // Move Up
+                        Text {
+                            anchors.centerIn: parent
+                            text: cardItem.phaseType.replace("PHASE_", "")
+                            color: cardItem.stripCol
+                            font.bold: true
+                            font.pixelSize: 11
+                            font.family: "Consolas"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                    }
+
+                    // 5. In-Card Action Buttons (Move Up, Move Down, Duplicate, Delete) - Matching Screen 1 Control Sizing
+                    RowLayout {
+                        spacing: Dimensions.controlButtonSpacing
+                        Layout.alignment: Qt.AlignVCenter
+
+                        // Move Up Button (44x44, radius 4, icon 22px)
                         Rectangle {
-                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
-                            color: "#1e293b"; border.color: "#334155"; border.width: 1
-                            Text { anchors.centerIn: parent; text: "↑"; color: "#ffffff"; font.bold: true; font.pixelSize: 12 }
+                            id: upBtn
+                            Layout.preferredWidth: Dimensions.controlButtonSize
+                            Layout.preferredHeight: Dimensions.controlButtonSize
+                            radius: Dimensions.controlButtonRadius
+                            color: upMouse.pressed ? Theme.controlBtnPressed : (upMouse.containsMouse ? Theme.controlBtnHover : Theme.controlBtnBg)
+                            border.color: upMouse.containsMouse ? Theme.controlBtnHoverBorder : Theme.controlBtnBorder
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "↑"
+                                color: upMouse.containsMouse ? "#38bdf8" : "#ffffff"
+                                font.bold: true
+                                font.pixelSize: Dimensions.controlButtonIconSize
+                            }
                             MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                id: upMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: timelineLogicRoot.moveStepUp(cardItem.index)
                             }
                         }
 
-                        // Move Down
+                        // Move Down Button (44x44, radius 4, icon 22px)
                         Rectangle {
-                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
-                            color: "#1e293b"; border.color: "#334155"; border.width: 1
-                            Text { anchors.centerIn: parent; text: "↓"; color: "#ffffff"; font.bold: true; font.pixelSize: 12 }
+                            id: downBtn
+                            Layout.preferredWidth: Dimensions.controlButtonSize
+                            Layout.preferredHeight: Dimensions.controlButtonSize
+                            radius: Dimensions.controlButtonRadius
+                            color: downMouse.pressed ? Theme.controlBtnPressed : (downMouse.containsMouse ? Theme.controlBtnHover : Theme.controlBtnBg)
+                            border.color: downMouse.containsMouse ? Theme.controlBtnHoverBorder : Theme.controlBtnBorder
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "↓"
+                                color: downMouse.containsMouse ? "#38bdf8" : "#ffffff"
+                                font.bold: true
+                                font.pixelSize: Dimensions.controlButtonIconSize
+                            }
                             MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                id: downMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: timelineLogicRoot.moveStepDown(cardItem.index)
                             }
                         }
 
-                        // Duplicate
+                        // Duplicate Button (44x44, radius 4, icon 22px)
                         Rectangle {
-                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
-                            color: "#1e293b"; border.color: "#334155"; border.width: 1
-                            Text { anchors.centerIn: parent; text: "⎘"; color: "#38bdf8"; font.bold: true; font.pixelSize: 13 }
+                            id: dupBtn
+                            Layout.preferredWidth: Dimensions.controlButtonSize
+                            Layout.preferredHeight: Dimensions.controlButtonSize
+                            radius: Dimensions.controlButtonRadius
+                            color: dupMouse.pressed ? Theme.controlBtnPressed : (dupMouse.containsMouse ? Theme.controlBtnHover : Theme.controlBtnBg)
+                            border.color: dupMouse.containsMouse ? Theme.controlBtnHoverBorder : Theme.controlBtnBorder
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⎘"
+                                color: dupMouse.containsMouse ? "#ffffff" : "#38bdf8"
+                                font.bold: true
+                                font.pixelSize: Dimensions.controlButtonIconSize
+                            }
                             MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                id: dupMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: timelineLogicRoot.duplicateStep(cardItem.index)
                             }
                         }
 
-                        // Delete
+                        // Delete Button (44x44, radius 4, icon 20px)
                         Rectangle {
-                            Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 4
-                            color: "#450a0a"; border.color: "#ef4444"; border.width: 1
-                            Text { anchors.centerIn: parent; text: "✕"; color: "#fca5a5"; font.bold: true; font.pixelSize: 12 }
+                            id: delBtn
+                            Layout.preferredWidth: Dimensions.controlButtonSize
+                            Layout.preferredHeight: Dimensions.controlButtonSize
+                            radius: Dimensions.controlButtonRadius
+                            color: delMouse.pressed ? "#2d0606" : (delMouse.containsMouse ? Theme.controlBtnDeleteHover : Theme.controlBtnDeleteBg)
+                            border.color: delMouse.containsMouse ? "#f87171" : Theme.controlBtnDeleteBorder
+                            border.width: 1
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "✕"
+                                color: delMouse.containsMouse ? "#ffffff" : "#fca5a5"
+                                font.bold: true
+                                font.pixelSize: 20
+                            }
                             MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                id: delMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: timelineLogicRoot.removeStep(cardItem.index)
                             }
                         }
@@ -391,7 +469,9 @@ Item {
                 }
 
                 MouseArea {
+                    id: cardHoverMouse
                     anchors.fill: parent
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     z: -1
                     onClicked: {

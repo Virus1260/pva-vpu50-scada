@@ -30,6 +30,25 @@ Item {
     readonly property color textTertiary:  "#64748b" // Units, placeholders (50%)
     readonly property color textHighlight: "#38bdf8" // Key values, active tags
 
+    // Industrial SCADA Card Colors (Matching Screen 1 Control Screen)
+    readonly property color cardBg:                 "#0f3862" // Standard card background
+    readonly property color cardBgAlternate:        "#092442" // Darker / secondary card background
+    readonly property color cardBgSelected:         "#124373" // Selected card background
+    readonly property color cardBgHover:            "#164a7d" // Card hover state
+    readonly property color cardBorder:             "#184d7e" // Standard card border
+    readonly property color cardBorderSelected:     "#38bdf8" // Highlight cyan border
+    readonly property color cardBorderHover:        "#2563eb" // Hover border blue
+
+    // Industrial SCADA Control Button Colors (Matching Screen 1 Media Controls)
+    readonly property color controlBtnBg:           "#0c3359" // Standard button background
+    readonly property color controlBtnBorder:       "#1a5286" // Standard button border
+    readonly property color controlBtnHover:        "#164270" // Button hover background
+    readonly property color controlBtnHoverBorder:  "#38bdf8" // Button hover border
+    readonly property color controlBtnPressed:      "#08233d" // Button pressed background
+    readonly property color controlBtnDeleteBg:     "#450a0a" // Delete button background
+    readonly property color controlBtnDeleteBorder: "#ef4444" // Delete button border
+    readonly property color controlBtnDeleteHover:  "#7f1d1d" // Delete button hover background
+
     // Standardized Gradients
     readonly property Gradient buttonGradient: Gradient {
         GradientStop { position: 0.0; color: "#1e40af" }
