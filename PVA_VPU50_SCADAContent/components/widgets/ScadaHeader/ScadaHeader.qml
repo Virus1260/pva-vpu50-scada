@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import "ScadaHeader"
 
 Rectangle {
     id: headerRoot
