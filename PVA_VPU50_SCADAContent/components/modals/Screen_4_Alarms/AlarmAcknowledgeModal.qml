@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../../widgets/ScadaKeyboard"
 
 Rectangle {
     id: ackModalRoot
@@ -94,6 +95,15 @@ Rectangle {
                     font.pixelSize: 12
                     text: "Inspected vacuum seals, verified normal skid state, and engaged backup line."
                 }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.IBeamCursor
+                    onClicked: {
+                        reasonTextInput.forceActiveFocus();
+                        textKeyboard.openFor(reasonTextInput, "ACTION / REASON FOR ACKNOWLEDGEMENT");
+                    }
+                }
             }
 
             Text {
@@ -130,5 +140,12 @@ Rectangle {
                 }
             }
         }
+    }
+
+    ScadaTextKeyboard {
+        id: textKeyboard
+        anchors.fill: parent
+        z: 9999
+        visible: false
     }
 }

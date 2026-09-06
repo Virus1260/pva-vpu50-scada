@@ -802,12 +802,12 @@ Item {
             return false;
         } else if (hasHomogenizerDry) {
             view.validationPassed = false;
-            view.validationStatusText = "⚠ Pre-Flight Warning: Seal Burn Risk";
+            view.validationStatusText = "Pre-Flight Warning: Seal Burn Risk";
             view.validationDetails = "Homogenizer set > 2000 RPM before liquid addition. Mechanical seal dry run detected.";
             return false;
         } else {
             view.validationPassed = true;
-            view.validationStatusText = "✓ Pre-Flight Checklist: " + stepCount + "/" + stepCount + " Guardrails Valid";
+            view.validationStatusText = "Pre-Flight Checklist: " + stepCount + "/" + stepCount + " Guardrails Valid";
             view.validationDetails = "All ISA-88 phases reconciled. Thermal shock and mechanical seal interlocks verified.";
             return true;
         }
@@ -1109,7 +1109,7 @@ Item {
             if (typeof Scada !== "undefined" && Scada.saveRecipeFromDesigner) {
                 var res = JSON.parse(Scada.saveRecipeFromDesigner(timelineLogicRoot.recipeId, timelineLogicRoot.recipeTitle, payload, "DRAFT"));
                 if (res.sha256) {
-                    view.validationStatusText = "✓ Draft Saved (SHA-256: " + res.sha256.substring(0, 8) + "...)";
+                    view.validationStatusText = "Draft Saved (SHA-256: " + res.sha256.substring(0, 8) + "...)";
                 }
             }
             timelineLogicRoot.recipeSaved({
@@ -1137,7 +1137,7 @@ Item {
                 if (typeof Scada !== "undefined" && Scada.saveRecipeFromDesigner) {
                     var res = JSON.parse(Scada.saveRecipeFromDesigner(timelineLogicRoot.recipeId, timelineLogicRoot.recipeTitle, payload, "UNDER REVIEW"));
                     if (res.sha256) {
-                        view.validationStatusText = "✓ Submitted for QA (SHA-256: " + res.sha256.substring(0, 8) + "...)";
+                        view.validationStatusText = "Submitted for QA (SHA-256: " + res.sha256.substring(0, 8) + "...)";
                     }
                 }
                 timelineLogicRoot.submitForApprovalRequested({
@@ -1273,6 +1273,22 @@ Item {
         }
     }
 
+    Connections {
+        target: view.stepNameKeyboardMouse
+        function onClicked() {
+            timelineLogicRoot.openTextKeyboard(view.stepNameInput, "EDIT STEP TITLE");
+        }
+    }
+
+    Connections {
+        target: view.stepNameInput
+        function onActiveFocusChanged() {
+            if (view.stepNameInput && view.stepNameInput.activeFocus && !textKeyboard.visible) {
+                timelineLogicRoot.openTextKeyboard(view.stepNameInput, "EDIT STEP TITLE");
+            }
+        }
+    }
+
     // =========================================================================
     // MODAL DIALOGS: ON-SCREEN NUMERIC KEYPAD & FULL QWERTY KEYBOARD
     // =========================================================================
@@ -1300,6 +1316,7 @@ Item {
     ScadaTextKeyboard {
         id: textKeyboard
         objectName: "textKeyboard"
+        anchors.fill: parent
         z: 10000
         visible: false
 

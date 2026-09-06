@@ -69,4 +69,9 @@ Item {
     readonly property color contextMenuBorder:     "#1e5b94" // Floating action menu border
     readonly property color contextMenuHover:      "#164270" // Floating action menu hover
     readonly property color contextMenuPressed:    "#0a2d52" // Floating action menu pressed
+
+    // ── Alias tokens (prevent QColor [undefined] runtime warnings) ─────────────
+    readonly property color borderDark:            "#1e3a5f" // = borderDim — subdued divider
+    readonly property color accentCyan:            "#38bdf8" // = primaryGlow — active cyan
+    readonly property color accentAmber:           "#f59e0b" // = statusReview — industrial amber
 }

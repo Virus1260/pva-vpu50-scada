@@ -189,89 +189,120 @@ Item {
                 cursorShape: Qt.IBeamCursor
 
                 property bool isDraggingLoupe: false
+                property bool isHeld: false
                 property real pressStartX: 0
                 property real pressStartY: 0
 
                 Timer {
                     id: longPressTimer
-                    interval: 220
+                    interval: 320
                     repeat: false
                     onTriggered: {
-                        touchMouseArea.isDraggingLoupe = true;
-                        loupeInstance.active = true;
-                        loupeInstance.fingerX = touchMouseArea.pressStartX;
-                        loupeInstance.fingerY = touchMouseArea.pressStartY;
+                        if (!touchMouseArea.isDraggingLoupe) {
+                            touchMouseArea.isHeld = true;
+                            innerInput.selectWord();
+                            fieldRoot.activeContextMenu.openFor(innerInput, touchMouseArea.pressStartX, touchMouseArea.pressStartY);
+                        }
                     }
                 }
 
                 onPressed: function(mouse) {
                     pressStartX = mouse.x;
                     pressStartY = mouse.y;
-                    longPressTimer.restart();
+                    isDraggingLoupe = false;
+                    isHeld = false;
 
+                    if (fieldRoot.activeContextMenu) fieldRoot.activeContextMenu.closeMenu();
                     var pos = innerInput.positionAt(mouse.x);
                     innerInput.cursorPosition = pos;
                     innerInput.forceActiveFocus();
-                    fieldRoot.openKeyboard();
+                    longPressTimer.restart();
                 }
 
                 onPositionChanged: function(mouse) {
                     var dx = Math.abs(mouse.x - pressStartX);
                     var dy = Math.abs(mouse.y - pressStartY);
-                    if (dx > 6 || dy > 6) {
+                    if (dx > 4 || dy > 4) {
+                        longPressTimer.stop();
                         isDraggingLoupe = true;
-                        loupeInstance.active = true;
+                        isHeld = false;
+                        if (fieldRoot.activeContextMenu) fieldRoot.activeContextMenu.closeMenu();
                     }
 
                     if (isDraggingLoupe) {
                         var pos = innerInput.positionAt(mouse.x);
                         innerInput.cursorPosition = pos;
-                        loupeInstance.fingerX = mouse.x;
-                        loupeInstance.fingerY = mouse.y;
+                        fieldRoot.activeLoupe.targetInput = innerInput;
+                        fieldRoot.activeLoupe.fingerX = mouse.x;
+                        fieldRoot.activeLoupe.fingerY = mouse.y;
+                        fieldRoot.activeLoupe.active = true;
+                        fieldRoot.activeLoupe.updatePosition();
                     }
                 }
 
                 onReleased: function(mouse) {
                     longPressTimer.stop();
-                    isDraggingLoupe = false;
-                    loupeInstance.active = false;
+
+                    if (isHeld) {
+                        isHeld = false;
+                        return; // Keep context menu open after hold
+                    }
+
+                    if (isDraggingLoupe) {
+                        isDraggingLoupe = false;
+                        fieldRoot.activeLoupe.active = false;
+                        if (fieldRoot.activeContextMenu) {
+                            fieldRoot.activeContextMenu.openFor(innerInput, mouse.x, mouse.y);
+                        }
+                        return;
+                    }
+
+                    // Quick tap
+                    fieldRoot.openKeyboard();
                 }
 
                 onCanceled: function() {
                     longPressTimer.stop();
                     isDraggingLoupe = false;
-                    loupeInstance.active = false;
+                    isHeld = false;
+                    fieldRoot.activeLoupe.active = false;
                 }
 
                 onDoubleClicked: function(mouse) {
                     longPressTimer.stop();
                     isDraggingLoupe = false;
-                    loupeInstance.active = false;
+                    isHeld = false;
+                    fieldRoot.activeLoupe.active = false;
                     innerInput.selectWord();
-                    contextMenuInstance.openFor(innerInput, mouse.x, mouse.y);
+                    fieldRoot.activeContextMenu.openFor(innerInput, mouse.x, mouse.y);
                 }
             }
         }
     }
 
-    // Touch Magnifying Loupe Instance
+    property var loupeTarget: null
+    property var contextMenuTarget: null
+    readonly property var activeLoupe: loupeTarget ? loupeTarget : loupeInstance
+    readonly property var activeContextMenu: contextMenuTarget ? contextMenuTarget : contextMenuInstance
+
+    // Touch Magnifying Loupe Fallback Instance
     ScadaTouchLoupe {
         id: loupeInstance
         targetInput: innerInput
         Component.onCompleted: {
-            if (fieldRoot.Window && fieldRoot.Window.contentItem) {
-                parent = fieldRoot.Window.contentItem;
+            if (fieldRoot.Window && fieldRoot.Window.window && fieldRoot.Window.window.contentItem) {
+                parent = fieldRoot.Window.window.contentItem;
             }
         }
     }
 
-    // Floating Context Menu Instance (Cut / Copy / Paste / Select All)
+    // Floating Context Menu Fallback Instance (Cut / Copy / Paste / Select All)
     ScadaTextContextMenu {
         id: contextMenuInstance
         targetInput: innerInput
         Component.onCompleted: {
-            if (fieldRoot.Window && fieldRoot.Window.contentItem) {
-                parent = fieldRoot.Window.contentItem;
+            if (fieldRoot.Window && fieldRoot.Window.window && fieldRoot.Window.window.contentItem) {
+                parent = fieldRoot.Window.window.contentItem;
             }
         }
     }

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import "../../../common"
+import "../../ScadaKeyboard"
 
 Item {
     id: dashboardLogicRoot
@@ -487,5 +488,31 @@ Item {
                 dashboardLogicRoot.proceedToIngredientBuilder(dashboardLogicRoot.activeRecipeData);
             }
         }
+    }
+
+    Connections {
+        target: view.searchInputField
+        function onActiveFocusChanged() {
+            if (view.searchInputField && view.searchInputField.activeFocus && !searchKeyboard.visible) {
+                searchKeyboard.openFor(view.searchInputField, "SEARCH RECIPES");
+            }
+        }
+    }
+
+    MouseArea {
+        parent: view.searchInputField
+        anchors.fill: parent
+        cursorShape: Qt.IBeamCursor
+        onClicked: {
+            view.searchInputField.forceActiveFocus();
+            searchKeyboard.openFor(view.searchInputField, "SEARCH RECIPES");
+        }
+    }
+
+    ScadaTextKeyboard {
+        id: searchKeyboard
+        anchors.fill: parent
+        z: 9999
+        visible: false
     }
 }

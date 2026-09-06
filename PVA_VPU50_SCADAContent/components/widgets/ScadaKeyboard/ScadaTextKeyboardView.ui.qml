@@ -20,15 +20,28 @@ Rectangle {
 
     property string titleText: "Text Input Keyboard"
     property string displayText: ""
+    property int cursorPosition: 0
+    property int selectionStart: 0
+    property int selectionEnd: 0
+    property string selectedText: ""
+    readonly property bool hasSelection: selectionEnd > selectionStart && selectedText.length > 0
     property bool isShift: false
     property string shiftLabel: "▲ Shift"
     property bool isShiftActive: false
     property bool isCapsLock: false
     property string physicalActiveKey: ""
+    property string securityToastMessage: ""
+    property bool securityToastVisible: false
 
     property alias headerDragArea: dragArea
     property alias dockBtn: dockBMouse
     property alias closeBtn: closeVkMouse
+    property alias previewStrip: previewStrip
+    property alias previewTxtBefore: previewTxtBefore
+    property alias previewTxtAfter: previewTxtAfter
+    property alias quickPasteMouse: quickPasteMouse
+    property alias leftHandleArea: leftHandleMouse
+    property alias rightHandleArea: rightHandleMouse
 
     // Key aliases
     property alias k1: key1; property alias k2: key2; property alias k3: key3; property alias k4: key4
@@ -55,6 +68,56 @@ Rectangle {
     // Prevent background click-through
     MouseArea {
         anchors.fill: parent
+    }
+
+    // Security Interlock Warning Toast Banner (Buffer overflow & DoS attack mitigation)
+    Rectangle {
+        id: securityBanner
+        z: 9999
+        anchors.top: parent.top
+        anchors.topMargin: textKeyboardViewRoot.securityToastVisible ? 8 : -50
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.min(parent.width - 40, secRow.implicitWidth + 24)
+        height: 34
+        radius: 6
+        color: "#2a0a0a"
+        border.color: "#ef4444"
+        border.width: 1.5
+        visible: opacity > 0.01
+        opacity: textKeyboardViewRoot.securityToastVisible ? 1.0 : 0.0
+
+        Behavior on anchors.topMargin { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+
+        RowLayout {
+            id: secRow
+            anchors.centerIn: parent
+            spacing: 8
+
+            Rectangle {
+                width: 16
+                height: 16
+                radius: 8
+                color: "#dc2626"
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "!"
+                    color: "#ffffff"
+                    font.bold: true
+                    font.pixelSize: 11
+                    font.family: "Segoe UI"
+                }
+            }
+
+            Text {
+                text: textKeyboardViewRoot.securityToastMessage
+                color: "#fca5a5"
+                font.bold: true
+                font.pixelSize: 12
+                font.family: "Segoe UI"
+            }
+        }
     }
 
     ColumnLayout {
@@ -156,8 +219,8 @@ Rectangle {
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 26
                     radius: 4
-                    color: closeVkMouse.pressed ? "#dc2626" : (closeVkMouse.containsMouse ? "#ef4444" : "#0d365e")
-                    border.color: closeVkMouse.containsMouse ? "#fca5a5" : "#1d5b94"
+                    color: closeVkMouse.pressed ? "#b91c1c" : (closeVkMouse.containsMouse ? "#ef4444" : "#1e293b")
+                    border.color: closeVkMouse.containsMouse ? "#f87171" : "#334155"
                     border.width: 1
 
                     Text {
@@ -180,30 +243,259 @@ Rectangle {
         }
 
         // =====================================================================
-        // 2. LIVE TEXT PREVIEW STRIP (#e6f2fa)
+        // 2. LIVE TEXT PREVIEW STRIP (#e6f2fa) WITH SELECTION LAYER & BADGE
         // =====================================================================
         Rectangle {
+            id: previewStrip
             Layout.fillWidth: true
             Layout.preferredHeight: 38
             color: "#e6f2fa"
-            border.color: "#286aa8"
-            border.width: 1
+            border.color: textKeyboardViewRoot.hasSelection ? "#0284c7" : "#286aa8"
+            border.width: textKeyboardViewRoot.hasSelection ? 2 : 1
             radius: 4
 
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10
+                spacing: 6
 
-                Text {
-                    id: previewTxt
-                    text: (textKeyboardViewRoot.displayText === "" ? "Type text here..." : textKeyboardViewRoot.displayText) + "▎"
-                    color: textKeyboardViewRoot.displayText === "" ? "#718da6" : "#08213b"
-                    font.pixelSize: 14
-                    font.bold: true
-                    font.family: "Segoe UI"
+                Item {
+                    id: previewContainer
                     Layout.fillWidth: true
-                    elide: Text.ElideRight
+                    Layout.fillHeight: true
+                    clip: true
+
+                    // Default Non-Selection Row with Blinking Cursor
+                    Row {
+                        visible: !textKeyboardViewRoot.hasSelection
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 0
+
+                        Text {
+                            id: previewTxtBefore
+                            text: textKeyboardViewRoot.displayText.substring(0, Math.max(0, Math.min(textKeyboardViewRoot.cursorPosition, textKeyboardViewRoot.displayText.length)))
+                            color: "#08213b"
+                            font.pixelSize: 14
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+
+                        // Living Blinking Text Cursor Indicator
+                        Rectangle {
+                            id: liveCursorBar
+                            width: 2
+                            height: 18
+                            color: "#0284c7"
+                            radius: 1
+                            opacity: 1.0
+
+                            SequentialAnimation on opacity {
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.0; duration: 450; easing.type: Easing.InOutQuad }
+                                NumberAnimation { to: 1.0; duration: 450; easing.type: Easing.InOutQuad }
+                            }
+                        }
+
+                        Text {
+                            id: previewTxtAfter
+                            text: textKeyboardViewRoot.displayText.substring(Math.max(0, Math.min(textKeyboardViewRoot.cursorPosition, textKeyboardViewRoot.displayText.length)))
+                            color: "#08213b"
+                            font.pixelSize: 14
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+
+                        Text {
+                            visible: textKeyboardViewRoot.displayText === ""
+                            text: "Type text here..."
+                            color: "#718da6"
+                            font.pixelSize: 14
+                            font.italic: true
+                            font.family: "Segoe UI"
+                        }
+                    }
+
+                    // Selection Active Layer (High-Visibility Industrial Blue Highlight)
+                    Row {
+                        visible: textKeyboardViewRoot.hasSelection
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 0
+
+                        Text {
+                            id: previewTxtBeforeSel
+                            text: textKeyboardViewRoot.displayText.substring(0, textKeyboardViewRoot.selectionStart)
+                            color: "#08213b"
+                            font.pixelSize: 14
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+
+                        Rectangle {
+                            id: selectionHighlightBox
+                            height: 24
+                            color: "#0284c7"
+                            border.color: "#38bdf8"
+                            border.width: 1
+                            radius: 2
+                            width: selTxtItem.implicitWidth
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                id: selTxtItem
+                                anchors.centerIn: parent
+                                text: textKeyboardViewRoot.selectedText
+                                color: "#ffffff"
+                                font.pixelSize: 14
+                                font.bold: true
+                                font.family: "Segoe UI"
+                            }
+
+                            // Left Selection Handle (Start pin & grab bead)
+                            Rectangle {
+                                id: leftSelHandle
+                                width: 14
+                                height: 26
+                                color: "transparent"
+                                x: -7
+                                y: -2
+                                z: 30
+
+                                Rectangle {
+                                    width: 2
+                                    height: 18
+                                    color: "#38bdf8"
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.top: parent.top
+                                }
+                                Rectangle {
+                                    width: 10
+                                    height: 10
+                                    radius: 5
+                                    color: leftHandleMouse.pressed ? "#38bdf8" : "#0284c7"
+                                    border.color: "#ffffff"
+                                    border.width: 1.5
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                }
+
+                                MouseArea {
+                                    id: leftHandleMouse
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    hoverEnabled: true
+                                    cursorShape: Qt.SizeHorCursor
+                                }
+                            }
+
+                            // Right Selection Handle (End pin & grab bead)
+                            Rectangle {
+                                id: rightSelHandle
+                                width: 14
+                                height: 26
+                                color: "transparent"
+                                x: parent.width - 7
+                                y: -2
+                                z: 30
+
+                                Rectangle {
+                                    width: 2
+                                    height: 18
+                                    color: "#38bdf8"
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.top: parent.top
+                                }
+                                Rectangle {
+                                    width: 10
+                                    height: 10
+                                    radius: 5
+                                    color: rightHandleMouse.pressed ? "#38bdf8" : "#0284c7"
+                                    border.color: "#ffffff"
+                                    border.width: 1.5
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                }
+
+                                MouseArea {
+                                    id: rightHandleMouse
+                                    anchors.fill: parent
+                                    anchors.margins: -6
+                                    hoverEnabled: true
+                                    cursorShape: Qt.SizeHorCursor
+                                }
+                            }
+                        }
+
+                        Text {
+                            id: previewTxtAfterSel
+                            text: textKeyboardViewRoot.displayText.substring(textKeyboardViewRoot.selectionEnd)
+                            color: "#08213b"
+                            font.pixelSize: 14
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+                    }
+                }
+
+                // Quick Paste Pill Button (Available when NOT selecting text, to paste directly at cursor without replacing anything)
+                Rectangle {
+                    id: quickPastePill
+                    visible: !textKeyboardViewRoot.hasSelection
+                    Layout.preferredHeight: 26
+                    Layout.preferredWidth: 64
+                    radius: 4
+                    color: quickPasteMouse.pressed ? "#0284c7" : (quickPasteMouse.containsMouse ? "#0f4273" : "#0d365e")
+                    border.color: quickPasteMouse.containsMouse ? "#38bdf8" : "#1d5b94"
+                    border.width: 1
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "PASTE"
+                        color: quickPasteMouse.containsMouse ? "#38bdf8" : "#94a3b8"
+                        font.bold: true
+                        font.pixelSize: 11
+                        font.family: "Segoe UI"
+                    }
+
+                    MouseArea {
+                        id: quickPasteMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                    }
+                }
+
+                // Selection Character Count Badge
+                Rectangle {
+                    id: selectionBadge
+                    visible: textKeyboardViewRoot.hasSelection
+                    Layout.preferredHeight: 24
+                    Layout.preferredWidth: selCountTxt.implicitWidth + 16
+                    radius: 4
+                    color: "#08213b"
+                    border.color: "#38bdf8"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 4
+
+                        Rectangle {
+                            width: 6
+                            height: 6
+                            radius: 3
+                            color: "#38bdf8"
+                        }
+
+                        Text {
+                            id: selCountTxt
+                            text: textKeyboardViewRoot.selectedText.length + (textKeyboardViewRoot.selectedText.length === 1 ? " char selected" : " chars selected")
+                            color: "#38bdf8"
+                            font.bold: true
+                            font.pixelSize: 10
+                            font.family: "Segoe UI"
+                        }
+                    }
                 }
             }
         }

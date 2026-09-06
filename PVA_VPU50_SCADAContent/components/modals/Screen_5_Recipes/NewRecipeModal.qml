@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../../widgets/ScadaKeyboard"
 
 Rectangle {
     id: modalRoot
@@ -79,6 +80,15 @@ Rectangle {
                         font.pixelSize: 12
                         text: "New Lotion Formulation"
                     }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.IBeamCursor
+                        onClicked: {
+                            nameInput.forceActiveFocus();
+                            textKeyboard.openFor(nameInput, "RECIPE NAME");
+                        }
+                    }
                 }
             }
 
@@ -101,6 +111,15 @@ Rectangle {
                         color: "#ffffff"
                         font.pixelSize: 12
                         text: "Ointment / Emulsion Base"
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.IBeamCursor
+                        onClicked: {
+                            prodInput.forceActiveFocus();
+                            textKeyboard.openFor(prodInput, "TARGET PRODUCT");
+                        }
                     }
                 }
             }
@@ -150,5 +169,12 @@ Rectangle {
                 }
             }
         }
+    }
+
+    ScadaTextKeyboard {
+        id: textKeyboard
+        anchors.fill: parent
+        z: 9999
+        visible: false
     }
 }

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+// @disable-check M203  -- JavaScript functions are required QML runtime logic; DS visual editor advisory only
 import QtQuick
 import QtQuick.Layouts
 import "../../../common"
@@ -36,6 +37,8 @@ Rectangle {
         } else {
             if (numpadModal.visible) numpadModal.visible = false;
             if (textKeyboard.visible) textKeyboard.visible = false;
+            if (modalContextMenu.active) modalContextMenu.closeMenu();
+            if (modalLoupe.active) modalLoupe.active = false;
         }
     }
 
@@ -44,6 +47,8 @@ Rectangle {
         onClicked: {
             if (numpadModal.visible) numpadModal.visible = false;
             if (textKeyboard.visible) textKeyboard.visible = false;
+            if (modalContextMenu.active) modalContextMenu.closeMenu();
+            if (modalLoupe.active) modalLoupe.active = false;
         }
     }
 
@@ -191,26 +196,18 @@ Rectangle {
                             font.pixelSize: 13
                             font.bold: true
                             font.family: "Segoe UI"
-                            selectByMouse: true
+                            selectByMouse: false
                             inputMethodHints: Qt.ImhNone
                             onTextChanged: ingModalRoot.ingredientName = text
-                            onActiveFocusChanged: {
-                                if (activeFocus) {
-                                    numpadModal.visible = false;
-                                    textKeyboard.openFor(nameInput, "INGREDIENT RAW MATERIAL");
-                                }
-                            }
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.IBeamCursor
-                        onClicked: {
-                            numpadModal.visible = false;
-                            nameInput.forceActiveFocus();
-                            textKeyboard.openFor(nameInput, "INGREDIENT RAW MATERIAL");
-                        }
+                    ScadaTouchInputHandler {
+                        targetInput: nameInput
+                        keyboard: textKeyboard
+                        loupe: modalLoupe
+                        contextMenu: modalContextMenu
+                        title: "INGREDIENT RAW MATERIAL"
                     }
                 }
             }
@@ -276,29 +273,22 @@ Rectangle {
                                 font.pixelSize: 13
                                 font.bold: true
                                 font.family: "Segoe UI"
-                                selectByMouse: true
+                                selectByMouse: false
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 onTextChanged: {
                                     var clean = text.replace(/^Phase\s*/i, "").trim();
                                     ingModalRoot.phase = clean || text.trim();
                                 }
-                                onActiveFocusChanged: {
-                                    if (activeFocus) {
-                                        textKeyboard.visible = false;
-                                        numpadModal.openForInput(phaseInput, "PHASE NUMBER", "", null, null);
-                                    }
-                                }
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.IBeamCursor
-                            onClicked: {
-                                textKeyboard.visible = false;
-                                phaseInput.forceActiveFocus();
-                                numpadModal.openForInput(phaseInput, "PHASE NUMBER", "", null, null);
-                            }
+                        ScadaTouchInputHandler {
+                            targetInput: phaseInput
+                            numpad: numpadModal
+                            loupe: modalLoupe
+                            contextMenu: modalContextMenu
+                            isNumeric: true
+                            title: "PHASE NUMBER"
                         }
                     }
                 }
@@ -340,19 +330,13 @@ Rectangle {
                                 font.pixelSize: 13
                                 font.bold: true
                                 font.family: "Segoe UI"
-                                selectByMouse: true
+                                selectByMouse: false
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 onTextChanged: {
                                     if (ingModalRoot.isVariableQty) {
                                         ingModalRoot.formulaText = text;
                                     } else {
                                         ingModalRoot.qtyValue = text;
-                                    }
-                                }
-                                onActiveFocusChanged: {
-                                    if (activeFocus) {
-                                        textKeyboard.visible = false;
-                                        numpadModal.openForInput(qtyInput, "QUANTITY", ingModalRoot.isVariableQty ? "%" : ingModalRoot.qtyUnit, null, null);
                                     }
                                 }
                             }
@@ -376,14 +360,14 @@ Rectangle {
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.IBeamCursor
-                            onClicked: {
-                                textKeyboard.visible = false;
-                                qtyInput.forceActiveFocus();
-                                numpadModal.openForInput(qtyInput, "QUANTITY", ingModalRoot.isVariableQty ? "%" : ingModalRoot.qtyUnit, null, null);
-                            }
+                        ScadaTouchInputHandler {
+                            targetInput: qtyInput
+                            numpad: numpadModal
+                            loupe: modalLoupe
+                            contextMenu: modalContextMenu
+                            isNumeric: true
+                            title: "QUANTITY"
+                            unit: ingModalRoot.isVariableQty ? "%" : ingModalRoot.qtyUnit
                         }
                     }
                 }
@@ -432,26 +416,18 @@ Rectangle {
                             color: "#ffffff"
                             font.pixelSize: 12
                             font.family: "Segoe UI"
-                            selectByMouse: true
+                            selectByMouse: false
                             inputMethodHints: Qt.ImhNone
                             onTextChanged: ingModalRoot.isaParameters = text
-                            onActiveFocusChanged: {
-                                if (activeFocus) {
-                                    numpadModal.visible = false;
-                                    textKeyboard.openFor(isaInput, "CHARGING INSTRUCTIONS");
-                                }
-                            }
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.IBeamCursor
-                        onClicked: {
-                            numpadModal.visible = false;
-                            isaInput.forceActiveFocus();
-                            textKeyboard.openFor(isaInput, "CHARGING INSTRUCTIONS");
-                        }
+                    ScadaTouchInputHandler {
+                        targetInput: isaInput
+                        keyboard: textKeyboard
+                        loupe: modalLoupe
+                        contextMenu: modalContextMenu
+                        title: "CHARGING INSTRUCTIONS"
                     }
                 }
             }
@@ -562,7 +538,19 @@ Rectangle {
     // Modular Full-Size QWERTY Text Keyboard
     ScadaTextKeyboard {
         id: textKeyboard
+        anchors.fill: parent
         z: 9999
         visible: false
+    }
+
+    // Touch Ergonomics: Magnifying Loupe Bubble & Floating Context Menu Overlays
+    ScadaTouchLoupe {
+        id: modalLoupe
+        z: 100000
+    }
+
+    ScadaTextContextMenu {
+        id: modalContextMenu
+        z: 100000
     }
 }

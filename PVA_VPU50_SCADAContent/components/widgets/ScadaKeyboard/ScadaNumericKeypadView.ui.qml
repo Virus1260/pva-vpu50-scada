@@ -189,14 +189,38 @@ Rectangle {
                 anchors.rightMargin: 12
                 spacing: 6
 
-                Text {
-                    text: numpadViewRoot.displayText + "▎"
-                    color: "#08213b"
-                    font.bold: true
-                    font.pixelSize: 26
-                    font.family: "Segoe UI"
+                Item {
                     Layout.fillWidth: true
-                    elide: Text.ElideLeft
+                    Layout.fillHeight: true
+                    clip: true
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 3
+
+                        Text {
+                            text: numpadViewRoot.displayText === "" ? "0" : numpadViewRoot.displayText
+                            color: "#08213b"
+                            font.bold: true
+                            font.pixelSize: 26
+                            font.family: "Segoe UI"
+                        }
+
+                        // Living Blinking Numpad Cursor
+                        Rectangle {
+                            width: 3
+                            height: 26
+                            color: "#0284c7"
+                            radius: 1.5
+                            opacity: 1.0
+
+                            SequentialAnimation on opacity {
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.0; duration: 450; easing.type: Easing.InOutQuad }
+                                NumberAnimation { to: 1.0; duration: 450; easing.type: Easing.InOutQuad }
+                            }
+                        }
+                    }
                 }
 
                 Text {

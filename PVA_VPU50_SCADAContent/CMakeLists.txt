@@ -55,6 +55,7 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "components/widgets/ScadaKeyboard/ScadaTextKeyboard.qml"
         "components/widgets/ScadaKeyboard/ScadaTextKeyboardView.ui.qml"
         "components/widgets/ScadaKeyboard/ScadaTouchInputField.qml"
+        "components/widgets/ScadaKeyboard/ScadaTouchInputHandler.qml"
         "components/widgets/ScadaKeyboard/ScadaTouchLoupe.qml"
         "components/widgets/ScadaNavbar/ScadaNavbar.qml"
         "components/widgets/ScadaNavbar/ScadaNavbarItem.ui.qml"

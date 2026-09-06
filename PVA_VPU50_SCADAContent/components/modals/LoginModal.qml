@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+// @disable-check M203  -- JavaScript functions are required QML runtime logic; DS visual editor advisory only
 import QtQuick
 import QtQuick.Layouts
 import "../common"
@@ -339,13 +340,43 @@ Rectangle {
                         font.pixelSize: 11
                     }
 
-                    // Masked PIN display dots
-                    Text {
-                        text: loginModalRoot.enteredPin.length > 0 ? "● ".repeat(loginModalRoot.enteredPin.length) : "••••"
-                        color: loginModalRoot.enteredPin.length > 0 ? "#00d2ff" : "#475569"
-                        font.bold: true
-                        font.pixelSize: 18
+                    // Masked PIN display dots with living blinking cursor
+                    Row {
                         Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            text: loginModalRoot.enteredPin.length > 0 ? "● ".repeat(loginModalRoot.enteredPin.length) : ""
+                            color: "#00d2ff"
+                            font.bold: true
+                            font.pixelSize: 18
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        // Living Blinking PIN Entry Cursor
+                        Rectangle {
+                            width: 2
+                            height: 18
+                            color: "#00d2ff"
+                            radius: 1
+                            anchors.verticalCenter: parent.verticalCenter
+                            opacity: 1.0
+
+                            SequentialAnimation on opacity {
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.0; duration: 450; easing.type: Easing.InOutQuad }
+                                NumberAnimation { to: 1.0; duration: 450; easing.type: Easing.InOutQuad }
+                            }
+                        }
+
+                        Text {
+                            visible: loginModalRoot.enteredPin.length === 0
+                            text: "••••"
+                            color: "#475569"
+                            font.bold: true
+                            font.pixelSize: 18
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
 
                     // Subtle keyboard input indicator

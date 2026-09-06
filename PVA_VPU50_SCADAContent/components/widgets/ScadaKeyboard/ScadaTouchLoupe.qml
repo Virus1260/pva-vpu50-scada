@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+// @disable-check M203  -- JavaScript functions are required QML runtime logic; DS visual editor advisory only
 import QtQuick
 import QtQuick.Shapes
 import "../../../theme"
@@ -6,15 +8,20 @@ Item {
     id: loupeRoot
     width: Dimensions.loupeDiameter
     height: Dimensions.loupeDiameter + 10 // extra height for downward pointer tip
-    z: 99999
-    visible: active && opacity > 0.01
+    z: 100000
+    enabled: false // Never intercept touch events from dragging finger
+    visible: active || opacity > 0.001
     opacity: active ? 1.0 : 0.0
+    x: 0
+    y: 0
 
     Behavior on opacity {
-        NumberAnimation { duration: 120; easing.type: Easing.OutQuad }
+        NumberAnimation { duration: 90; easing.type: Easing.OutQuad }
     }
 
     property var targetInput: null
+    property var anchorItem: null
+    readonly property var activeAnchor: anchorItem ? anchorItem : targetInput
     property real fingerX: 0
     property real fingerY: 0
     property int cursorPosition: targetInput ? targetInput.cursorPosition : 0
@@ -22,24 +29,66 @@ Item {
 
     // Calculated text metrics for magnification
     readonly property string currentText: targetInput ? targetInput.text : ""
-    readonly property font targetFont: targetInput ? targetInput.font : Qt.font({ family: Typography.fontDisplay, pixelSize: 12 })
+    readonly property font targetFont: (anchorItem && anchorItem.font) ? anchorItem.font : (targetInput ? targetInput.font : Qt.font({ family: Typography.fontDisplay, pixelSize: 12 }))
     readonly property real zoomScale: Dimensions.loupeZoomScale
 
-    // Synchronize position to float directly above operator finger
+    // Synchronize position to float directly above operator finger/pointer
     function updatePosition() {
-        if (!targetInput || !parent) return;
-        var globalPos = targetInput.mapToItem(parent, fingerX, fingerY);
+        if (!activeAnchor) return;
+        if (!parent || parent.width <= 0) return;
+
+        // fingerX is a local-space offset within activeAnchor (e.g. cursorMetrics.width)
+        // Use mapToItem to convert to parent coordinate space
+        var fx = (isNaN(fingerX) || fingerX < 0) ? 0 : fingerX;
+        var fy = (isNaN(fingerY) || fingerY < 0) ? (activeAnchor.height / 2) : fingerY;
+        var globalPos = activeAnchor.mapToItem(parent, fx, fy);
+        if (!globalPos || isNaN(globalPos.x) || isNaN(globalPos.y)) return;
+
         var targetX = globalPos.x - (width / 2);
-        var targetY = globalPos.y + Dimensions.loupeOffsetY;
+        // Float cleanly above the finger/pointer (clears full loupe height + 12px margin)
+        var targetY = globalPos.y - height - 12;
+
+        // If too close to top edge, flip to show below the input row instead
+        if (targetY < 8) {
+            targetY = globalPos.y + (activeAnchor.height > 0 ? activeAnchor.height : 32) + 12;
+        }
 
         // Boundary safety clamps inside parent view
         loupeRoot.x = Math.max(8, Math.min(parent.width - width - 8, targetX));
         loupeRoot.y = Math.max(8, Math.min(parent.height - height - 8, targetY));
+        if (active) autoDismissTimer.restart();
     }
 
-    onFingerXChanged: updatePosition()
-    onFingerYChanged: updatePosition()
-    onActiveChanged: if (active) updatePosition()
+    // Auto-dismiss after 0.5 sec (500ms) of stationary inactivity
+    Timer {
+        id: autoDismissTimer
+        interval: 500
+        repeat: false
+        onTriggered: loupeRoot.active = false
+    }
+
+    onFingerXChanged: {
+        updatePosition();
+        if (active) autoDismissTimer.restart();
+    }
+    onFingerYChanged: {
+        updatePosition();
+        if (active) autoDismissTimer.restart();
+    }
+    onActiveChanged: {
+        if (active) {
+            updatePosition();
+            autoDismissTimer.restart();
+        } else {
+            autoDismissTimer.stop();
+        }
+    }
+    onCursorPositionChanged: if (active) updatePosition()
+    onTargetInputChanged: {
+        if (!targetInput) active = false;
+        if (active) updatePosition();
+    }
+    onAnchorItemChanged: if (active) updatePosition()
 
     // Circular Magnifying Glass Frame
     Rectangle {
@@ -66,6 +115,15 @@ Item {
             id: magnifiedCanvas
             anchors.fill: parent
 
+            // Exact text measurement for pixel-perfect cursor centering
+            TextMetrics {
+                id: cursorMetrics
+                font.family: loupeRoot.targetFont.family
+                font.pixelSize: Math.round(loupeRoot.targetFont.pixelSize * loupeRoot.zoomScale)
+                font.bold: true
+                text: loupeRoot.currentText.substring(0, Math.max(0, Math.min(loupeRoot.cursorPosition, loupeRoot.currentText.length)))
+            }
+
             // Magnified text preview string
             Text {
                 id: magnifiedText
@@ -76,13 +134,8 @@ Item {
                 color: "#ffffff"
                 text: loupeRoot.currentText
 
-                // Calculate horizontal shift so cursor position is centered exactly in the loupe
-                x: {
-                    var curPos = Math.max(0, Math.min(loupeRoot.cursorPosition, loupeRoot.currentText.length));
-                    var textBefore = loupeRoot.currentText.substring(0, curPos);
-                    var textMetricsWidth = curPos > 0 ? (curPos * (font.pixelSize * 0.58)) : 0;
-                    return (loupeCircle.width / 2) - textMetricsWidth;
-                }
+                // Centered exactly at insertion point
+                x: (loupeCircle.width / 2) - cursorMetrics.width
             }
 
             // High-Visibility Vertical Amber Cursor Line

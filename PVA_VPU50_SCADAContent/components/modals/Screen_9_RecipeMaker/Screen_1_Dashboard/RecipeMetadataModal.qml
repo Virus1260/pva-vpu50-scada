@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+// @disable-check M203  -- JavaScript functions are required QML runtime logic; DS visual editor advisory only
 import QtQuick
 import QtQuick.Layouts
 import "../../../common"
@@ -47,6 +48,8 @@ Rectangle {
         } else {
             if (numpadModal.visible) numpadModal.visible = false;
             if (textKeyboard.visible) textKeyboard.visible = false;
+            if (modalContextMenu.active) modalContextMenu.closeMenu();
+            if (modalLoupe.active) modalLoupe.active = false;
         }
     }
 
@@ -86,6 +89,8 @@ Rectangle {
         onClicked: {
             if (numpadModal.visible) numpadModal.visible = false;
             if (textKeyboard.visible) textKeyboard.visible = false;
+            if (modalContextMenu.active) modalContextMenu.closeMenu();
+            if (modalLoupe.active) modalLoupe.active = false;
         }
     }
 
@@ -220,26 +225,24 @@ Rectangle {
                             id: titleInput
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 28
                             verticalAlignment: TextInput.AlignVCenter
                             text: metaModalRoot.recipeTitle
                             color: "#ffffff"
                             font.pixelSize: 12
                             font.bold: true
                             font.family: "Segoe UI"
-                            selectByMouse: true
+                            selectByMouse: false
                             inputMethodHints: Qt.ImhNone
                             onTextChanged: metaModalRoot.recipeTitle = text
-                            onActiveFocusChanged: if (activeFocus) textKeyboard.openFor(titleInput, "RECIPE TITLE")
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.IBeamCursor
-                            onClicked: {
-                                titleInput.forceActiveFocus();
-                                textKeyboard.openFor(titleInput, "RECIPE TITLE");
-                            }
+                        ScadaTouchInputHandler {
+                            targetInput: titleInput
+                            keyboard: textKeyboard
+                            loupe: modalLoupe
+                            contextMenu: modalContextMenu
+                            title: "RECIPE TITLE"
                         }
                     }
                 }
@@ -268,26 +271,24 @@ Rectangle {
                             id: prodNameInput
                             anchors.fill: parent
                             anchors.leftMargin: 10
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 28
                             verticalAlignment: TextInput.AlignVCenter
                             text: metaModalRoot.productName
                             color: "#ffffff"
                             font.pixelSize: 12
                             font.bold: true
                             font.family: "Segoe UI"
-                            selectByMouse: true
+                            selectByMouse: false
                             inputMethodHints: Qt.ImhNone
                             onTextChanged: metaModalRoot.productName = text
-                            onActiveFocusChanged: if (activeFocus) textKeyboard.openFor(prodNameInput, "PRODUCT NAME")
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.IBeamCursor
-                            onClicked: {
-                                prodNameInput.forceActiveFocus();
-                                textKeyboard.openFor(prodNameInput, "PRODUCT NAME");
-                            }
+                        ScadaTouchInputHandler {
+                            targetInput: prodNameInput
+                            keyboard: textKeyboard
+                            loupe: modalLoupe
+                            contextMenu: modalContextMenu
+                            title: "PRODUCT NAME"
                         }
                     }
                 }
@@ -422,7 +423,7 @@ Rectangle {
                             ScadaIcon {
                                 Layout.preferredWidth: 14
                                 Layout.preferredHeight: 14
-                                iconSource: "../../../../assets/icons/controls/clock.svg"
+                                iconName: "clock"
                                 iconColor: shelfInput.activeFocus ? "#38bdf8" : "#94a3b8"
                             }
 
@@ -435,10 +436,9 @@ Rectangle {
                                 font.pixelSize: 12
                                 font.bold: true
                                 font.family: "Segoe UI"
-                                selectByMouse: true
+                                selectByMouse: false
                                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                                 onTextChanged: metaModalRoot.shelfLifeMonths = text
-                                onActiveFocusChanged: if (activeFocus) numpadModal.openForInput(shelfInput, "SHELF LIFE", "Months", null, null)
                             }
 
                             Text {
@@ -450,13 +450,14 @@ Rectangle {
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.IBeamCursor
-                            onClicked: {
-                                shelfInput.forceActiveFocus();
-                                numpadModal.openForInput(shelfInput, "SHELF LIFE", "Months", null, null);
-                            }
+                        ScadaTouchInputHandler {
+                            targetInput: shelfInput
+                            numpad: numpadModal
+                            loupe: modalLoupe
+                            contextMenu: modalContextMenu
+                            isNumeric: true
+                            title: "SHELF LIFE"
+                            unit: "Months"
                         }
                     }
                 }
@@ -598,10 +599,9 @@ Rectangle {
                                     font.pixelSize: 12
                                     font.bold: true
                                     font.family: "Segoe UI"
-                                    selectByMouse: true
+                                    selectByMouse: false
                                     inputMethodHints: Qt.ImhFormattedNumbersOnly
                                     onTextChanged: metaModalRoot.batchSizeKg = text
-                                    onActiveFocusChanged: if (activeFocus) numpadModal.openForInput(batchInput, "BATCH SIZE", "kg", null, null)
                                 }
 
                                 Text {
@@ -612,13 +612,14 @@ Rectangle {
                                 }
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.IBeamCursor
-                                onClicked: {
-                                    batchInput.forceActiveFocus();
-                                    numpadModal.openForInput(batchInput, "BATCH SIZE", "kg", null, null);
-                                }
+                            ScadaTouchInputHandler {
+                                targetInput: batchInput
+                                numpad: numpadModal
+                                loupe: modalLoupe
+                                contextMenu: modalContextMenu
+                                isNumeric: true
+                                title: "BATCH SIZE"
+                                unit: "kg"
                             }
                         }
                     }
@@ -656,10 +657,9 @@ Rectangle {
                                     color: "#ffffff"
                                     font.pixelSize: 12
                                     font.family: "Segoe UI"
-                                    selectByMouse: true
+                                    selectByMouse: false
                                     inputMethodHints: Qt.ImhFormattedNumbersOnly
                                     onTextChanged: metaModalRoot.targetDensity = text
-                                    onActiveFocusChanged: if (activeFocus) numpadModal.openForInput(densityInput, "DENSITY", "kg/m³", null, null)
                                 }
 
                                 Text {
@@ -670,13 +670,14 @@ Rectangle {
                                 }
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.IBeamCursor
-                                onClicked: {
-                                    densityInput.forceActiveFocus();
-                                    numpadModal.openForInput(densityInput, "DENSITY", "kg/m³", null, null);
-                                }
+                            ScadaTouchInputHandler {
+                                targetInput: densityInput
+                                numpad: numpadModal
+                                loupe: modalLoupe
+                                contextMenu: modalContextMenu
+                                isNumeric: true
+                                title: "DENSITY"
+                                unit: "kg/m³"
                             }
                         }
                     }
@@ -740,10 +741,9 @@ Rectangle {
                                 font.pixelSize: 11
                                 font.bold: true
                                 font.family: "Segoe UI"
-                                selectByMouse: true
+                                selectByMouse: false
                                 inputMethodHints: Qt.ImhNone
                                 onTextChanged: metaModalRoot.authorName = text
-                                onActiveFocusChanged: if (activeFocus) textKeyboard.openFor(authorInput, "AUTHOR / CREATOR NAME")
                             }
 
                             // Dynamic Logged-in Role Level Badge (Without duplicated outer brackets)
@@ -767,13 +767,12 @@ Rectangle {
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.IBeamCursor
-                            onClicked: {
-                                authorInput.forceActiveFocus();
-                                textKeyboard.openFor(authorInput, "AUTHOR / CREATOR NAME");
-                            }
+                        ScadaTouchInputHandler {
+                            targetInput: authorInput
+                            keyboard: textKeyboard
+                            loupe: modalLoupe
+                            contextMenu: modalContextMenu
+                            title: "AUTHOR / CREATOR NAME"
                         }
                     }
                 }
@@ -903,19 +902,17 @@ Rectangle {
                             font.pixelSize: 11
                             font.family: "Segoe UI"
                             wrapMode: TextEdit.Wrap
-                            selectByMouse: true
+                            selectByMouse: false
                             onTextChanged: metaModalRoot.description = text
-                            onActiveFocusChanged: if (activeFocus) textKeyboard.openFor(descInput, "RECIPE DESCRIPTION")
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.IBeamCursor
-                        onClicked: {
-                            descInput.forceActiveFocus();
-                            textKeyboard.openFor(descInput, "RECIPE DESCRIPTION");
-                        }
+                    ScadaTouchInputHandler {
+                        targetInput: descInput
+                        keyboard: textKeyboard
+                        loupe: modalLoupe
+                        contextMenu: modalContextMenu
+                        title: "RECIPE DESCRIPTION"
                     }
                 }
             }
@@ -1077,7 +1074,19 @@ Rectangle {
     // Modular Full-Size QWERTY Text Keyboard
     ScadaTextKeyboard {
         id: textKeyboard
+        anchors.fill: parent
         z: 9999
         visible: false
+    }
+
+    // Touch Ergonomics: Magnifying Loupe Bubble & Floating Context Menu Overlays
+    ScadaTouchLoupe {
+        id: modalLoupe
+        z: 100000
+    }
+
+    ScadaTextContextMenu {
+        id: modalContextMenu
+        z: 100000
     }
 }

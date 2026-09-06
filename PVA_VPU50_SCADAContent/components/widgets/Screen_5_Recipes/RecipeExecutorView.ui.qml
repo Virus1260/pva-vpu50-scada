@@ -8,6 +8,7 @@ Supports live concurrent sub-operation progress bars, equipment status, and BOM 
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "../../common"
 
 Rectangle {
     id: executorRoot
@@ -467,10 +468,19 @@ Rectangle {
                                        (index === executorRoot.currentStepIndex ? (executorRoot.isExecuting ? "#0284c7" : "#f59e0b") : "#1e293b")
                                 Text {
                                     anchors.centerIn: parent
-                                    text: index < executorRoot.currentStepIndex ? "✓" : (index + 1) + ""
+                                    visible: index >= executorRoot.currentStepIndex
+                                    text: (index + 1) + ""
                                     color: "#ffffff"
                                     font.bold: true
                                     font.pixelSize: 11
+                                }
+                                ScadaIcon {
+                                    anchors.centerIn: parent
+                                    visible: index < executorRoot.currentStepIndex
+                                    width: 12
+                                    height: 12
+                                    iconName: "check"
+                                    iconColor: "#ffffff"
                                 }
                             }
 

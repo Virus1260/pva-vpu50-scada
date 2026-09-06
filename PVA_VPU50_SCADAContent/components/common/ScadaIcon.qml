@@ -10,9 +10,10 @@ Item {
     property string iconName: ""
     property color iconColor: "#ffffff"
     property string iconSource: ""
+    readonly property url baseUrl: Qt.resolvedUrl(".")
 
     function resolveSource(name) {
-        if (iconSource !== "") return iconSource;
+        if (iconSource !== "") return Qt.resolvedUrl(iconSource);
         if (!name || name === "") return "";
 
         var map = {
@@ -165,7 +166,7 @@ Item {
         };
 
         if (map.hasOwnProperty(name)) {
-            return Qt.resolvedUrl(map[name]);
+            return Qt.resolvedUrl(rootIcon.baseUrl + "/" + map[name]);
         }
         return "";
     }

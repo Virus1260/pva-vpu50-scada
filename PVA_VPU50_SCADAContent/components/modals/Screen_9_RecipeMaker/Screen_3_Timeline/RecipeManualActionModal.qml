@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
+import "../../../common"
+import "../../../widgets/ScadaKeyboard"
 
 Item {
     id: manualActionModalRoot
@@ -227,13 +229,24 @@ Item {
                         border.color: "#10b981"
                         border.width: 1
 
-                        Text {
+                        Row {
                             anchors.centerIn: parent
-                            text: "✓ Interlocks Clear"
-                            color: "#a7f3d0"
-                            font.bold: true
-                            font.pixelSize: 10
-                            font.family: "Segoe UI"
+                            spacing: 4
+                            ScadaIcon {
+                                width: 12
+                                height: 12
+                                iconName: "check"
+                                iconColor: "#a7f3d0"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            Text {
+                                text: "Interlocks Clear"
+                                color: "#a7f3d0"
+                                font.bold: true
+                                font.pixelSize: 10
+                                font.family: "Segoe UI"
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
                         }
                     }
                 }
@@ -388,6 +401,15 @@ Item {
                                     font.family: "Consolas"
                                     onTextChanged: manualActionModalRoot.operatorId = text
                                 }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.IBeamCursor
+                                    onClicked: {
+                                        opIdInput.forceActiveFocus();
+                                        textKeyboard.openFor(opIdInput, "OPERATOR ID");
+                                    }
+                                }
                             }
                         }
 
@@ -414,6 +436,15 @@ Item {
                                     font.pixelSize: 14
                                     font.family: "Consolas"
                                     onTextChanged: manualActionModalRoot.operatorPin = text
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.IBeamCursor
+                                    onClicked: {
+                                        pinInput.forceActiveFocus();
+                                        textKeyboard.openFor(pinInput, "SECURITY PIN");
+                                    }
                                 }
                             }
                         }
@@ -485,11 +516,11 @@ Item {
                         anchors.centerIn: parent
                         spacing: 8
 
-                        Text {
-                            text: "✓"
-                            color: "#ffffff"
-                            font.bold: true
-                            font.pixelSize: 16
+                        ScadaIcon {
+                            width: 14
+                            height: 14
+                            iconName: "check"
+                            iconColor: "#ffffff"
                         }
 
                         Text {
@@ -523,5 +554,12 @@ Item {
                 }
             }
         }
+    }
+
+    ScadaTextKeyboard {
+        id: textKeyboard
+        anchors.fill: parent
+        z: 9999
+        visible: false
     }
 }

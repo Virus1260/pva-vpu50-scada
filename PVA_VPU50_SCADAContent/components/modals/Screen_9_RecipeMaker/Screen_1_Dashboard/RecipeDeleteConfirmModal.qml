@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import "../../../common"
 
 Rectangle {
     id: delConfirmRoot
@@ -79,12 +80,12 @@ Rectangle {
                     border.color: "#ef4444"
                     border.width: 1
 
-                    Text {
+                    ScadaIcon {
                         anchors.centerIn: parent
-                        text: "⚠"
-                        color: "#ef4444"
-                        font.bold: true
-                        font.pixelSize: 18
+                        width: 18
+                        height: 18
+                        iconName: "warning"
+                        iconColor: "#ef4444"
                     }
                 }
 

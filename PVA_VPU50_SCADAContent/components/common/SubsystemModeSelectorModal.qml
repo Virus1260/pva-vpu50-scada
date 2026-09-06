@@ -149,12 +149,12 @@ Rectangle {
                             color: "#00d2ff"
                             visible: cardDelegate.isSelected
 
-                            Text {
+                            ScadaIcon {
                                 anchors.centerIn: parent
-                                text: "✓"
-                                color: "#08213b"
-                                font.bold: true
-                                font.pixelSize: 12
+                                width: 12
+                                height: 12
+                                iconName: "check"
+                                iconColor: "#08213b"
                             }
                         }
 

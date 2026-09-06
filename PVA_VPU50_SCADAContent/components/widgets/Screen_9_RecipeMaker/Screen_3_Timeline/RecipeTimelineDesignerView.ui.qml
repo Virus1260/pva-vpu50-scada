@@ -19,7 +19,7 @@ Item {
     property string recipeVersion: "v1.0"
     property int selectedStepIndex: 0
     property int totalStepsCount: 5
-    property string validationStatusText: "✓ Pre-Flight Checklist: 5/5 All Guardrails Valid"
+    property string validationStatusText: "Pre-Flight Checklist: 5/5 All Guardrails Valid"
     property bool validationPassed: true
     property string validationDetails: "All phases reconciled. Mechanical seal & thermal safety interlocks verified."
 
@@ -653,12 +653,13 @@ Item {
                                             color: stepTitleMouse.containsMouse ? Theme.accentHover : Theme.bgCard
                                             border.color: Theme.primary
                                             border.width: Dimensions.borderWidthThin
-
                                             Text {
                                                 anchors.centerIn: parent
-                                                text: "⌨"
+                                                text: "KB"
+                                                font.bold: true
+                                                font.pixelSize: 11
+                                                font.family: Typography.fontDisplay
                                                 color: Theme.textHighlight
-                                                font.pixelSize: 14
                                             }
                                         }
                                     }
@@ -899,12 +900,12 @@ Item {
                                                     border.color: "#38bdf8"
                                                     border.width: 1
 
-                                                    Text {
+                                                    ScadaIcon {
                                                         anchors.centerIn: parent
-                                                        text: "✓"
-                                                        color: "#ffffff"
-                                                        font.bold: true
-                                                        font.pixelSize: 12
+                                                        width: 12
+                                                        height: 12
+                                                        iconName: "check"
+                                                        iconColor: "#ffffff"
                                                         visible: timelineDesignerViewRoot.inspectorRunAgitatorCoActive
                                                     }
                                                 }
@@ -1284,13 +1285,22 @@ Item {
                                 border.color: Theme.primaryGlow
                                 border.width: Dimensions.borderWidthThin
 
-                                Text {
+                                RowLayout {
                                     anchors.centerIn: parent
-                                    text: "✓ Apply Parameters to Step"
-                                    color: Theme.textPrimary
-                                    font.bold: true
-                                    font.pointSize: Typography.sizeBody
-                                    font.family: Typography.fontDisplay
+                                    spacing: 6
+                                    ScadaIcon {
+                                        Layout.preferredWidth: 14
+                                        Layout.preferredHeight: 14
+                                        iconName: "check"
+                                        iconColor: Theme.textPrimary
+                                    }
+                                    Text {
+                                        text: "Apply Parameters to Step"
+                                        color: Theme.textPrimary
+                                        font.bold: true
+                                        font.pointSize: Typography.sizeBody
+                                        font.family: Typography.fontDisplay
+                                    }
                                 }
 
                                 MouseArea {
@@ -1419,7 +1429,12 @@ Item {
                     RowLayout {
                         anchors.centerIn: parent
                         spacing: 6
-                        Text { text: "✓"; color: "#ffffff"; font.bold: true; font.pixelSize: 14 }
+                        ScadaIcon {
+                            Layout.preferredWidth: 14
+                            Layout.preferredHeight: 14
+                            iconName: "check"
+                            iconColor: "#ffffff"
+                        }
                         Text { text: "Submit for QA Review"; color: "#ffffff"; font.bold: true; font.pixelSize: 11; font.family: "Segoe UI" }
                     }
 

@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+// @disable-check M203  -- JavaScript functions are required runtime logic; DS visual editor advisory only
 import QtQuick
 import QtQuick.Layouts
 
@@ -21,12 +22,31 @@ Rectangle {
     property var targetInput: null
     property bool isDocked: false
     property string physicalPressedKey: ""
+    property int maxDigits: 14
+    property int selectionStart: 0
+    property int selectionEnd: 0
+    readonly property bool hasSelection: selectionEnd > selectionStart
+    property string securityToastMessage: ""
+    property bool securityToastVisible: false
 
     signal accepted(double value)
     signal rejected
     signal closed
 
     focus: true
+
+    Timer {
+        id: numSecurityTimer
+        interval: 2600
+        repeat: false
+        onTriggered: keypadRoot.securityToastVisible = false
+    }
+
+    function showSecurityToast(msg) {
+        keypadRoot.securityToastMessage = msg;
+        keypadRoot.securityToastVisible = true;
+        numSecurityTimer.restart();
+    }
 
     Timer {
         id: keyReleaseTimer
@@ -47,6 +67,12 @@ Rectangle {
     }
 
     Keys.onPressed: function(event) {
+        if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_V) {
+            keypadRoot.flashKey("PASTE");
+            keypadRoot.handlePaste();
+            event.accepted = true;
+            return;
+        }
         if (event.key >= Qt.Key_0 && event.key <= Qt.Key_9) {
             var digit = (event.key - Qt.Key_0).toString();
             keypadRoot.flashKey(digit);
@@ -105,6 +131,56 @@ Rectangle {
         MouseArea {
             anchors.fill: parent
             onPressed: function(mouse) { mouse.accepted = true; }
+        }
+
+        // Security Interlock Warning Toast Banner (Buffer overflow & DoS attack mitigation)
+        Rectangle {
+            id: numSecurityBanner
+            z: 9999
+            anchors.top: parent.top
+            anchors.topMargin: keypadRoot.securityToastVisible ? 8 : -50
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(parent.width - 24, secNumRow.implicitWidth + 24)
+            height: 32
+            radius: 6
+            color: "#2a0a0a"
+            border.color: "#ef4444"
+            border.width: 1.5
+            visible: opacity > 0.01
+            opacity: keypadRoot.securityToastVisible ? 1.0 : 0.0
+
+            Behavior on anchors.topMargin { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+
+            RowLayout {
+                id: secNumRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                Rectangle {
+                    width: 14
+                    height: 14
+                    radius: 7
+                    color: "#dc2626"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "!"
+                        color: "#ffffff"
+                        font.bold: true
+                        font.pixelSize: 10
+                        font.family: "Segoe UI"
+                    }
+                }
+
+                Text {
+                    text: keypadRoot.securityToastMessage
+                    color: "#fca5a5"
+                    font.bold: true
+                    font.pixelSize: 11
+                    font.family: "Segoe UI"
+                }
+            }
         }
 
         ColumnLayout {
@@ -238,29 +314,226 @@ Rectangle {
             }
 
             // =================================================================
-            // 2. INPUT DISPLAY BOX (#e6f2fa)
+            // 2. INPUT DISPLAY BOX (#e6f2fa) WITH SELECTION & DIRECT PASTE
             // =================================================================
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 52
                 color: "#e6f2fa"
-                border.color: keypadRoot.isInputValid ? "#286aa8" : "#ff4444"
-                border.width: 2
+                border.color: keypadRoot.hasSelection ? "#0284c7" : (keypadRoot.isInputValid ? "#286aa8" : "#ff4444")
+                border.width: keypadRoot.hasSelection ? 2 : 1.5
                 radius: 5
 
                 RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: 12
                     anchors.rightMargin: 12
-                    spacing: 4
+                    spacing: 6
 
-                    Text {
-                        text: (keypadRoot.currentInput === "" ? "0" : keypadRoot.currentInput) + "▎"
-                        color: "#08213b"
-                        font.bold: true
-                        font.pixelSize: 26
-                        font.family: "Segoe UI"
+                    Item {
+                        id: numDisplayContainer
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+
+                        // Normal Non-Selection Row with Blinking Numpad Cursor
+                        Row {
+                            visible: !keypadRoot.hasSelection
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 3
+
+                            Text {
+                                text: keypadRoot.currentInput === "" ? "0" : keypadRoot.currentInput
+                                color: "#08213b"
+                                font.bold: true
+                                font.pixelSize: 26
+                                font.family: "Segoe UI"
+                            }
+
+                            // Living Blinking Numpad Cursor
+                            Rectangle {
+                                width: 3
+                                height: 26
+                                color: "#0284c7"
+                                radius: 1.5
+                                opacity: 1.0
+
+                                SequentialAnimation on opacity {
+                                    loops: Animation.Infinite
+                                    NumberAnimation { to: 0.0; duration: 450; easing.type: Easing.InOutQuad }
+                                    NumberAnimation { to: 1.0; duration: 450; easing.type: Easing.InOutQuad }
+                                }
+                            }
+                        }
+
+                        // Selection Active Row with Dual Teardrop Pin Handles
+                        Row {
+                            visible: keypadRoot.hasSelection
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 0
+
+                            Text {
+                                text: keypadRoot.currentInput.substring(0, keypadRoot.selectionStart)
+                                color: "#08213b"
+                                font.bold: true
+                                font.pixelSize: 26
+                                font.family: "Segoe UI"
+                            }
+
+                            Rectangle {
+                                id: numHighlightBox
+                                height: 32
+                                color: "#0284c7"
+                                border.color: "#38bdf8"
+                                border.width: 1
+                                radius: 2
+                                width: numSelTxt.implicitWidth
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Text {
+                                    id: numSelTxt
+                                    anchors.centerIn: parent
+                                    text: keypadRoot.currentInput.substring(keypadRoot.selectionStart, keypadRoot.selectionEnd)
+                                    color: "#ffffff"
+                                    font.bold: true
+                                    font.pixelSize: 26
+                                    font.family: "Segoe UI"
+                                }
+
+                                // Left Selection Handle (Pin & grab bead)
+                                Rectangle {
+                                    width: 14
+                                    height: 32
+                                    color: "transparent"
+                                    x: -7
+                                    y: -2
+                                    z: 30
+
+                                    Rectangle {
+                                        width: 2
+                                        height: 22
+                                        color: "#38bdf8"
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.top: parent.top
+                                    }
+                                    Rectangle {
+                                        width: 10
+                                        height: 10
+                                        radius: 5
+                                        color: numLeftHandleMouse.pressed ? "#38bdf8" : "#0284c7"
+                                        border.color: "#ffffff"
+                                        border.width: 1.5
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.bottom: parent.bottom
+                                    }
+
+                                    MouseArea {
+                                        id: numLeftHandleMouse
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        hoverEnabled: true
+                                        cursorShape: Qt.SizeHorCursor
+                                        onPositionChanged: function(mouse) {
+                                            if (!pressed) return;
+                                            var newStart = Math.max(0, Math.min(keypadRoot.selectionEnd - 1, Math.floor((x + mouse.x) / 16)));
+                                            keypadRoot.selectionStart = newStart;
+                                        }
+                                    }
+                                }
+
+                                // Right Selection Handle (Pin & grab bead)
+                                Rectangle {
+                                    width: 14
+                                    height: 32
+                                    color: "transparent"
+                                    x: parent.width - 7
+                                    y: -2
+                                    z: 30
+
+                                    Rectangle {
+                                        width: 2
+                                        height: 22
+                                        color: "#38bdf8"
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.top: parent.top
+                                    }
+                                    Rectangle {
+                                        width: 10
+                                        height: 10
+                                        radius: 5
+                                        color: numRightHandleMouse.pressed ? "#38bdf8" : "#0284c7"
+                                        border.color: "#ffffff"
+                                        border.width: 1.5
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        anchors.bottom: parent.bottom
+                                    }
+
+                                    MouseArea {
+                                        id: numRightHandleMouse
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        hoverEnabled: true
+                                        cursorShape: Qt.SizeHorCursor
+                                        onPositionChanged: function(mouse) {
+                                            if (!pressed) return;
+                                            var newEnd = Math.min(keypadRoot.currentInput.length, Math.max(keypadRoot.selectionStart + 1, Math.ceil((parent.width + mouse.x) / 16)));
+                                            keypadRoot.selectionEnd = newEnd;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: keypadRoot.currentInput.substring(keypadRoot.selectionEnd)
+                                color: "#08213b"
+                                font.bold: true
+                                font.pixelSize: 26
+                                font.family: "Segoe UI"
+                            }
+                        }
+
+                        // Double-tap on display box selects whole number; single-tap clears selection
+                        MouseArea {
+                            anchors.fill: parent
+                            z: 5
+                            onDoubleClicked: {
+                                keypadRoot.selectionStart = 0;
+                                keypadRoot.selectionEnd = keypadRoot.currentInput.length;
+                            }
+                            onClicked: {
+                                if (keypadRoot.hasSelection) {
+                                    keypadRoot.selectionStart = 0;
+                                    keypadRoot.selectionEnd = 0;
+                                }
+                            }
+                        }
+                    }
+
+                    // Direct Paste Pill Button (Allows paste without replacing or selecting)
+                    Rectangle {
+                        Layout.preferredHeight: 26
+                        Layout.preferredWidth: 54
+                        radius: 4
+                        color: numPasteMouse.pressed ? "#0284c7" : (numPasteMouse.containsMouse ? "#0f4273" : "#0d365e")
+                        border.color: numPasteMouse.containsMouse ? "#38bdf8" : "#1d5b94"
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "PASTE"
+                            color: numPasteMouse.containsMouse ? "#38bdf8" : "#94a3b8"
+                            font.bold: true
+                            font.pixelSize: 10
+                            font.family: "Segoe UI"
+                        }
+
+                        MouseArea {
+                            id: numPasteMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: keypadRoot.handlePaste()
+                        }
                     }
 
                     Text {
@@ -410,10 +683,17 @@ Rectangle {
         currentInput = (inputItem && inputItem.text) ? inputItem.text : "0";
         validateInput();
         visible = true;
-        keypadRoot.forceActiveFocus();
+        // Keep focus on targetInput — don't steal focus to modal root
+        // (prevents cursor from disappearing in the input field)
+        if (inputItem) inputItem.forceActiveFocus();
         if (modalBox && !isDocked) {
-            modalBox.x = (keypadRoot.width - modalBox.width) / 2;
-            modalBox.y = (keypadRoot.height - modalBox.height) / 2;
+            // Responsive centering: use actual runtime dimensions
+            var pW = keypadRoot.width > 0 ? keypadRoot.width : 1024;
+            var pH = keypadRoot.height > 0 ? keypadRoot.height : 600;
+            var mW = modalBox.width > 0 ? modalBox.width : 400;
+            var mH = modalBox.height > 0 ? modalBox.height : 280;
+            modalBox.x = Math.max(8, (pW - mW) / 2);
+            modalBox.y = Math.max(8, (pH - mH) / 2);
         }
     }
 
@@ -425,12 +705,71 @@ Rectangle {
 
     function dockBottom() {
         isDocked = true;
-        modalBox.x = (keypadRoot.width - modalBox.width) / 2;
-        modalBox.y = keypadRoot.height - modalBox.height - 12;
+        var pW = keypadRoot.width > 0 ? keypadRoot.width : 1024;
+        var pH = keypadRoot.height > 0 ? keypadRoot.height : 600;
+        var mW = modalBox.width > 0 ? modalBox.width : 400;
+        var mH = modalBox.height > 0 ? modalBox.height : 280;
+        modalBox.x = Math.max(0, (pW - mW) / 2);
+        modalBox.y = Math.max(0, pH - mH - 12);
+    }
+
+    function handlePaste(clipboardStr) {
+        var str = clipboardStr;
+        if (str === undefined || str === null) {
+            if (targetInput && targetInput.paste) {
+                targetInput.forceActiveFocus();
+                targetInput.paste();
+                str = targetInput.text;
+            }
+        }
+        if (!str || str.length === 0) return;
+
+        // Security check 1: Reject strings containing letters or malicious injection characters
+        var cleaned = str.trim();
+        if (!/^-?[0-9]*\.?[0-9]+$/.test(cleaned)) {
+            showSecurityToast("SECURITY: Non-numeric input rejected.");
+            return;
+        }
+
+        // Security check 2: Buffer limit (maxDigits)
+        if (cleaned.length > maxDigits) {
+            cleaned = cleaned.substring(0, maxDigits);
+            showSecurityToast("SECURITY: Input clamped to " + maxDigits + " digits.");
+        }
+
+        // Security check 3: Safe Operating Range Validation
+        var val = parseFloat(cleaned);
+        if (isNaN(val)) {
+            showSecurityToast("SECURITY: Invalid number format.");
+            return;
+        }
+
+        if (hasRange) {
+            if (val < minVal || val > maxVal) {
+                showSecurityToast("SECURITY: Value outside range [" + minVal + " – " + maxVal + " " + unit + "]");
+                val = Math.max(minVal, Math.min(maxVal, val));
+                cleaned = val.toString();
+            }
+        }
+
+        currentInput = cleaned;
+        selectionStart = 0;
+        selectionEnd = 0;
+        validateInput();
     }
 
     function appendDigit(digit) {
-        if (currentInput === "0" || currentInput === "") {
+        if (currentInput.length >= maxDigits) {
+            showSecurityToast("SECURITY: Max " + maxDigits + " digits limit reached.");
+            return;
+        }
+        if (hasSelection) {
+            var before = currentInput.substring(0, selectionStart);
+            var after = currentInput.substring(selectionEnd);
+            currentInput = before + digit + after;
+            selectionStart = 0;
+            selectionEnd = 0;
+        } else if (currentInput === "0" || currentInput === "") {
             currentInput = digit;
         } else {
             currentInput += digit;
@@ -439,21 +778,34 @@ Rectangle {
     }
 
     function appendDot() {
-        if (currentInput.indexOf(".") === -1) {
+        if (hasSelection) {
+            currentInput = "0.";
+            selectionStart = 0;
+            selectionEnd = 0;
+        } else if (currentInput.indexOf(".") === -1) {
             currentInput = (currentInput === "" ? "0." : currentInput + ".");
         }
         validateInput();
     }
 
     function backspace() {
-        if (currentInput.length > 0) {
+        if (hasSelection) {
+            var before = currentInput.substring(0, selectionStart);
+            var after = currentInput.substring(selectionEnd);
+            currentInput = (before + after === "") ? "0" : (before + after);
+            selectionStart = 0;
+            selectionEnd = 0;
+        } else if (currentInput.length > 0) {
             currentInput = currentInput.substring(0, currentInput.length - 1);
+            if (currentInput === "" || currentInput === "-") currentInput = "0";
         }
         validateInput();
     }
 
     function clear() {
         currentInput = "0";
+        selectionStart = 0;
+        selectionEnd = 0;
         validateInput();
     }
 

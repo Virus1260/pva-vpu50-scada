@@ -23,11 +23,12 @@ Rectangle {
         anchors.rightMargin: 8
         spacing: 6
 
-        Text {
-            text: badgeRoot.isSatisfied ? "✓" : "⚠"
-            color: badgeRoot.isSatisfied ? "#34d399" : "#fca5a5"
-            font.bold: true
-            font.pixelSize: 11
+        ScadaIcon {
+            width: 14
+            height: 14
+            iconName: badgeRoot.isSatisfied ? "check" : "warning"
+            iconColor: badgeRoot.isSatisfied ? "#34d399" : "#fca5a5"
+            Layout.alignment: Qt.AlignVCenter
         }
 
         Text {
