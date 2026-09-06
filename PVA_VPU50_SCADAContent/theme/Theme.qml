@@ -54,4 +54,19 @@ Item {
         GradientStop { position: 0.0; color: "#1e40af" }
         GradientStop { position: 1.0; color: "#1d4ed8" }
     }
+
+    // Modal Scrim & Overlay Protection
+    readonly property color scrimModal:            "#95000000" // Modal backdrop dim preventing accidental background touches
+
+    // Interactive Text Input, Magnifying Loupe & Selection Tokens
+    readonly property color loupeBg:               "#091d33" // Loupe circular background
+    readonly property color loupeBorder:           "#38bdf8" // Glowing cyan loupe border
+    readonly property color loupeCursor:           "#f59e0b" // High-visibility amber cursor
+    readonly property color selectionHighlight:    "#4438bdf8" // Translucent selection fill
+    readonly property color selectionBorder:       "#38bdf8" // Selection boundary stroke
+    readonly property color selectionHandle:       "#38bdf8" // Teardrop handle fill
+    readonly property color contextMenuBg:         "#08213b" // Floating context action menu pill
+    readonly property color contextMenuBorder:     "#1e5b94" // Floating action menu border
+    readonly property color contextMenuHover:      "#164270" // Floating action menu hover
+    readonly property color contextMenuPressed:    "#0a2d52" // Floating action menu pressed
 }

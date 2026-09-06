@@ -126,8 +126,11 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaKeyboardKey.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaNumericKeypad.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaNumericKeypadView.ui.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTextContextMenu.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTextKeyboard.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTextKeyboardView.ui.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTouchInputField.qml</file>
+        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTouchLoupe.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbar.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarItem.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarModel.qml</file>

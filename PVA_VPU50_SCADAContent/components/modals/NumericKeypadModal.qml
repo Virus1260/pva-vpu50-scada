@@ -219,7 +219,7 @@ Rectangle {
 
                         Text {
                             anchors.centerIn: parent
-                            text: "✕"
+                            text: "X"
                             color: closeMouse.containsMouse ? "#ffffff" : "#94a3b8"
                             font.bold: true
                             font.pixelSize: 13
@@ -396,9 +396,10 @@ Rectangle {
         }
     }
 
-    // =========================================================================
-    // MODULAR FUNCTIONS
-    // =========================================================================
+    function openFor(inputItem, tagTitle, unitName, minLimit, maxLimit) {
+        openForInput(inputItem, tagTitle, unitName, minLimit, maxLimit);
+    }
+
     function openForInput(inputItem, tagTitle, unitName, minLimit, maxLimit) {
         targetInput = inputItem;
         targetTag = tagTitle ? tagTitle : "";

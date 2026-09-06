@@ -73,7 +73,7 @@ Rectangle {
 
             Text {
                 anchors.centerIn: parent
-                text: "✕"
+                text: "X"
                 color: closeMouse.containsMouse ? "#ffffff" : "#94a3b8"
                 font.pixelSize: 13
                 font.bold: true

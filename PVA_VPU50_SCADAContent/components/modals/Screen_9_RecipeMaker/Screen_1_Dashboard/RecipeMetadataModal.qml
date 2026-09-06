@@ -331,7 +331,12 @@ Rectangle {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 6
-                                Text { text: "🧴"; font.pixelSize: 12 }
+                                Rectangle {
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    color: metaModalRoot.productType === "Emulsion / Cream" ? "#38bdf8" : "#64748b"
+                                }
                                 Text {
                                     text: "Emulsion / Cream"
                                     color: metaModalRoot.productType === "Emulsion / Cream" ? "#ffffff" : "#cbd5e1"
@@ -361,7 +366,12 @@ Rectangle {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 6
-                                Text { text: "🧴"; font.pixelSize: 12 }
+                                Rectangle {
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    color: metaModalRoot.productType === "Ointment" ? "#38bdf8" : "#64748b"
+                                }
                                 Text {
                                     text: "Ointment"
                                     color: metaModalRoot.productType === "Ointment" ? "#ffffff" : "#cbd5e1"
@@ -381,7 +391,7 @@ Rectangle {
                     }
                 }
 
-                // Right: Shelf Life Label + Compact Input Box [ ⏱ 24 Months ]
+                // Right: Shelf Life Label + Compact Input Box [ 24 Months ]
                 ColumnLayout {
                     Layout.preferredWidth: 395
                     Layout.fillWidth: true
@@ -409,9 +419,11 @@ Rectangle {
                             anchors.rightMargin: 8
                             spacing: 6
 
-                            Text {
-                                text: "⏱"
-                                font.pixelSize: 12
+                            ScadaIcon {
+                                Layout.preferredWidth: 14
+                                Layout.preferredHeight: 14
+                                iconSource: "../../../../assets/icons/controls/clock.svg"
+                                iconColor: shelfInput.activeFocus ? "#38bdf8" : "#94a3b8"
                             }
 
                             TextInput {
@@ -486,7 +498,12 @@ Rectangle {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 6
-                                Text { text: "💧"; font.pixelSize: 12 }
+                                Rectangle {
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    color: metaModalRoot.productType === "Gel" ? "#38bdf8" : "#64748b"
+                                }
                                 Text {
                                     text: "Gel"
                                     color: metaModalRoot.productType === "Gel" ? "#ffffff" : "#cbd5e1"
@@ -516,7 +533,12 @@ Rectangle {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 6
-                                Text { text: "🧪"; font.pixelSize: 12 }
+                                Rectangle {
+                                    width: 6
+                                    height: 6
+                                    radius: 3
+                                    color: metaModalRoot.productType === "Solution" ? "#38bdf8" : "#64748b"
+                                }
                                 Text {
                                     text: "Solution"
                                     color: metaModalRoot.productType === "Solution" ? "#ffffff" : "#cbd5e1"
@@ -783,10 +805,13 @@ Rectangle {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 6
-                                Text {
-                                    text: metaModalRoot.qtyType === "Fixed" ? "●" : "○"
-                                    color: metaModalRoot.qtyType === "Fixed" ? "#ffffff" : "#64748b"
-                                    font.pixelSize: 10
+                                Rectangle {
+                                    width: 10
+                                    height: 10
+                                    radius: 5
+                                    color: metaModalRoot.qtyType === "Fixed" ? "#38bdf8" : "transparent"
+                                    border.color: metaModalRoot.qtyType === "Fixed" ? "#ffffff" : "#64748b"
+                                    border.width: 1.5
                                 }
                                 Text {
                                     text: "Fixed (kg / L)"
@@ -815,10 +840,13 @@ Rectangle {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 6
-                                Text {
-                                    text: metaModalRoot.qtyType === "Variable" ? "●" : "○"
-                                    color: metaModalRoot.qtyType === "Variable" ? "#ffffff" : "#64748b"
-                                    font.pixelSize: 10
+                                Rectangle {
+                                    width: 10
+                                    height: 10
+                                    radius: 5
+                                    color: metaModalRoot.qtyType === "Variable" ? "#c084fc" : "transparent"
+                                    border.color: metaModalRoot.qtyType === "Variable" ? "#ffffff" : "#64748b"
+                                    border.width: 1.5
                                 }
                                 Text {
                                     text: "Variable (% / Form.)"
@@ -906,11 +934,22 @@ Rectangle {
                     anchors.leftMargin: 10
                     anchors.rightMargin: 10
                     spacing: 8
-                    Text {
-                        text: "ℹ"
-                        color: metaModalRoot.qtyType === "Fixed" ? "#38bdf8" : "#c084fc"
-                        font.bold: true
-                        font.pixelSize: 12
+                    Rectangle {
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
+                        radius: 7
+                        color: "transparent"
+                        border.color: metaModalRoot.qtyType === "Fixed" ? "#38bdf8" : "#c084fc"
+                        border.width: 1.5
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "i"
+                            color: metaModalRoot.qtyType === "Fixed" ? "#38bdf8" : "#c084fc"
+                            font.bold: true
+                            font.pixelSize: 10
+                            font.family: "Segoe UI"
+                        }
                     }
                     Text {
                         text: metaModalRoot.qtyType === "Fixed"
@@ -985,10 +1024,10 @@ Rectangle {
                             font.family: "Segoe UI"
                         }
                         Text {
-                            text: "→"
+                            text: ">>"
                             color: "#ffffff"
                             font.bold: true
-                            font.pixelSize: 15
+                            font.pixelSize: 12
                         }
                     }
 
