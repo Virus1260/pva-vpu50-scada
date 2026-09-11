@@ -1,0 +1,18 @@
+# Vercel Deployment Ignore
+# Ignore heavy scratch extractions, frame-by-frame PNG/SVGs, and raw media (155 MB)
+scratch/
+Dependencies/
+
+# Agent, test & temporary files
+.agents/
+.vscode/
+.idea/
+tests/
+test/
+*.log
+*.tmp
+*.mp4
+
+# Markdown docs
+*.md
+!README.md
