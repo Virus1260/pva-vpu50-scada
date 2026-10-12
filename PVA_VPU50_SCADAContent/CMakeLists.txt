@@ -184,6 +184,11 @@ qt6_add_qml_module(PVA_VPU50_SCADAContent
         "assets/icons/pid/valve_butterfly_open.svg"
         "assets/icons/pid/valve_diaphragm_closed.svg"
         "assets/icons/pid/valve_diaphragm_open.svg"
+        "assets/not_used/backspace.svg"
+        "assets/not_used/ekato_logo.svg"
+        "assets/not_used/pid_schema.svg"
+        "assets/not_used/start_green.svg"
+        "assets/not_used/thumbnail.png"
 )
 
 
