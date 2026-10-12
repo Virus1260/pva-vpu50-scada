@@ -72,6 +72,13 @@ Item {
     property bool inspectorRequireOperatorSign: true
     property bool inspectorRequireSupervisorPin: true
 
+    // Eldeeb Formulation & Scale-Up Guardrails
+    property bool inspectorTempInterlockEnabled: false
+    property real inspectorMinVesselTemp: 75.0
+    property real inspectorMaxVesselTemp: 85.0
+    property real inspectorTargetBctMin: 15.0
+    property string inspectorPhaseCategory: "VAT"
+
     // Aliases for logic controller
     property alias sequenceListView: stepsListView
     property alias saveDraftMouse: saveDraftArea
@@ -122,6 +129,13 @@ Item {
     property alias pulseOnMouse: pulseOnArea
     property alias pulseOffMouse: pulseOffArea
     property alias guidanceKeyboardMouse: guidanceArea
+
+    // Eldeeb Scale-up Guardrail Aliases
+    property alias tempInterlockToggleMouse: tempInterlockToggleArea
+    property alias minTempMouse: minTempArea
+    property alias maxTempMouse: maxTempArea
+    property alias targetBctMouse: targetBctArea
+    property alias phaseCategoryBtnMouse: phaseCategoryBtnArea
 
     ColumnLayout {
         anchors.fill: parent

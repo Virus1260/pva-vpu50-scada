@@ -28,6 +28,23 @@ Rectangle {
     property string currentUserRole: "Supervisor (Level 2)"
     property int currentUserLevel: 2
     property int version: 1
+    property int selectedPerspectiveTab: 0 // 0: Identity, 1: R&D CQA, 2: Process Dev CPP
+
+    // Hassan Eldeeb Perspective 2: R&D Formulation (CQA - Critical Quality Attributes)
+    property string minViscosityCp: "15000"
+    property string maxViscosityCp: "25000"
+    property string minPh: "5.50"
+    property string maxPh: "6.50"
+    property string totalSolidsPct: "18.5"
+    property string dropletSizeMicrons: "2.5"
+
+    // Hassan Eldeeb Perspective 3: Process Development Scale-Up (CPP - Critical Process Parameters)
+    property string maxHeatingRateCpm: "2.5"
+    property string maxCoolingRateCpm: "2.0"
+    property string maxAdditionRateKpm: "4.5"
+    property string maxHomogenizerRpm: "3000"
+    property string maxVacuumBar: "-0.80"
+    property string targetBctMinutes: "45.0"
 
     signal saveAndNext(var metadata)
     signal cancelled
@@ -45,6 +62,20 @@ Rectangle {
             densityInput.text = metaModalRoot.targetDensity;
             descInput.text = metaModalRoot.description;
             authorInput.text = metaModalRoot.authorName;
+
+            minViscInput.text = metaModalRoot.minViscosityCp;
+            maxViscInput.text = metaModalRoot.maxViscosityCp;
+            minPhInput.text = metaModalRoot.minPh;
+            maxPhInput.text = metaModalRoot.maxPh;
+            solidsInput.text = metaModalRoot.totalSolidsPct;
+            dropletInput.text = metaModalRoot.dropletSizeMicrons;
+
+            heatRateInput.text = metaModalRoot.maxHeatingRateCpm;
+            coolRateInput.text = metaModalRoot.maxCoolingRateCpm;
+            addRateInput.text = metaModalRoot.maxAdditionRateKpm;
+            homoMaxInput.text = metaModalRoot.maxHomogenizerRpm;
+            vacMaxInput.text = metaModalRoot.maxVacuumBar;
+            bctTargetInput.text = metaModalRoot.targetBctMinutes;
         } else {
             if (numpadModal.visible) numpadModal.visible = false;
             if (textKeyboard.visible) textKeyboard.visible = false;
@@ -73,6 +104,20 @@ Rectangle {
         authorName = cleanAuthor || "Formulation Chemist";
         version = data.version || 1;
 
+        minViscosityCp = data.minViscosityCp !== undefined ? String(data.minViscosityCp) : "15000";
+        maxViscosityCp = data.maxViscosityCp !== undefined ? String(data.maxViscosityCp) : "25000";
+        minPh = data.minPh !== undefined ? String(data.minPh) : "5.50";
+        maxPh = data.maxPh !== undefined ? String(data.maxPh) : "6.50";
+        totalSolidsPct = data.totalSolidsPct !== undefined ? String(data.totalSolidsPct) : "18.5";
+        dropletSizeMicrons = data.dropletSizeMicrons !== undefined ? String(data.dropletSizeMicrons) : "2.5";
+
+        maxHeatingRateCpm = data.maxHeatingRateCpm !== undefined ? String(data.maxHeatingRateCpm) : "2.5";
+        maxCoolingRateCpm = data.maxCoolingRateCpm !== undefined ? String(data.maxCoolingRateCpm) : "2.0";
+        maxAdditionRateKpm = data.maxAdditionRateKpm !== undefined ? String(data.maxAdditionRateKpm) : "4.5";
+        maxHomogenizerRpm = data.maxHomogenizerRpm !== undefined ? String(data.maxHomogenizerRpm) : "3000";
+        maxVacuumBar = data.maxVacuumBar !== undefined ? String(data.maxVacuumBar) : "-0.80";
+        targetBctMinutes = data.targetBctMinutes !== undefined ? String(data.targetBctMinutes) : "45.0";
+
         titleInput.text = recipeTitle;
         prodNameInput.text = productName;
         shelfInput.text = shelfLifeMonths;
@@ -80,6 +125,20 @@ Rectangle {
         densityInput.text = targetDensity;
         descInput.text = description;
         authorInput.text = authorName;
+
+        minViscInput.text = minViscosityCp;
+        maxViscInput.text = maxViscosityCp;
+        minPhInput.text = minPh;
+        maxPhInput.text = maxPh;
+        solidsInput.text = totalSolidsPct;
+        dropletInput.text = dropletSizeMicrons;
+
+        heatRateInput.text = maxHeatingRateCpm;
+        coolRateInput.text = maxCoolingRateCpm;
+        addRateInput.text = maxAdditionRateKpm;
+        homoMaxInput.text = maxHomogenizerRpm;
+        vacMaxInput.text = maxVacuumBar;
+        bctTargetInput.text = targetBctMinutes;
 
         visible = true;
     }
@@ -195,14 +254,120 @@ Rectangle {
             }
 
             // =================================================================
-            // ROW 1: RECIPE TITLE & PRODUCT NAME (50% / 50% Symmetry)
+            // HASSAN ELDEEB 3-PERSPECTIVE MANUFACTURING TABS
+            // (1. General & Identity, 2. R&D Formulation CQA, 3. Process Dev Scale-Up CPP)
             // =================================================================
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 8
 
-                // Recipe Title (50% Width)
-                ColumnLayout {
+                // Tab 1: General & Identity
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    radius: 4
+                    color: metaModalRoot.selectedPerspectiveTab === 0 ? "#0284c7" : "#081d33"
+                    border.color: metaModalRoot.selectedPerspectiveTab === 0 ? "#38bdf8" : "#1d5b94"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Rectangle { width: 6; height: 6; radius: 3; color: metaModalRoot.selectedPerspectiveTab === 0 ? "#38bdf8" : "#64748b" }
+                        Text {
+                            text: "1. GENERAL & IDENTITY"
+                            color: metaModalRoot.selectedPerspectiveTab === 0 ? "#ffffff" : "#94a3b8"
+                            font.pixelSize: 10
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: metaModalRoot.selectedPerspectiveTab = 0
+                    }
+                }
+
+                // Tab 2: R&D Formulation (CQA)
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    radius: 4
+                    color: metaModalRoot.selectedPerspectiveTab === 1 ? "#0284c7" : "#081d33"
+                    border.color: metaModalRoot.selectedPerspectiveTab === 1 ? "#38bdf8" : "#1d5b94"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Rectangle { width: 6; height: 6; radius: 3; color: metaModalRoot.selectedPerspectiveTab === 1 ? "#38bdf8" : "#64748b" }
+                        Text {
+                            text: "2. R&D FORMULATION (CQA)"
+                            color: metaModalRoot.selectedPerspectiveTab === 1 ? "#ffffff" : "#94a3b8"
+                            font.pixelSize: 10
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: metaModalRoot.selectedPerspectiveTab = 1
+                    }
+                }
+
+                // Tab 3: Process Development Scale-Up (CPP)
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    radius: 4
+                    color: metaModalRoot.selectedPerspectiveTab === 2 ? "#0284c7" : "#081d33"
+                    border.color: metaModalRoot.selectedPerspectiveTab === 2 ? "#38bdf8" : "#1d5b94"
+                    border.width: 1
+
+                    RowLayout {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        Rectangle { width: 6; height: 6; radius: 3; color: metaModalRoot.selectedPerspectiveTab === 2 ? "#38bdf8" : "#64748b" }
+                        Text {
+                            text: "3. PROCESS DEV SCALE-UP (CPP)"
+                            color: metaModalRoot.selectedPerspectiveTab === 2 ? "#ffffff" : "#94a3b8"
+                            font.pixelSize: 10
+                            font.bold: true
+                            font.family: "Segoe UI"
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: metaModalRoot.selectedPerspectiveTab = 2
+                    }
+                }
+            }
+
+            // =================================================================
+            // TAB 1: GENERAL & IDENTITY SECTION
+            // =================================================================
+            ColumnLayout {
+                id: tabGeneralIdentity
+                Layout.fillWidth: true
+                visible: metaModalRoot.selectedPerspectiveTab === 0
+                spacing: 8
+
+                // Row 1: Recipe Title & Product Name (50% / 50% Symmetry)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    // Recipe Title (50% Width)
+                    ColumnLayout {
                     Layout.preferredWidth: 395
                     Layout.fillWidth: true
                     spacing: 3
@@ -960,6 +1125,315 @@ Rectangle {
                     }
                 }
             }
+            } // End tabGeneralIdentity
+
+            // =================================================================
+            // TAB 2: R&D FORMULATION (CRITICAL QUALITY ATTRIBUTES - CQA)
+            // =================================================================
+            ColumnLayout {
+                id: tabRdFormulation
+                Layout.fillWidth: true
+                visible: metaModalRoot.selectedPerspectiveTab === 1
+                spacing: 10
+
+                // Row 1: Target Viscosity Window (Min / Max cP)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MIN TARGET VISCOSITY (cP) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: minViscInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: minViscInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.minViscosityCp; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.minViscosityCp = text
+                            }
+                            ScadaTouchInputHandler { targetInput: minViscInput; numpad: numpadModal; title: "MIN TARGET VISCOSITY (cP)"; unit: "cP" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX TARGET VISCOSITY (cP) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: maxViscInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: maxViscInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxViscosityCp; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxViscosityCp = text
+                            }
+                            ScadaTouchInputHandler { targetInput: maxViscInput; numpad: numpadModal; title: "MAX TARGET VISCOSITY (cP)"; unit: "cP" }
+                        }
+                    }
+                }
+
+                // Row 2: Target pH Window
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MIN TARGET pH *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: minPhInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: minPhInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.minPh; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.minPh = text
+                            }
+                            ScadaTouchInputHandler { targetInput: minPhInput; numpad: numpadModal; title: "MIN TARGET pH"; unit: "pH" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX TARGET pH *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: maxPhInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: maxPhInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxPh; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxPh = text
+                            }
+                            ScadaTouchInputHandler { targetInput: maxPhInput; numpad: numpadModal; title: "MAX TARGET pH"; unit: "pH" }
+                        }
+                    }
+                }
+
+                // Row 3: Total Solids & Emulsion Droplet D50
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "TOTAL DISSOLVED SOLIDS (TDS %) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: solidsInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: solidsInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.totalSolidsPct; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.totalSolidsPct = text
+                            }
+                            ScadaTouchInputHandler { targetInput: solidsInput; numpad: numpadModal; title: "TOTAL DISSOLVED SOLIDS (%)"; unit: "%" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "TARGET EMULSION DROPLET D50 (µm) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: dropletInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: dropletInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.dropletSizeMicrons; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.dropletSizeMicrons = text
+                            }
+                            ScadaTouchInputHandler { targetInput: dropletInput; numpad: numpadModal; title: "EMULSION DROPLET D50"; unit: "µm" }
+                        }
+                    }
+                }
+
+                // CQA Regulatory Guidance Banner
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    color: "#082f49"
+                    border.color: "#0284c7"
+                    border.width: 1
+                    radius: 4
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
+
+                        Rectangle {
+                            width: 16; height: 16; radius: 8; color: "#0284c7"
+                            Text { anchors.centerIn: parent; text: "i"; color: "#ffffff"; font.bold: true; font.pixelSize: 10 }
+                        }
+                        Text {
+                            text: "HASSAN ELDEEB R&D PERSPECTIVE: Critical Quality Attributes (CQA) define final batch release & FDA 21 CFR Part 11 electronic batch record compliance."
+                            color: "#7dd3fc"
+                            font.pixelSize: 10
+                            font.family: "Segoe UI"
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            } // End tabRdFormulation
+
+            // =================================================================
+            // TAB 3: PROCESS DEV SCALE-UP (CRITICAL PROCESS PARAMETERS - CPP)
+            // =================================================================
+            ColumnLayout {
+                id: tabProcessDev
+                Layout.fillWidth: true
+                visible: metaModalRoot.selectedPerspectiveTab === 2
+                spacing: 10
+
+                // Row 1: Max Heating & Cooling Ramp Envelopes
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX HEATING RAMP RATE (°C/min) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: heatRateInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: heatRateInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxHeatingRateCpm; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxHeatingRateCpm = text
+                            }
+                            ScadaTouchInputHandler { targetInput: heatRateInput; numpad: numpadModal; title: "MAX HEATING RAMP (°C/min)"; unit: "°C/min" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX COOLING RAMP RATE (°C/min) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: coolRateInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: coolRateInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxCoolingRateCpm; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxCoolingRateCpm = text
+                            }
+                            ScadaTouchInputHandler { targetInput: coolRateInput; numpad: numpadModal; title: "MAX COOLING RAMP (°C/min)"; unit: "°C/min" }
+                        }
+                    }
+                }
+
+                // Row 2: Addition Dosing Flow Rate & Max Homogenizer Speed
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX ADDITION DOSING FLOW RATE (kg/min) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: addRateInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: addRateInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxAdditionRateKpm; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxAdditionRateKpm = text
+                            }
+                            ScadaTouchInputHandler { targetInput: addRateInput; numpad: numpadModal; title: "MAX ADDITION RATE (kg/min)"; unit: "kg/min" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX HOMOGENIZER TIP SPEED (RPM) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: homoMaxInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: homoMaxInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxHomogenizerRpm; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxHomogenizerRpm = text
+                            }
+                            ScadaTouchInputHandler { targetInput: homoMaxInput; numpad: numpadModal; title: "MAX HOMOGENIZER RPM"; unit: "RPM" }
+                        }
+                    }
+                }
+
+                // Row 3: Max Vacuum Envelope & Target BCT Budget
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "MAX VACUUM DE-AERATION (bar) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: vacMaxInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: vacMaxInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.maxVacuumBar; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.maxVacuumBar = text
+                            }
+                            ScadaTouchInputHandler { targetInput: vacMaxInput; numpad: numpadModal; title: "MAX VACUUM ENVELOPE"; unit: "bar" }
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text { text: "TARGET BCT CYCLE BUDGET (Minutes) *"; color: "#38bdf8"; font.pixelSize: 10; font.bold: true; font.family: "Segoe UI" }
+                        Rectangle {
+                            Layout.fillWidth: true; Layout.preferredHeight: 32; color: "#081d33"; radius: 4
+                            border.color: bctTargetInput.activeFocus ? "#38bdf8" : "#1d5b94"; border.width: 1
+                            TextInput {
+                                id: bctTargetInput; anchors.fill: parent; anchors.margins: 6
+                                text: metaModalRoot.targetBctMinutes; color: "#ffffff"; font.pixelSize: 12; font.bold: true; font.family: "Segoe UI"
+                                onTextChanged: metaModalRoot.targetBctMinutes = text
+                            }
+                            ScadaTouchInputHandler { targetInput: bctTargetInput; numpad: numpadModal; title: "TARGET BCT BUDGET"; unit: "Mins" }
+                        }
+                    }
+                }
+
+                // Process Dev Guidance Banner
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    color: "#271d07"
+                    border.color: "#f59e0b"
+                    border.width: 1
+                    radius: 4
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 8
+
+                        Rectangle {
+                            width: 16; height: 16; radius: 8; color: "#f59e0b"
+                            Text { anchors.centerIn: parent; text: "!"; color: "#000000"; font.bold: true; font.pixelSize: 10 }
+                        }
+                        Text {
+                            text: "HASSAN ELDEEB PROCESS DEV ENVELOPE: Scale-up limits prevent thermal emulsion shock and set the target Batch Cycle Time (BCT) budget to eliminate NVAT."
+                            color: "#fde68a"
+                            font.pixelSize: 10
+                            font.family: "Segoe UI"
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            } // End tabProcessDev
 
             Item { Layout.fillHeight: true }
 
@@ -1053,7 +1527,21 @@ Rectangle {
                                 targetDensity: parseFloat(metaModalRoot.targetDensity) || 1020.0,
                                 description: metaModalRoot.description,
                                 author: computedAuthor,
-                                version: metaModalRoot.version
+                                version: metaModalRoot.version,
+
+                                // Hassan Eldeeb 3-Perspective Data
+                                minViscosityCp: parseFloat(metaModalRoot.minViscosityCp) || 15000,
+                                maxViscosityCp: parseFloat(metaModalRoot.maxViscosityCp) || 25000,
+                                minPh: parseFloat(metaModalRoot.minPh) || 5.50,
+                                maxPh: parseFloat(metaModalRoot.maxPh) || 6.50,
+                                totalSolidsPct: parseFloat(metaModalRoot.totalSolidsPct) || 18.5,
+                                dropletSizeMicrons: parseFloat(metaModalRoot.dropletSizeMicrons) || 2.5,
+                                maxHeatingRateCpm: parseFloat(metaModalRoot.maxHeatingRateCpm) || 2.5,
+                                maxCoolingRateCpm: parseFloat(metaModalRoot.maxCoolingRateCpm) || 2.0,
+                                maxAdditionRateKpm: parseFloat(metaModalRoot.maxAdditionRateKpm) || 4.5,
+                                maxHomogenizerRpm: parseFloat(metaModalRoot.maxHomogenizerRpm) || 3000,
+                                maxVacuumBar: parseFloat(metaModalRoot.maxVacuumBar) || -0.80,
+                                targetBctMinutes: parseFloat(metaModalRoot.targetBctMinutes) || 45.0
                             };
                             metaModalRoot.saveAndNext(data);
                         }
