@@ -130,12 +130,6 @@ Item {
     property alias pulseOffMouse: pulseOffArea
     property alias guidanceKeyboardMouse: guidanceArea
 
-    // Eldeeb Scale-up Guardrail Aliases
-    property alias tempInterlockToggleMouse: tempInterlockToggleArea
-    property alias minTempMouse: minTempArea
-    property alias maxTempMouse: maxTempArea
-    property alias targetBctMouse: targetBctArea
-    property alias phaseCategoryBtnMouse: phaseCategoryBtnArea
 
     ColumnLayout {
         anchors.fill: parent

@@ -9,7 +9,6 @@
         <file>PVA_VPU50_SCADAContent/assets/3d/Agitator.qml</file>
         <file>PVA_VPU50_SCADAContent/assets/3d/meshes/body12948_mesh.mesh</file>
         <file>PVA_VPU50_SCADAContent/assets/3d/meshes/body2086_mesh.mesh</file>
-        <file>PVA_VPU50_SCADAContent/assets/3d/Metadata/thumbnail.png</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/common/icon_check.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/common/icon_warning.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_equip.svg</file>
@@ -20,7 +19,6 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/act_schedule.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/arrow_down.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/arrow_up.svg</file>
-        <file>PVA_VPU50_SCADAContent/assets/icons/controls/backspace.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/clock.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/close_x.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/duplicate.svg</file>
@@ -28,7 +26,6 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/pause_dark.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/start.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/start_dark.svg</file>
-        <file>PVA_VPU50_SCADAContent/assets/icons/controls/start_green.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/controls/stop.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/equipment/heating_thermometer.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/equipment/homogenizer_rotor.svg</file>
@@ -37,7 +34,6 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/equipment/vacuum_gauge.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/header/alarm_bell.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/header/alarm_bell_green.svg</file>
-        <file>PVA_VPU50_SCADAContent/assets/icons/header/ekato_logo.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/header/favicon.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/header/lightbulb.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/header/user.svg</file>
@@ -86,7 +82,6 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_butterfly_open.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_diaphragm_closed.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_diaphragm_open.svg</file>
-        <file>PVA_VPU50_SCADAContent/assets/pid_schema.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_body.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_jacket.svg</file>
         <file>PVA_VPU50_SCADAContent/components/common/DeviceSetpointStepper.qml</file>
@@ -95,10 +90,6 @@
         <file>PVA_VPU50_SCADAContent/components/common/SubsystemModeButton.qml</file>
         <file>PVA_VPU50_SCADAContent/components/common/SubsystemModeSelectorModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/design_system/TouchBadge.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/design_system/TouchButton.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/design_system/TouchCard.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/design_system/TouchScrollContainer.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/design_system/TouchStepper.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/ConfirmationModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/LoginModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/NumericKeypadModal.qml</file>
@@ -109,11 +100,7 @@
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_1_Control/HeatingModeModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_1_Control/HomogenizerModeModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_1_Control/VacuumModeModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_3_Trends/TrendExportReportModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_4_Alarms/AlarmAcknowledgeModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes/DeleteConfirmModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes/NewRecipeModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes/StepConfirmDialog.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDeleteConfirmModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeMetadataModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientModal.qml</file>
@@ -124,17 +111,13 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/PvaLogo.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/ScadaHeader.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaKeyboardKey.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaNumericKeypad.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaNumericKeypadView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTextContextMenu.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTextKeyboard.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTextKeyboardView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTouchInputField.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTouchInputHandler.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaKeyboard/ScadaTouchLoupe.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbar.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarItem.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/ScadaNavbar/ScadaNavbarModel.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaCard.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaMediaControls.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control/ScadaModeSelector.qml</file>
@@ -149,10 +132,8 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidControlBox.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidHeatingEffect.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidHomogenizer.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidHopper.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidInlineHeater.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidLevelGauge.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidLidLifter.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidMinimap.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidMotor.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_2_PID/PidPipe.ui.qml</file>
@@ -168,18 +149,10 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_4_Alarms/AlarmsHistoryTableWidget.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_4_Alarms/AlarmsTableWidget.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_4_Alarms/AlarmsTopBar.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/FormulationView.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeCreatorView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeExecutorView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeIngredientsTable.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeMatrixView.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeOperationRow.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeStepProgress.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeToolbar.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeTopToolbar.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDashboard.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDashboardView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeBomPanel.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientBuilder.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientBuilderView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineDesigner.qml</file>

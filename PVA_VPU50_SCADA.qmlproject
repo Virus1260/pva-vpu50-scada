@@ -46,10 +46,6 @@ Project {
     }
 
     QmlFiles {
-        directory: "PVA_VPU50_SCADAContent/components/modals/Screen_5_Recipes"
-    }
-
-    QmlFiles {
         directory: "PVA_VPU50_SCADAContent/config"
     }
 
@@ -89,10 +85,6 @@ Project {
 
     Files {
         filter: "*.wav;*.mp3"
-    }
-
-    Files {
-        filter: "*.mp4"
     }
 
     Files {
