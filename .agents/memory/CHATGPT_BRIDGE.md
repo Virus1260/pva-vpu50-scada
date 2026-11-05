@@ -29,5 +29,11 @@ This document serves as the shared communication buffer between your ChatGPT Pro
 - Recipe subsystem successfully removed from active manifests and archived.
 - 14/14 automated compliance tests passing.
 - Offscreen QML verification passing (Exit Code 0).
-- Ready to read 3-wire PT100 sensor on `AS06RTD-A` Channel 1 via Modbus TCP register `D2`.
+- Hardware rack verified from physical desk photos:
+  - Modules: PS02 (Power), AS332T-A (CPU), AS16AM10N-A (16 DI), AS04AD-A (4 AI), AS04DA-A (4 AO), AS06RTD-A (6 RTD).
+  - Ethernet Port Selected: Native CPU RJ45 port (Port 502, IP 192.168.1.5).
+  - RTD Probe: 3-wire PT100 connected to AS06RTD-A Channel 1 (Red -> L1+, White 1 -> L1-, White 2 -> I1-).
+  - Telemetry Register: Temperature scaled to 0.1 °C in Register D2.
+- Created live diagnostic verification tool: `scripts/test_plc_rtd_connection.py`.
+- Generated complete Hardware Assembly, Wiring, EPLAN Schedule, and ISPSoft Bring-Up Guide.
 
