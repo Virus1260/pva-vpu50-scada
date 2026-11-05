@@ -65,11 +65,4 @@ Item {
     property alias row6DevCard: ui.row6DevCard
     property alias row6Media: ui.row6Media
     property alias row6Runtime: ui.row6Runtime
-
-    // --- Run-Mode Decoupling & Automatic Recipe Lockout Properties ---
-    property alias isLocked: ui.isLocked
-    property alias lockoutBatchId: ui.lockoutBatchId
-    property alias lockoutRecipeName: ui.lockoutRecipeName
-    property alias lockoutStep: ui.lockoutStep
-    property alias lockoutTotalSteps: ui.lockoutTotalSteps
 }

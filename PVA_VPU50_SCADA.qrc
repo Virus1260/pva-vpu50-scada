@@ -101,10 +101,6 @@
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_1_Control/HomogenizerModeModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_1_Control/VacuumModeModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/modals/Screen_4_Alarms/AlarmAcknowledgeModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDeleteConfirmModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeMetadataModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientModal.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/modals/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeManualActionModal.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderAnnunciator.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderMachineCluster.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/ScadaHeader/HeaderUserCluster.qml</file>
@@ -149,14 +145,6 @@
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_4_Alarms/AlarmsHistoryTableWidget.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_4_Alarms/AlarmsTableWidget.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/components/widgets/Screen_4_Alarms/AlarmsTopBar.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeCreatorView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes/RecipeExecutorView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDashboard.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_1_Dashboard/RecipeDashboardView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientBuilder.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_2_Ingredients/RecipeIngredientBuilderView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineDesigner.qml</file>
-        <file>PVA_VPU50_SCADAContent/components/widgets/Screen_9_RecipeMaker/Screen_3_Timeline/RecipeTimelineDesignerView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/config/HardwareDefinitions.qml</file>
         <file>PVA_VPU50_SCADAContent/config/ScadaConfig.qml</file>
         <file>PVA_VPU50_SCADAContent/config/ScadaStateMiddleware.qml</file>
@@ -170,14 +158,10 @@
         <file>PVA_VPU50_SCADAContent/screens/Screen_3_TrendsView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_4_Alarms.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_4_AlarmsView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_5_Recipes.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_5_RecipesView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_6_Audit.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_6_AuditView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_8_Diagnostics.qml</file>
         <file>PVA_VPU50_SCADAContent/screens/Screen_8_DiagnosticsView.ui.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_9_RecipeMaker.qml</file>
-        <file>PVA_VPU50_SCADAContent/screens/Screen_9_RecipeMakerView.ui.qml</file>
         <file>PVA_VPU50_SCADAContent/theme/AppConstants.qml</file>
         <file>PVA_VPU50_SCADAContent/theme/Dimensions.qml</file>
         <file>PVA_VPU50_SCADAContent/theme/qmldir</file>
@@ -186,7 +170,6 @@
         <file>qtquickcontrols2.conf</file>
         <file>scada/config/alarm_catalog.json</file>
         <file>scada/config/opcua.production.example.json</file>
-        <file>scada/config/recipe_catalog.json</file>
         <file>scada/config/role_catalog.json</file>
         <file>scada/config/sensor_catalog.json</file>
         <file>scada/config/tag_catalog.json</file>

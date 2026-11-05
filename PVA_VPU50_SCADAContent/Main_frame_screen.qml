@@ -17,7 +17,6 @@ Item {
 
     // --- Industrial Process State Variables ---
     property bool isAutoMode: true
-    property string currentRecipeName: "UNIMIX_BATCH_01"
 
     property double r1TargetSpeed: 25.0
     property double r1ActualSpeed: 0.0
@@ -58,7 +57,7 @@ Item {
     property int r6RuntimeSeconds: 0
 
     property var alarmList: [
-        "SYSTEM READY - RECIPE [VPU_BATCH_01] STANDBY",
+        "SYSTEM READY - VPU-50 INDUSTRIAL SCADA ONLINE",
         "INFO: AGITATOR MOTOR [1M1501] READY FOR SEQUENCE",
         "NOTICE: VACUUM CHAMBER SEAL INTEGRITY VERIFIED",
         "STATUS: HEATING JACKET PROPORTIONAL REGULATION ACTIVE"
@@ -70,8 +69,6 @@ Item {
         "P&ID VIEW - PVA SYSTEMS VPU-50 SKID & PROCESS VALVES",
         "PROCESS TRENDS - MULTI-CHANNEL HISTORICAL LOG",
         "ALARM ANNUNCIATOR - ACTIVE PROCESS NOTIFICATIONS",
-        "RECIPES (RUN) - ISA-88 BATCH PROCESS EXECUTION MONITOR",
-        "RECIPE MAKER - 21 CFR PART 11 MASTER RECIPE AUTHORING",
         "ELECTRONIC BATCH RECORD - 21 CFR PART 11 AUDIT LOG",
         "MAINTENANCE - HARDWARE I/O DIAGNOSTICS & OVERRIDE"
     ]
@@ -101,69 +98,13 @@ Item {
         value: rootWindow.activeUserLevel
     }
 
-    // Bind Recipe Maker Screen author & role dynamically
-    Binding {
-        target: ui.recipeMakerScreen
-        property: "activeUserName"
-        value: rootWindow.activeUserName
-    }
-    Binding {
-        target: ui.recipeMakerScreen
-        property: "activeUserRole"
-        value: rootWindow.activeUserRole
-    }
-    Binding {
-        target: ui.recipeMakerScreen
-        property: "activeUserLevel"
-        value: rootWindow.activeUserLevel
-    }
-
-    // Bind Screen 1 Control Screen run-mode decoupling / recipe lockout
-    Binding {
-        target: ui.controlView
-        property: "isLocked"
-        value: typeof Scada !== "undefined" && Scada.recipeRunning
-    }
-    Binding {
-        target: ui.controlView
-        property: "lockoutBatchId"
-        value: typeof Scada !== "undefined" ? Scada.activeBatchId : ""
-    }
-    Binding {
-        target: ui.controlView
-        property: "lockoutRecipeName"
-        value: typeof Scada !== "undefined" ? Scada.activeRecipeName : ""
-    }
-    Binding {
-        target: ui.controlView
-        property: "lockoutStep"
-        value: typeof Scada !== "undefined" ? Scada.currentStepIndex : 0
-    }
-    Binding {
-        target: ui.controlView
-        property: "lockoutTotalSteps"
-        value: typeof Scada !== "undefined" ? Scada.totalSteps : 0
-    }
-
     // --- Component Setup & Static Wiring ---
     Component.onCompleted: {
         var ctrl = ui.controlView;
         if (!ctrl) return;
 
-        // --- RUN-MODE DECOUPLING & SAFETY INTERLOCK HELPERS ---
-        function checkRecipeLockout() {
-            if (typeof Scada !== "undefined" && Scada.recipeRunning) {
-                if (ui.header) {
-                    ui.header.alarmMessage = "SAFETY INTERLOCK: Automatic recipe active - manual controls locked out.";
-                    ui.header.isAlarmActive = true;
-                }
-                return true;
-            }
-            return false;
-        }
-
+        // --- SAFETY INTERLOCK HELPER (RULE 3) ---
         function checkProcessRunning(equipmentName, isRunning) {
-            if (checkRecipeLockout()) return true;
             if (isRunning) {
                 if (ui.header) {
                     ui.header.alarmMessage = "SAFETY INTERLOCK: Stop " + equipmentName + " before modifying mode or setpoint parameters.";
@@ -804,13 +745,13 @@ Item {
                 rootWindow.isAutoMode = isAuto;
                 if (ui.header) {
                     ui.header.plantModeText = isAuto ? "(A)" : "(M)";
-                    ui.header.alarmMessage = isAuto ? "AUTOMATIC PRODUCTION MODE - RECIPE [" + rootWindow.currentRecipeName + "] ACTIVE" : "MANUAL OVERRIDE MODE - OPERATOR SETPOINTS ENABLED";
+                    ui.header.alarmMessage = isAuto ? "AUTOMATIC PROCESS MODE - SKID SEQUENCE ARMED" : "MANUAL OVERRIDE MODE - OPERATOR SETPOINTS ENABLED";
                 }
             });
 
             ui.plantModal.modeSelected.connect(function(mode) {
-                if (mode === "RECIPE" && ui.sidebar) {
-                    ui.sidebar.activeIndex = 4; // Switch to Recipes Screen
+                if (mode === "CIRCULATION" && ui.header) {
+                    ui.header.alarmMessage = "CIRCULATION MODE - EXTERNAL LOOP RECIRCULATION ACTIVE";
                 } else if (mode === "CIP" && ui.header) {
                     ui.header.alarmMessage = "CIP MODE - CLEANING IN PLACE SEQUENCE ACTIVE";
                 } else if (mode === "PRODUCTION" && ui.header) {

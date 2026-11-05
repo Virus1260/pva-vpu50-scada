@@ -3,6 +3,7 @@
 # =========================================================================
 
 # Build output directories
+archive/
 build/
 build-*/
 build_wasm/

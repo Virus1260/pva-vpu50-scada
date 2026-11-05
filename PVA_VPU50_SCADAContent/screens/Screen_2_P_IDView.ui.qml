@@ -19,15 +19,6 @@ Rectangle {
     property real worldX: 0
     property real worldY: 0
 
-    // Live Recipe HUD Broadcast Properties
-    property bool isRecipeRunning: false
-    property string activeRecipeName: "Industrial Shampoo Formulation"
-    property int currentRecipeStepIndex: 0
-    property string currentRecipeStepName: "Phase A: Initial Water Charge"
-    property int stepTimerRemaining: 180
-    property int batchTimerElapsed: 0
-    property string activeOpDevices: "Fill Valve (SP: 55%)"
-
     // =========================================================================
     // 3-LAYER P&ID ARCHITECTURAL ALIASES
     // =========================================================================
@@ -103,85 +94,5 @@ Rectangle {
         viewHeight: 840
         zoomScale: pidViewRoot.worldScale
         isLegendActive: pidViewRoot.showTags
-    }
-
-    // =========================================================================
-    // FLOATING RECIPE LIVE EXECUTION HUD (Broadcasts live from Screen 5)
-    // =========================================================================
-    Rectangle {
-        id: recipeLiveHud
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.margins: 14
-        width: 320
-        height: 84
-        radius: 6
-        color: pidViewRoot.isRecipeRunning ? "#08223f" : "#071c33"
-        border.color: pidViewRoot.isRecipeRunning ? "#00d2ff" : "#1e3a8a"
-        border.width: 1.4
-        z: 100
-
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            spacing: 3
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 6
-
-                Rectangle {
-                    Layout.preferredWidth: 8
-                    Layout.preferredHeight: 8
-                    radius: 4
-                    color: pidViewRoot.isRecipeRunning ? "#22c55e" : "#f59e0b"
-                }
-
-                Text {
-                    text: pidViewRoot.isRecipeRunning ? "RECIPE RUNNING" : "RECIPE STANDBY"
-                    color: pidViewRoot.isRecipeRunning ? "#86efac" : "#fde68a"
-                    font.bold: true
-                    font.pixelSize: 9
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Text {
-                    text: "Phase " + (pidViewRoot.currentRecipeStepIndex + 1) + "/5"
-                    color: "#38bdf8"
-                    font.bold: true
-                    font.pixelSize: 10
-                }
-            }
-
-            Text {
-                text: pidViewRoot.currentRecipeStepName
-                color: "#ffffff"
-                font.bold: true
-                font.pixelSize: 11
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    text: "Active: " + pidViewRoot.activeOpDevices
-                    color: "#94a3b8"
-                    font.pixelSize: 9
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-
-                Text {
-                    text: pidViewRoot.stepTimerRemaining + "s"
-                    color: "#f5d033"
-                    font.bold: true
-                    font.pixelSize: 11
-                }
-            }
-        }
     }
 }

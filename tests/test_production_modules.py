@@ -7,11 +7,6 @@ import unittest
 from unittest.mock import MagicMock
 
 from scada.controller import ScadaController
-from scada.recipes import (
-    Recipe,
-    calculate_recipe_hash,
-    serialize_designer_timeline_to_isa88,
-)
 from scada.modbus.delta_map import (
     DeltaRegisterMap,
     pack_step_setpoints,
@@ -35,120 +30,48 @@ class TestProductionModules(unittest.TestCase):
         self.td.cleanup()
 
     # =========================================================================
-    # 1. RECIPE PERSISTENCE & SHA-256 SCHEMA SERIALIZATION
+    # 1. PROCESS CONTROL & 21 CFR PART 11 AUDIT INTEGRITY
     # =========================================================================
-    def test_designer_timeline_serialization_and_sha256(self):
-        sample_designer_payload = {
-            "id": "REC-VPU50-TEST",
-            "name": "Validation Ointment Batch",
-            "version": "1.0",
-            "status": "DRAFT",
-            "batchSizeKg": 100.0,
-            "steps": [
-                {
-                    "stepId": 1,
-                    "name": "Phase A Aqueous Charge",
-                    "phaseType": "PHASE_AUTO_TRANSFER",
-                    "durationMin": 5,
-                    "durationSec": 0,
-                    "guidanceText": "Auto charge DI water",
-                },
-                {
-                    "stepId": 2,
-                    "name": "Thermal Heating to 75C",
-                    "phaseType": "PHASE_THERMAL_CONTROL",
-                    "targetTemp": 75.0,
-                    "agitatorSpeed": 25.0,
-                    "durationMin": 10,
-                    "durationSec": 0,
-                },
-                {
-                    "stepId": 3,
-                    "name": "High-Shear Emulsification",
-                    "phaseType": "PHASE_HOMOGENIZATION",
-                    "homogenizerSpeed": 2800.0,
-                    "runAgitatorCoActive": True,
-                    "coActiveAgitatorSpeed": 35.0,
-                    "durationMin": 15,
-                    "durationSec": 0,
-                },
-                {
-                    "stepId": 4,
-                    "name": "Vacuum Deaeration",
-                    "phaseType": "PHASE_VACUUM_CONTROL",
-                    "targetVacuum": -450.0,
-                    "durationMin": 8,
-                    "durationSec": 0,
-                },
-            ],
-        }
-
-        # Serialize into ISA-88 standard recipe
-        recipe = serialize_designer_timeline_to_isa88(sample_designer_payload, author=self.controller._current_user)
-
-        self.assertIsInstance(recipe, Recipe)
-        self.assertEqual(recipe.id, "REC-VPU50-TEST")
-        self.assertEqual(len(recipe.steps), 4)
-        self.assertEqual(recipe.estimated_duration_sec, (5 + 10 + 15 + 8) * 60)
-
-        # Check operations & PID mapping
-        homo_step = recipe.steps[2]
-        self.assertEqual(len(homo_step.operations), 2)
-        devices = [op.device.value for op in homo_step.operations]
-        self.assertIn("homogenizer", devices)
-        self.assertIn("agitator", devices)
-
-        # SHA-256 integrity verification
-        self.assertTrue(len(recipe.sha256_hash) == 64, "SHA-256 must be 64-char hex string")
-        calculated = calculate_recipe_hash(recipe.to_dict())
-        self.assertEqual(recipe.sha256_hash, calculated)
-
-        # Test controller slot invocation
-        res_json = self.controller.saveRecipeFromDesigner(
-            recipe.id, recipe.name, json.dumps(sample_designer_payload), "DRAFT"
-        )
-        res = json.loads(res_json)
-        self.assertTrue(res["success"])
-        self.assertEqual(res["sha256"], recipe.sha256_hash)
-
-        # Verify audit trail logging
-        audit_events = self.controller.audit_store.list_events()
-        saved_events = [e for e in audit_events if e["action"] == "RECIPE_SAVED"]
-        self.assertGreaterEqual(len(saved_events), 1)
-        self.assertEqual(saved_events[-1]["object_id"], "REC-VPU50-TEST")
-
-    # =========================================================================
-    # 2. RUN-MODE DECOUPLING & SCREEN 1 LOCKOUT ENFORCEMENT
-    # =========================================================================
-    def test_screen_1_lockout_during_active_recipe(self):
-        # 1. In IDLE state, manual adjustments are permitted
-        self.assertFalse(self.controller.recipeRunning)
-        ok = self.controller.setProcessSetpoint("vpu.main.agitator_speed", 30.0, "Manual pre-check")
+    def test_process_setpoint_and_audit_logging(self):
+        # 1. Set valid agitator speed
+        ok = self.controller.setProcessSetpoint("vpu.main.agitator_speed", 35.0, "Production mixing phase")
         self.assertTrue(ok)
-        self.assertEqual(self.controller._telemetry.get("vpu.main.agitator_speed"), 30.0)
+        self.assertEqual(self.controller._telemetry.get("vpu.main.agitator_speed"), 35.0)
 
-        # 2. Start an automatic batch
-        batch_id = self.controller.startBatch("REC-LOTION-01")
-        self.assertTrue(self.controller.recipeRunning)
+        # 2. Verify audit trail recorded with cryptographic hash
+        audit_events = self.controller.audit_store.list_events()
+        set_events = [e for e in audit_events if e["action"] == "SETPOINT_MODIFIED"]
+        self.assertGreaterEqual(len(set_events), 1)
+        self.assertEqual(set_events[-1]["object_id"], "vpu.main.agitator_speed")
+        self.assertEqual(set_events[-1]["after"]["value"], 35.0)
+
+        # 3. Verify cryptographic chain
+        valid, msg = self.controller.audit_store.verify_chain()
+        self.assertTrue(valid)
+
+    # =========================================================================
+    # 2. BATCH LIFECYCLE & HISTORIAN PERSISTENCE
+    # =========================================================================
+    def test_batch_lifecycle_and_historian(self):
+        batch_id = self.controller.startBatch("Validation Mixing Run")
         self.assertEqual(self.controller.activeBatchId, batch_id)
 
-        # 3. Attempt manual override while recipe is executing -> MUST BE REJECTED
-        with self.assertRaises(PermissionError):
-            self.controller.setProcessSetpoint("vpu.main.agitator_speed", 45.0, "Operator unauthorized tweak")
-
-        # 4. Confirm security violation was recorded to 21 CFR Part 11 audit log
+        # Confirm batch started audit event
         audit_events = self.controller.audit_store.list_events()
-        violations = [e for e in audit_events if e["action"] == "SECURITY_VIOLATION"]
-        self.assertGreaterEqual(len(violations), 1)
-        self.assertEqual(violations[-1]["reason"], f"Attempted manual override while recipe active (Batch {batch_id})")
+        start_events = [e for e in audit_events if e["action"] == "BATCH_STARTED"]
+        self.assertGreaterEqual(len(start_events), 1)
 
-        # 5. End batch -> Lockout must release automatically
-        self.controller.endBatch(batch_id, "completed")
-        self.assertFalse(self.controller.recipeRunning)
+        # End batch
+        ok = self.controller.endBatch(batch_id, "completed")
+        self.assertTrue(ok)
+        self.assertEqual(self.controller.activeBatchId, "")
 
-        # Manual control permitted again
-        ok_after = self.controller.setProcessSetpoint("vpu.main.agitator_speed", 35.0, "Post-batch manual wash")
-        self.assertTrue(ok_after)
+        # Confirm batches list contains it
+        batches_json = self.controller.getBatchesJson()
+        batches = json.loads(batches_json)
+        found = [b for b in batches if b["id"] == batch_id]
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["status"], "completed")
 
     # =========================================================================
     # 3. DELTA AS332T-A MODBUS MEMORY MAPPING & READ-BACK VERIFICATION

@@ -151,20 +151,20 @@ Rectangle {
                     }
                 }
 
-                // 2. Recipe Tile
+                // 2. External Circulation Tile
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: modalRoot.activeMode === "RECIPE" ? "#164e85" : (rMouse.containsMouse ? "#124373" : "#082646")
-                    border.color: modalRoot.activeMode === "RECIPE" ? "#00d2ff" : (rMouse.containsMouse ? "#3b82f6" : "#1d5b94")
-                    border.width: modalRoot.activeMode === "RECIPE" ? 2.5 : 1
+                    color: modalRoot.activeMode === "CIRCULATION" ? "#164e85" : (rMouse.containsMouse ? "#124373" : "#082646")
+                    border.color: modalRoot.activeMode === "CIRCULATION" ? "#00d2ff" : (rMouse.containsMouse ? "#3b82f6" : "#1d5b94")
+                    border.width: modalRoot.activeMode === "CIRCULATION" ? 2.5 : 1
                     radius: 8
 
                     ColumnLayout {
                         anchors.centerIn: parent
                         spacing: 8
                         Text {
-                            text: "Recipe"
+                            text: "Circulation"
                             color: "#ffffff"
                             font.bold: true
                             font.pixelSize: 13
@@ -173,7 +173,7 @@ Rectangle {
                         Image {
                             width: 40
                             height: 40
-                            source: "../../assets/icons/nav/recipes_checklist.svg"
+                            source: "../../assets/icons/modes/plant/external_circulation.svg"
                             fillMode: Image.PreserveAspectFit
                             mipmap: true
                             Layout.alignment: Qt.AlignHCenter
@@ -189,7 +189,7 @@ Rectangle {
                         height: 20
                         radius: 10
                         color: "#00d2ff"
-                        visible: modalRoot.activeMode === "RECIPE"
+                        visible: modalRoot.activeMode === "CIRCULATION"
                         Image {
                             anchors.centerIn: parent
                             source: "../../assets/icons/common/icon_check.svg"
@@ -206,8 +206,8 @@ Rectangle {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            modalRoot.activeMode = "RECIPE";
-                            modalRoot.modeSelected("RECIPE");
+                            modalRoot.activeMode = "CIRCULATION";
+                            modalRoot.modeSelected("CIRCULATION");
                             modalRoot.closed();
                         }
                     }

@@ -9,7 +9,7 @@ from scada.audit import AuditEvent, AuditStore, utc_now
 from scada.configuration import ConfigurationRegistry
 from scada.security import SecurityManager
 from scada.alarms import AlarmManager
-from scada.store import HistorianStore, RecipeStore
+from scada.store import HistorianStore
 
 
 class TestScadaCompliance(unittest.TestCase):
@@ -51,11 +51,11 @@ class TestScadaCompliance(unittest.TestCase):
         self.assertTrue(security.check_permission("operator", "telemetry.read"))
         self.assertTrue(security.check_permission("operator", "alarm.acknowledge"))
         
-        # Operator CANNOT approve recipes (requires QA or Admin)
-        self.assertFalse(security.check_permission("operator", "recipe.approve"))
+        # Operator cannot reconfigure system parameters
+        self.assertFalse(security.check_permission("operator", "system.configure"))
         
-        # QA CAN approve recipes
-        self.assertTrue(security.check_permission("quality", "recipe.approve"))
+        # Admin can reconfigure system
+        self.assertTrue(security.check_permission("administrator", "system.configure"))
 
     def test_alarm_acknowledgement_requires_comment(self):
         audit_store = AuditStore(self.temp_dir / "audit.db", b"TEST_KEY_32_BYTES_REQUIRED_123456")
@@ -74,102 +74,28 @@ class TestScadaCompliance(unittest.TestCase):
         # Acknowledge with valid reason
         alarm_mgr.acknowledge_alarm(alm_id, "operator_1", "Temperature cooling valve opened manually")
 
-    def test_recipe_catalog_schema_validation(self):
-        from scada.recipes import RecipeCatalog, DeviceType, StopConditionType
-        catalog = RecipeCatalog()
-        recipes = catalog.list_recipes()
-        self.assertGreaterEqual(len(recipes), 2, "Catalog must contain at least 2 default recipe templates")
+    def test_historian_telemetry_and_lttb_downsampling(self):
+        historian = HistorianStore(self.temp_dir / "historian.db")
+        historian.initialise()
 
-        shampoo = catalog.get_recipe("REC-VPU50-001")
-        self.assertIsNotNone(shampoo, "Industrial Shampoo recipe must exist in catalog")
-        self.assertEqual(shampoo.name, "Industrial Shampoo Formulation")
-        self.assertEqual(len(shampoo.ingredients), 15, "Shampoo BOM must have 15 ingredients")
-        self.assertEqual(len(shampoo.steps), 10, "Shampoo recipe must have 10 nested parent steps")
+        batch = historian.start_batch("BATCH-001", "Production Test Batch", 1, "operator_1")
+        self.assertIsNotNone(batch["id"])
 
-        # Verify nested sub-step operations
-        step_1 = shampoo.steps[0]
-        self.assertEqual(len(step_1.operations), 1)
-        self.assertEqual(step_1.operations[0].device, DeviceType.FILL_VALVE)
+        # Write sample telemetry points
+        for sec in range(10):
+            historian.write_samples(batch["id"], {
+                "vpu.main.temperature": 25.0 + sec * 2.0,
+                "vpu.main.agitator_speed": 45.0,
+            })
 
-        step_7 = shampoo.steps[6]
-        self.assertEqual(len(step_7.operations), 5, "Phase C must have 5 concurrent operations")
-        devices = [op.device for op in step_7.operations]
-        self.assertIn(DeviceType.HOMOGENIZER, devices)
-        self.assertIn(DeviceType.AGITATOR, devices)
-        self.assertIn(DeviceType.VACUUM, devices)
+        telemetry = historian.get_batch_telemetry(batch["id"])
+        tags_recorded = {entry["tag"] for entry in telemetry}
+        self.assertIn("vpu.main.temperature", tags_recorded)
+        self.assertGreaterEqual(len(telemetry), 10)
 
-    def test_recipe_execution_state_transitions(self):
-        from scada.recipes import RecipeCatalog, RecipeExecutionEngine
-        catalog = RecipeCatalog()
-        shampoo = catalog.get_recipe("REC-VPU50-001")
-        self.assertIsNotNone(shampoo)
+        historian.end_batch(batch["id"], "completed")
 
-        engine = RecipeExecutionEngine(shampoo)
-        self.assertFalse(engine.is_running)
-
-        # Start execution
-        started = engine.start()
-        self.assertTrue(started)
-        self.assertTrue(engine.is_running)
-        self.assertEqual(engine.current_step_index, 0)
-
-        # Step 1 tick for 185 seconds (duration is 180s)
-        engine.tick(185.0)
-        # Should transition to Step 2
-        self.assertEqual(engine.current_step_index, 1)
-
-        # Step 2 tick for 245 seconds (duration is 240s)
-        engine.tick(245.0)
-        # Step 3 requires confirmation
-        self.assertEqual(engine.current_step_index, 2)
-        self.assertTrue(engine.confirm_active, "Step 3 must trigger 21 CFR hold point confirmation")
-        self.assertTrue(engine.manual_waiting)
-
-        # Confirm hold point
-        confirmed = engine.confirm_hold_point("operator_1")
-        self.assertTrue(confirmed)
-        self.assertFalse(engine.confirm_active)
-
-        # Snapshot check
-        snap = engine.get_execution_snapshot()
-        self.assertTrue(snap["recipeLoaded"])
-        self.assertEqual(snap["currentStepIndex"], 2)
-        self.assertGreater(len(snap["operations"]), 0)
-        self.assertIn("ingredients", snap)
-        self.assertGreater(len(snap["ingredients"]), 0)
-
-    def test_recipe_step_mutations_and_cosmetic_gel(self):
-        from scada.recipes import RecipeCatalog, RecipeExecutionEngine
-        catalog = RecipeCatalog()
-        gel = catalog.get_recipe("REC-VPU50-003")
-        self.assertIsNotNone(gel, "High-Shear Cosmetic Gel must exist in catalog")
-        self.assertEqual(len(gel.steps), 4)
-        self.assertEqual(len(gel.ingredients), 8)
-
-        engine = RecipeExecutionEngine(gel)
-        initial_first_step_id = engine.recipe.steps[0].id
-
-        # Move step down
-        moved = engine.move_step(initial_first_step_id, 1)
-        self.assertTrue(moved)
-        self.assertEqual(engine.recipe.steps[1].id, initial_first_step_id)
-
-        # Move step back up
-        moved_up = engine.move_step(initial_first_step_id, -1)
-        self.assertTrue(moved_up)
-        self.assertEqual(engine.recipe.steps[0].id, initial_first_step_id)
-
-        # Add new step
-        new_step = engine.add_step("Phase Z: QC Testing", "Analytical viscosity check")
-        self.assertIsNotNone(new_step)
-        self.assertEqual(len(engine.recipe.steps), 5)
-
-        # Remove step
-        removed = engine.remove_step(new_step.id)
-        self.assertTrue(removed)
-        self.assertEqual(len(engine.recipe.steps), 4)
-
-    def test_sqlite_persistence_and_snapshot_isolation(self):
+    def test_sqlite_persistence_and_users(self):
         import tempfile
         from pathlib import Path
         from scada.store import ScadaDatabaseStore
@@ -179,7 +105,6 @@ class TestScadaCompliance(unittest.TestCase):
             store = ScadaDatabaseStore(db_path)
             store.initialise()
 
-            # 1. Verify default users seeded
             with store.connection() as conn:
                 users = conn.execute("SELECT username, role FROM users").fetchall()
                 roles = {u["username"]: u["role"] for u in users}
@@ -187,54 +112,11 @@ class TestScadaCompliance(unittest.TestCase):
                 self.assertEqual(roles.get("incharge"), "incharge")
                 self.assertEqual(roles.get("admin"), "administrator")
 
-            # 2. Create Master Recipe
-            test_body = {
-                "id": "REC-TEST-001",
-                "name": "Test Hydrogel",
-                "version": "1.0",
-                "author": "Incharge",
-                "approvalStatus": "APPROVED",
-                "createdAt": "2026-02-22T00:00:00Z",
-                "estimatedDurationSec": 600,
-                "batchSizeKg": 25.0,
-                "steps": [
-                    {"id": 1, "name": "Step 1", "description": "Original Step", "operations": []}
-                ],
-                "ingredients": []
-            }
-            store.create_recipe("REC-TEST-001", "Test Hydrogel", test_body, "incharge")
-            store.approve_recipe("REC-TEST-001", "Dr. Vance")
-
-            # 3. Start Batch Run -> Creates Immutable Snapshot
-            batch_run = store.start_batch_run("REC-TEST-001", "operator_1")
-            self.assertIsNotNone(batch_run["batchId"])
-            self.assertEqual(batch_run["snapshot"]["name"], "Test Hydrogel")
-            self.assertEqual(batch_run["snapshot"]["steps"][0]["name"], "Step 1")
-
-            # 4. Modify Master Recipe (Draft v2)
-            updated_body = dict(test_body)
-            updated_body["steps"] = [{"id": 1, "name": "Step 1 Modified", "description": "New SOP", "operations": []}]
-            store.update_recipe("REC-TEST-001", "Test Hydrogel (Modified)", updated_body, "incharge")
-
-            # 5. Verify Snapshot Isolation: Batch run still holds original Step 1
-            events = store.get_batch_events(batch_run["batchId"])
-            self.assertGreaterEqual(len(events), 1)
-            self.assertEqual(events[0]["eventType"], "batch_start")
-
-            with store.connection() as conn:
-                run_row = conn.execute("SELECT recipe_snapshot_json FROM batch_runs WHERE id = ?", (batch_run["batchId"],)).fetchone()
-                import json
-                snap = json.loads(run_row["recipe_snapshot_json"])
-                self.assertEqual(snap["steps"][0]["name"], "Step 1", "Batch run snapshot must NEVER change after master recipe edit")
-
     def test_pid_device_tags_mapping(self):
-        from scada.recipes import DeviceType, PID_TAG_MAP
-        self.assertIn("1M1501", PID_TAG_MAP[DeviceType.AGITATOR])
-        self.assertIn("1X1001", PID_TAG_MAP[DeviceType.HOMOGENIZER])
-        self.assertIn("1M5001", PID_TAG_MAP[DeviceType.VACUUM])
-        self.assertIn("1E6001", PID_TAG_MAP[DeviceType.HEATER])
-        self.assertIn("1K1001", PID_TAG_MAP[DeviceType.FILL_VALVE])
-        self.assertIn("1M2001", PID_TAG_MAP[DeviceType.DRAIN_VALVE])
+        self.assertIsNotNone(self.registry.get_tag("vpu.main.agitator_speed"))
+        self.assertIsNotNone(self.registry.get_tag("vpu.main.homogenizer_speed"))
+        self.assertIsNotNone(self.registry.get_tag("vpu.main.temperature"))
+        self.assertIsNotNone(self.registry.get_tag("vpu.main.vacuum_pressure"))
 
     def test_cmake_and_qrc_build_integrity(self):
         root_dir = Path(__file__).resolve().parent.parent

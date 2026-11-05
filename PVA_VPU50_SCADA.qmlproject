@@ -30,10 +30,6 @@ Project {
     }
 
     QmlFiles {
-        directory: "PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes"
-    }
-
-    QmlFiles {
         directory: "PVA_VPU50_SCADAContent/components/widgets/ScadaHeader"
     }
 
@@ -132,7 +128,6 @@ Project {
         "PVA_VPU50_SCADAContent/components/widgets",
         "PVA_VPU50_SCADAContent/components/widgets/ScadaHeader",
         "PVA_VPU50_SCADAContent/components/widgets/Screen_1_Control",
-        "PVA_VPU50_SCADAContent/components/widgets/Screen_5_Recipes",
         "PVA_VPU50_SCADAContent/components/modals",
         "PVA_VPU50_SCADAContent/components/modals/Screen_1_Control",
         "PVA_VPU50_SCADAContent/screens"

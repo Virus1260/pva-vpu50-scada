@@ -13,8 +13,12 @@ Rectangle {
     color: "#0a2d52"
     clip: true
 
-    ScadaConfig { id: scadaConfig }
-    ScadaStateMiddleware { id: scadaBridge }
+    ScadaConfig {
+        id: scadaConfig
+    }
+    ScadaStateMiddleware {
+        id: scadaBridge
+    }
     property alias scadaBridge: scadaBridge
 
     // Base Coordinate Canvas Dimensions (Full P&ID System Canvas)
@@ -50,12 +54,16 @@ Rectangle {
     readonly property real displayY: actualContentHeight <= height ? (height - actualContentHeight) / 2 : Math.max(minAllowedPanY, Math.min(maxAllowedPanY, rawPanY))
 
     onWidthChanged: {
-        if (zoomScale < fitZoom) zoomScale = fitZoom;
-        if (actualContentWidth <= width) rawPanX = (width - actualContentWidth) / 2;
+        if (zoomScale < fitZoom)
+            zoomScale = fitZoom;
+        if (actualContentWidth <= width)
+            rawPanX = (width - actualContentWidth) / 2;
     }
     onHeightChanged: {
-        if (zoomScale < fitZoom) zoomScale = fitZoom;
-        if (actualContentHeight <= height) rawPanY = (height - actualContentHeight) / 2;
+        if (zoomScale < fitZoom)
+            zoomScale = fitZoom;
+        if (actualContentHeight <= height)
+            rawPanY = (height - actualContentHeight) / 2;
     }
 
     Component.onCompleted: {
@@ -69,13 +77,41 @@ Rectangle {
     // =========================================================================
     // 1. SYNCHRONIZE UI FORM MINIMAP WITH RUNTIME PAN, ZOOM, AND SIGNALS
     // =========================================================================
-    Binding { target: ui.pidMinimap; property: "viewX"; value: pidScreenRoot.displayX }
-    Binding { target: ui.pidMinimap; property: "viewY"; value: pidScreenRoot.displayY }
-    Binding { target: ui.pidMinimap; property: "viewWidth"; value: pidScreenRoot.width }
-    Binding { target: ui.pidMinimap; property: "viewHeight"; value: pidScreenRoot.height }
-    Binding { target: ui.pidMinimap; property: "zoomScale"; value: pidScreenRoot.zoomScale }
-    Binding { target: ui.pidMinimap; property: "fitZoom"; value: pidScreenRoot.fitZoom }
-    Binding { target: ui.pidMinimap; property: "isLegendActive"; value: pidScreenRoot.showTags }
+    Binding {
+        target: ui.pidMinimap
+        property: "viewX"
+        value: pidScreenRoot.displayX
+    }
+    Binding {
+        target: ui.pidMinimap
+        property: "viewY"
+        value: pidScreenRoot.displayY
+    }
+    Binding {
+        target: ui.pidMinimap
+        property: "viewWidth"
+        value: pidScreenRoot.width
+    }
+    Binding {
+        target: ui.pidMinimap
+        property: "viewHeight"
+        value: pidScreenRoot.height
+    }
+    Binding {
+        target: ui.pidMinimap
+        property: "zoomScale"
+        value: pidScreenRoot.zoomScale
+    }
+    Binding {
+        target: ui.pidMinimap
+        property: "fitZoom"
+        value: pidScreenRoot.fitZoom
+    }
+    Binding {
+        target: ui.pidMinimap
+        property: "isLegendActive"
+        value: pidScreenRoot.showTags
+    }
 
     Connections {
         target: ui.pidMinimap
@@ -122,7 +158,7 @@ Rectangle {
             initialZoom = pidScreenRoot.zoomScale;
         }
 
-        onPinchUpdated: function(pinch) {
+        onPinchUpdated: function (pinch) {
             var newZoom = Math.max(pidScreenRoot.minZoom, Math.min(pidScreenRoot.maxZoom, initialZoom * pinch.scale));
             pidScreenRoot.zoomScale = newZoom;
             pidScreenRoot.rawPanX += pinch.previousCenter.x - pinch.center.x;
@@ -138,13 +174,13 @@ Rectangle {
             property real lastY: 0
             property bool isDragging: false
 
-            onPressed: function(mouse) {
+            onPressed: function (mouse) {
                 lastX = mouse.x;
                 lastY = mouse.y;
                 isDragging = true;
             }
 
-            onPositionChanged: function(mouse) {
+            onPositionChanged: function (mouse) {
                 if (isDragging && (mouse.buttons & Qt.LeftButton)) {
                     var dx = mouse.x - lastX;
                     var dy = mouse.y - lastY;
@@ -160,7 +196,7 @@ Rectangle {
                 isDragging = false;
             }
 
-            onWheel: function(wheel) {
+            onWheel: function (wheel) {
                 var factor = wheel.angleDelta.y > 0 ? 1.12 : 0.88;
                 var oldZoom = pidScreenRoot.zoomScale;
                 var newZoom = Math.max(pidScreenRoot.minZoom, Math.min(pidScreenRoot.maxZoom, oldZoom * factor));
@@ -275,13 +311,5 @@ Rectangle {
         vK168201.mouseArea.onClicked: pidScreenRoot.componentTapped("K 168 201")
         vK168202.mouseArea.onClicked: pidScreenRoot.componentTapped("K 168 202")
         vK168204.mouseArea.onClicked: pidScreenRoot.componentTapped("K 168 204")
-
-        isRecipeRunning: scadaBridge.isRecipeRunning
-        activeRecipeName: scadaBridge.activeRecipeName
-        currentRecipeStepIndex: scadaBridge.currentRecipeStepIndex
-        currentRecipeStepName: scadaBridge.currentRecipeStepName
-        stepTimerRemaining: scadaBridge.stepTimerSec
-        batchTimerElapsed: scadaBridge.batchTimerSec
-        activeOpDevices: scadaBridge.activeOpDevices
     }
 }

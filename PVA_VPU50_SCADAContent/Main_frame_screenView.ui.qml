@@ -33,8 +33,6 @@ Rectangle {
     property alias pidScreen: pidView
     property alias trendsScreen: trendsView
     property alias alarmsScreen: alarmsView
-    property alias recipesScreen: recipesView
-    property alias recipeMakerScreen: makerView
     property alias auditScreen: auditView
     property alias maintenanceScreen: maintView
 
@@ -60,7 +58,7 @@ Rectangle {
         z: 10
         vesselName: "VPU 50"
         activeBatchId: "B1"
-        alarmMessage: "SYSTEM READY - RECIPE [VPU_BATCH_01] STANDBY"
+        alarmMessage: "SYSTEM READY - VPU-50 INDUSTRIAL SCADA ONLINE"
     }
 
     // 2. RIGHT-SIDE SCADA NAVIGATION DOCK (110px Width, Large Touch Ergonomics)
@@ -104,22 +102,12 @@ Rectangle {
             id: alarmsView
         }
 
-        // SCREEN 4: RECIPE EXECUTION (OPERATOR & RUN MONITORING)
-        Screen_5_Recipes {
-            id: recipesView
-        }
-
-        // SCREEN 5: RECIPE MAKER (AUTHORING - INCHARGE & ADMIN)
-        Screen_9_RecipeMaker {
-            id: makerView
-        }
-
-        // SCREEN 6: AUDIT TRAIL & 21 CFR PART 11 EBR
+        // SCREEN 4: AUDIT TRAIL & 21 CFR PART 11 EBR
         Screen_6_Audit {
             id: auditView
         }
 
-        // SCREEN 7: HARDWARE MAINTENANCE & I/O DIAGNOSTICS
+        // SCREEN 5: HARDWARE MAINTENANCE & I/O DIAGNOSTICS
         Screen_8_Diagnostics {
             id: maintView
         }

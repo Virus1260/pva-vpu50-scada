@@ -15,14 +15,48 @@ Rectangle {
 
     // Master list of SCADA navigation items
     readonly property var navItems: [
-        { id: 0, name: "Control", icon: "status_stack", label: "Control", minLevel: 1 },
-        { id: 1, name: "P&ID", icon: "pid_vessel", label: "P&ID", minLevel: 1 },
-        { id: 2, name: "Trends", icon: "trends_chart", label: "Trends", minLevel: 1 },
-        { id: 3, name: "Alarms", icon: "alarms_bell", label: "Alarms", minLevel: 1 },
-        { id: 4, name: "Recipes", icon: "recipes_checklist", label: "Recipes (Run)", minLevel: 1 },
-        { id: 5, name: "RecipeMaker", icon: "recipe_maker", label: "Recipe Maker", minLevel: 1 },
-        { id: 6, name: "AuditLog", icon: "logs_order", label: "Audit Log", minLevel: 1 },
-        { id: 7, name: "Diagnostics", icon: "tools_maintenance", label: "Diagnostics", minLevel: 1 }
+        {
+            id: 0,
+            name: "Control",
+            icon: "status_stack",
+            label: "Control",
+            minLevel: 1
+        },
+        {
+            id: 1,
+            name: "P&ID",
+            icon: "pid_vessel",
+            label: "P&ID",
+            minLevel: 1
+        },
+        {
+            id: 2,
+            name: "Trends",
+            icon: "trends_chart",
+            label: "Trends",
+            minLevel: 1
+        },
+        {
+            id: 3,
+            name: "Alarms",
+            icon: "alarms_bell",
+            label: "Alarms",
+            minLevel: 1
+        },
+        {
+            id: 4,
+            name: "AuditLog",
+            icon: "logs_order",
+            label: "Audit Log",
+            minLevel: 1
+        },
+        {
+            id: 5,
+            name: "Diagnostics",
+            icon: "tools_maintenance",
+            label: "Diagnostics",
+            minLevel: 1
+        }
     ]
 
     // Top Scroll Hint / Scroll-Up Trigger
@@ -36,7 +70,11 @@ Rectangle {
         color: "#06182c"
         opacity: scrollArea.contentY > 5 ? 0.95 : 0.0
         visible: opacity > 0.0
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
 
         Text {
             anchors.centerIn: parent
@@ -119,7 +157,7 @@ Rectangle {
         // Mouse Wheel Scroll Handler
         WheelHandler {
             target: scrollArea
-            onWheel: (event) => {
+            onWheel: event => {
                 var step = 102;
                 var delta = event.angleDelta.y > 0 ? -step : step;
                 var newY = Math.max(0, Math.min(scrollArea.contentHeight - scrollArea.height, scrollArea.contentY + delta));
@@ -139,7 +177,11 @@ Rectangle {
         color: "#06182c"
         opacity: (scrollArea.contentHeight > scrollArea.height && scrollArea.contentY < (scrollArea.contentHeight - scrollArea.height - 5)) ? 0.95 : 0.0
         visible: opacity > 0.0
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
 
         Text {
             anchors.centerIn: parent
@@ -173,6 +215,10 @@ Rectangle {
         visible: scrollArea.contentHeight > scrollArea.height
         y: scrollArea.height > 0 ? (scrollArea.contentY / scrollArea.contentHeight) * scrollArea.height : 0
         height: scrollArea.height > 0 ? Math.max(20, (scrollArea.height / scrollArea.contentHeight) * scrollArea.height) : 0
-        Behavior on opacity { NumberAnimation { duration: 200 } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 200
+            }
+        }
     }
 }
