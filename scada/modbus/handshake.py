@@ -39,7 +39,7 @@ class Isa88BatchHandshake:
             raise IOError(f"Modbus write failed to registers D{start_addr}-D{start_addr + count - 1}: {write_res}")
 
         # 2. Read Back Verification Check
-        read_res = client.read_holding_registers(start_addr, count)
+        read_res = client.read_holding_registers(start_addr, count=count)
         if hasattr(read_res, "isError") and read_res.isError():
             raise IOError(f"Modbus read-back verification failed on registers D{start_addr}-D{start_addr + count - 1}: {read_res}")
 

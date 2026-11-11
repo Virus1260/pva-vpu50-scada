@@ -171,6 +171,91 @@ class TestProductionModules(unittest.TestCase):
         with self.assertRaises(ReadBackVerificationError):
             Isa88BatchHandshake.download_step_with_readback(mock_client_corrupt, step_params, step_index=1)
 
+    # =========================================================================
+    # 4. OPERATIONAL MODES, READ-ONLY LOCK & SIMULATION OVERWRITE PREVENTION
+    # =========================================================================
+    def test_bench_monitor_read_only_protection(self):
+        monitor_controller = ScadaController(self.runtime_dir, mode="BENCH_MONITOR")
+        monitor_controller.loginUser("supervisor", "supervisor")
+
+        try:
+            # 1. Parameter write must be rejected with PermissionError
+            with self.assertRaises(PermissionError) as ctx:
+                monitor_controller.setProcessSetpoint("vpu.main.agitator_speed", 30.0, "Test write")
+            self.assertIn("READ_ONLY_LOCK", str(ctx.exception))
+
+            # 2. Worker step download must be rejected
+            res = monitor_controller.modbus_worker.download_step({}, step_index=1)
+            self.assertFalse(res["verified"])
+            self.assertIn("READ_ONLY_LOCK", res["error"])
+
+            # 3. Worker setpoint write must be rejected
+            res_sp = monitor_controller.modbus_worker.write_process_setpoint(0, 30)
+            self.assertFalse(res_sp["success"])
+            self.assertIn("READ_ONLY_LOCK", res_sp["error"])
+        finally:
+            monitor_controller.cleanup()
+
+    def test_bench_monitor_does_not_overwrite_physical_telemetry_on_tick(self):
+        monitor_controller = ScadaController(self.runtime_dir, mode="BENCH_MONITOR")
+        try:
+            # 1. Simulate arrival of real Modbus RTD telemetry (e.g. 24.8 °C)
+            monitor_controller._on_modbus_telemetry({
+                "vpu.main.temperature": 24.8,
+                "vpu.jacket.temperature": 25.1,
+                "vpu.main.agitator_speed": 0.0,
+            })
+            self.assertEqual(monitor_controller.telemetry.get("vpu.main.temperature"), 24.8)
+
+            # 2. Trigger 500ms controller tick
+            monitor_controller._on_tick()
+
+            # 3. Telemetry must STILL be 24.8 °C (must NOT be overwritten by simulator!)
+            self.assertEqual(monitor_controller.telemetry.get("vpu.main.temperature"), 24.8)
+            self.assertEqual(monitor_controller.telemetry.get("vpu.jacket.temperature"), 25.1)
+        finally:
+            monitor_controller.cleanup()
+
+    def test_offline_command_rejection_no_false_success(self):
+        control_controller = ScadaController(self.runtime_dir, mode="BENCH_CONTROL")
+        try:
+            # Worker is offline (no PLC at 192.168.1.5 connected)
+            res = control_controller.modbus_worker.download_step({}, step_index=1)
+            self.assertFalse(res["verified"])
+            self.assertIn("HARDWARE_DISCONNECTED", res["error"])
+
+            res_sp = control_controller.modbus_worker.write_process_setpoint(0, 45)
+            self.assertFalse(res_sp["success"])
+            self.assertIn("HARDWARE_DISCONNECTED", res_sp["error"])
+        finally:
+            control_controller.cleanup()
+
+    def test_digital_output_control_and_readback(self):
+        # 1. Test in SIMULATION mode
+        sim_controller = ScadaController(self.runtime_dir, mode="SIMULATION")
+        try:
+            res_json = sim_controller.setDigitalOutput(2, True, force=False)
+            res = json.loads(res_json)
+            self.assertTrue(res["success"])
+            self.assertEqual(res["output"], 2)
+            self.assertTrue(res["state"])
+
+            io_status = json.loads(sim_controller.getDigitalIoStatusJson())
+            self.assertIn("outputs", io_status)
+            self.assertIn("inputs", io_status)
+        finally:
+            sim_controller.cleanup()
+
+        # 2. Test in BENCH_MONITOR mode with read-only protection
+        monitor_controller = ScadaController(self.runtime_dir, mode="BENCH_MONITOR")
+        try:
+            # Non-forced write must be rejected
+            res_locked = monitor_controller.modbus_worker.write_digital_output(2, True, force=False)
+            self.assertFalse(res_locked["success"])
+            self.assertIn("READ_ONLY_LOCK", res_locked["error"])
+        finally:
+            monitor_controller.cleanup()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -55,6 +55,10 @@ class DeltaRegisterMap:
     COIL_INTERLOCK_AGIT_HEATING = 42  # M42: Agitator >= 15 RPM during heat (1=OK)
     COIL_INTERLOCK_VESSEL_CLOSED = 43 # M43: Vessel Hatch & Ports Closed (1=OK)
 
+    # --- PHYSICAL DIGITAL I/O MAPPING (Delta AS Series Appendix B.1) ---
+    COIL_Y_BASE = 40960               # 0xA000: Y0.0 (Bit-level Physical Transistor / Relay Outputs)
+    INPUT_X_BASE = 24576              # 0x6000: X0.0 (Bit-level Physical Digital Inputs)
+
     # --- MODE BITMASK CONSTANTS (D56) ---
     MODE_BIT_AGITATOR_CW = 1 << 0       # Bit 0: Agitator Clockwise (CW Down)
     MODE_BIT_AGITATOR_CCW = 1 << 1      # Bit 1: Agitator Counter-CW (CCW Up)

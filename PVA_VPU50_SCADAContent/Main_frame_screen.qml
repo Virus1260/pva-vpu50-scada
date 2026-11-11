@@ -879,13 +879,100 @@ Item {
         }
     }
 
-    // --- Fast Process Simulation Loop (250ms) ---
+    // --- Authoritative Python SCADA Connection Bridge ---
+    Connections {
+        target: (typeof Scada !== "undefined") ? Scada : null
+        ignoreUnknownSignals: true
+
+        function onTelemetryUpdated() {
+            if (typeof Scada === "undefined" || !Scada) return;
+            var mode = Scada.operatingMode || "SIMULATION";
+            var isConnected = Scada.isPlcConnected;
+            var t = Scada.telemetry;
+            if (!t) return;
+
+            // In BENCH_MONITOR and BENCH_CONTROL, live PLC readings are authoritative!
+            if (mode !== "SIMULATION") {
+                if (t["vpu.main.agitator_speed"] !== undefined) {
+                    rootWindow.r1ActualSpeed = Number(t["vpu.main.agitator_speed"]);
+                }
+                if (t["vpu.main.homogenizer_speed"] !== undefined) {
+                    rootWindow.r2ActualSpeed = Number(t["vpu.main.homogenizer_speed"]);
+                }
+                if (t["vpu.main.temperature"] !== undefined) {
+                    rootWindow.productTemp = Number(t["vpu.main.temperature"]);
+                }
+                if (t["vpu.jacket.temperature"] !== undefined) {
+                    rootWindow.jacketDeltaT = Number(t["vpu.jacket.temperature"]);
+                }
+                if (t["vpu.main.vacuum_pressure"] !== undefined) {
+                    rootWindow.vacuumPressure = Number(t["vpu.main.vacuum_pressure"]);
+                }
+                if (t["vpu.main.agitator_power"] !== undefined) {
+                    rootWindow.r1Power = Number(t["vpu.main.agitator_power"]);
+                }
+                if (t["vpu.main.agitator_current"] !== undefined) {
+                    rootWindow.r1Current = Number(t["vpu.main.agitator_current"]);
+                }
+
+                // Update Control View UI elements directly with real physical values
+                var ctrl = ui.controlView;
+                if (ctrl) {
+                    if (ctrl.row1SpeedControl) ctrl.row1SpeedControl.currentVal = rootWindow.r1ActualSpeed;
+                    if (ctrl.row1PowerCard) {
+                        ctrl.row1PowerCard.powerVal = rootWindow.r1Power.toFixed(1);
+                        ctrl.row1PowerCard.currentVal = rootWindow.r1Current.toFixed(1);
+                    }
+                    if (ctrl.row2SpeedControl) ctrl.row2SpeedControl.currentVal = rootWindow.r2ActualSpeed;
+                    if (ctrl.row4PressureGauge) ctrl.row4PressureGauge.currentValue = rootWindow.vacuumPressure;
+                    if (ctrl.row6TempCard) ctrl.row6TempCard.primaryValue = rootWindow.productTemp.toFixed(1);
+                    if (ctrl.row6DeltaTCard) ctrl.row6DeltaTCard.primaryValue = rootWindow.jacketDeltaT.toFixed(1);
+                }
+
+                // Synchronize P&ID synoptic
+                scadaMiddleware.isAgitatorRunning = (rootWindow.r1ActualSpeed > 1.0);
+                scadaMiddleware.agitatorSpeed = rootWindow.r1ActualSpeed;
+                scadaMiddleware.isHomogenizerRunning = (rootWindow.r2ActualSpeed > 10.0);
+                scadaMiddleware.homogenizerSpeed = rootWindow.r2ActualSpeed;
+                scadaMiddleware.vesselTemp = rootWindow.productTemp;
+                scadaMiddleware.vacuumPressure = rootWindow.vacuumPressure;
+
+                if (ui.pidScreen && ui.pidScreen.scadaBridge) {
+                    ui.pidScreen.scadaBridge.isAgitatorRunning = scadaMiddleware.isAgitatorRunning;
+                    ui.pidScreen.scadaBridge.agitatorSpeed = scadaMiddleware.agitatorSpeed;
+                    ui.pidScreen.scadaBridge.isHomogenizerRunning = scadaMiddleware.isHomogenizerRunning;
+                    ui.pidScreen.scadaBridge.homogenizerSpeed = scadaMiddleware.homogenizerSpeed;
+                    ui.pidScreen.scadaBridge.vesselTemp = scadaMiddleware.vesselTemp;
+                    ui.pidScreen.scadaBridge.vacuumPressure = scadaMiddleware.vacuumPressure;
+                }
+
+                // Update Header Status Banner with real hardware telemetry & connection status
+                if (ui.header) {
+                    if (isConnected) {
+                        ui.header.alarmMessage = "[" + mode + "] DELTA AS332T ONLINE (192.168.1.5:502) | RTD VESSEL TEMP: " + rootWindow.productTemp.toFixed(1) + " °C";
+                        ui.header.isAlarmActive = false;
+                    } else {
+                        ui.header.alarmMessage = "COMMUNICATION FAULT: DELTA AS332T PLC OFFLINE (" + (Scada.plcStatusText || "DISCONNECTED") + ")";
+                        ui.header.isAlarmActive = true;
+                    }
+                }
+            } else {
+                // In SIMULATION mode, display simulation indicator on header
+                if (ui.header && !ui.header.isAlarmActive) {
+                    ui.header.alarmMessage = "[SIMULATION MODE] VIRTUAL SKID ACTIVE - ALL VALUES EMULATED";
+                }
+            }
+        }
+    }
+
+    // --- Fast Process Simulation Loop (Only active during SIMULATION mode) ---
     Timer {
         id: processSimulationTimer
         interval: 250
-        running: true
+        running: (typeof Scada === "undefined" || !Scada || Scada.operatingMode === "SIMULATION")
         repeat: true
         onTriggered: {
+            if (typeof Scada !== "undefined" && Scada && Scada.operatingMode !== "SIMULATION") return;
             var ctrl = ui.controlView;
             if (!ctrl) return;
 
@@ -976,6 +1063,7 @@ Item {
         running: true
         repeat: true
         onTriggered: {
+            if (typeof Scada !== "undefined" && Scada && Scada.operatingMode !== "SIMULATION") return;
             var ctrl = ui.controlView;
             if (!ctrl) return;
 

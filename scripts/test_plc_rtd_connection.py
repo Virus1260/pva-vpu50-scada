@@ -70,8 +70,8 @@ def main():
     print("[2/3] Querying Holding Registers (D0–D9) and Status Coils (M32–M47)...")
 
     def read_plc_cycle():
-        rr = client.read_holding_registers(0, 10)
-        rc = client.read_coils(32, 16)
+        rr = client.read_holding_registers(0, count=10)
+        rc = client.read_coils(32, count=16)
 
         if rr.isError() or rc.isError():
             print("[WARN] Modbus read returned exception error.")

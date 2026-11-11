@@ -35,6 +35,23 @@ def parse_arguments() -> argparse.Namespace:
         default=PROJECT_ROOT / "runtime",
         help="Runtime simulation data directory for SQLite stores.",
     )
+    parser.add_argument(
+        "--mode",
+        choices=["SIMULATION", "BENCH_MONITOR", "BENCH_CONTROL"],
+        default="SIMULATION",
+        help="Industrial operational mode: SIMULATION (software only), BENCH_MONITOR (read-only PLC telemetry), BENCH_CONTROL (active PLC control).",
+    )
+    parser.add_argument(
+        "--plc-ip",
+        default="192.168.1.5",
+        help="Target Delta AS332T-A PLC IP address (default: 192.168.1.5).",
+    )
+    parser.add_argument(
+        "--plc-port",
+        type=int,
+        default=502,
+        help="Modbus TCP Port (default: 502).",
+    )
     return parser.parse_args()
 
 
@@ -47,7 +64,12 @@ def main() -> int:
     app.setOrganizationName("PVASystems")
     app.setApplicationName("PVA VPU-50 Industrial SCADA")
 
-    controller = ScadaController(arguments.runtime_dir)
+    controller = ScadaController(
+        runtime_dir=arguments.runtime_dir,
+        mode=arguments.mode,
+        plc_host=arguments.plc_ip,
+        plc_port=arguments.plc_port,
+    )
     app.aboutToQuit.connect(controller.cleanup)
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Scada", controller)

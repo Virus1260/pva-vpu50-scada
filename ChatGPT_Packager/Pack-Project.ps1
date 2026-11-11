@@ -461,13 +461,14 @@ function Generate-ProjectContextMd {
 
     $sizeMb = [Math]::Round(($TotalBytes / 1MB), 2)
     $ts = [DateTime]::UtcNow.ToString("yyyy-MM-dd HH:mm:ss 'UTC'")
+    $tick = [char]96
 
     return @"
 # PVA Systems VPU-50 Industrial SCADA – Project Context & Architecture
 
-**Package Snapshot:** `$SnapshotId`  
+**Package Snapshot:** ${tick}${SnapshotId}${tick}  
 **Generated At:** $ts  
-**Total Source Files:** $TotalFiles (`$sizeMb MB)  
+**Total Source Files:** $TotalFiles ($sizeMb MB)  
 **Git Baseline:** $($GitMeta.CommitHash) (Branch: $($GitMeta.Branch))  
 **Working Tree Status:** $($GitMeta.StatusSummary)  
 

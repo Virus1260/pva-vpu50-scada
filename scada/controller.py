@@ -13,6 +13,7 @@ from scada.alarms import AlarmManager
 from scada.audit import AuditEvent, AuditStore, utc_now
 from scada.configuration import ConfigurationRegistry
 from scada.cortex import CortexEngine
+from scada.modbus.worker import ModbusWorker, OperationalMode
 from scada.security import SecurityManager
 from scada.simulation import PlantSimulator
 from scada.store import HistorianStore
@@ -25,10 +26,28 @@ class ScadaController(QObject):
     auditUpdated = Signal()
     batchListUpdated = Signal()
 
-    def __init__(self, runtime_dir: Path, parent: QObject | None = None) -> None:
+    def __init__(
+        self,
+        runtime_dir: Path,
+        mode: str | OperationalMode = OperationalMode.SIMULATION,
+        plc_host: str = "192.168.1.5",
+        plc_port: int = 502,
+        parent: QObject | None = None,
+    ) -> None:
         super().__init__(parent)
         self.runtime_dir = runtime_dir
         self.runtime_dir.mkdir(parents=True, exist_ok=True)
+
+        if isinstance(mode, str):
+            try:
+                self.operating_mode = OperationalMode(mode)
+            except ValueError:
+                self.operating_mode = OperationalMode.SIMULATION
+        else:
+            self.operating_mode = mode
+
+        self.plc_host = plc_host
+        self.plc_port = plc_port
 
         config_dir = Path(__file__).resolve().parent / "config"
         self.registry = ConfigurationRegistry(config_dir)
@@ -44,8 +63,17 @@ class ScadaController(QObject):
         self._current_user = "operator"
         self._current_role = "operator"
 
+        # Hardware Connection State
+        self._plc_connected: bool = (self.operating_mode == OperationalMode.SIMULATION)
+        self._plc_status_text: str = (
+            "Simulation Active (Virtual Skid)"
+            if self.operating_mode == OperationalMode.SIMULATION
+            else f"Connecting to Delta AS332T at {self.plc_host}:{self.plc_port}..."
+        )
+
         # Current Telemetry State
-        self._telemetry: dict[str, float] = self.simulator.step(0.0)
+        self._telemetry: dict[str, Any] = self.simulator.step(0.0)
+        self._telemetry["operating_mode"] = self.operating_mode.value
 
         # Active Process Batch State
         self._active_batch_id: str | None = None
@@ -59,21 +87,30 @@ class ScadaController(QObject):
         self.timer.start(500)
 
         # Delta AS332T-A Modbus TCP Background Polling Worker
-        from scada.modbus.worker import ModbusWorker
         self.modbus_worker = ModbusWorker(
-            host="192.168.1.5",
-            port=502,
+            host=self.plc_host,
+            port=self.plc_port,
             poll_interval_ms=100,
-            enable_simulation_fallback=True,
+            mode=self.operating_mode,
+            enable_simulation_fallback=False,
             parent=self,
         )
         self.modbus_worker.telemetryPolled.connect(self._on_modbus_telemetry)
+        self.modbus_worker.connectionStateChanged.connect(self._on_connection_state_changed)
         self.modbus_worker.stepDoneSignaled.connect(self._on_modbus_step_done)
         self.modbus_worker.start()
 
-    def _on_modbus_telemetry(self, telemetry: dict[str, Any]) -> None:
-        self._telemetry.update({k: v for k, v in telemetry.items() if isinstance(v, (int, float))})
+    def _on_connection_state_changed(self, connected: bool, msg: str) -> None:
+        self._plc_connected = connected
+        self._plc_status_text = msg
+        self._telemetry["plc_connected"] = connected
+        self._telemetry["plc_status"] = msg
         self.telemetryUpdated.emit()
+
+    def _on_modbus_telemetry(self, telemetry: dict[str, Any]) -> None:
+        if self.operating_mode in (OperationalMode.BENCH_MONITOR, OperationalMode.BENCH_CONTROL):
+            self._telemetry.update({k: v for k, v in telemetry.items() if isinstance(v, (int, float, str, bool))})
+            self.telemetryUpdated.emit()
 
     def _on_modbus_step_done(self, completed_step: int) -> None:
         pass
@@ -94,7 +131,11 @@ class ScadaController(QObject):
                 }, iso_t)
 
     def _on_tick(self) -> None:
-        self._telemetry = self.simulator.step(0.5)
+        # INVARIANT: Only step the software simulator when in SIMULATION mode!
+        # In BENCH_MONITOR or BENCH_CONTROL mode, physical Modbus readings must NEVER be overwritten!
+        if self.operating_mode == OperationalMode.SIMULATION:
+            self._telemetry = self.simulator.step(0.5)
+
         self.alarm_mgr.evaluate_telemetry(self._telemetry)
 
         # Record to Historian if batch active
@@ -103,6 +144,23 @@ class ScadaController(QObject):
 
         self.telemetryUpdated.emit()
         self.alarmsUpdated.emit()
+
+    # --- Reactive Properties for QML Screen Binding ---
+    @Property("QVariantMap", notify=telemetryUpdated)
+    def telemetry(self) -> dict[str, Any]:
+        return dict(self._telemetry)
+
+    @Property(str, notify=telemetryUpdated)
+    def operatingMode(self) -> str:
+        return self.operating_mode.value
+
+    @Property(bool, notify=telemetryUpdated)
+    def isPlcConnected(self) -> bool:
+        return bool(self._plc_connected)
+
+    @Property(str, notify=telemetryUpdated)
+    def plcStatusText(self) -> str:
+        return self._plc_status_text
 
     # --- Reactive Properties for QML Screen Binding ---
     @Property(bool, notify=recipeStateUpdated)
@@ -149,6 +207,9 @@ class ScadaController(QObject):
 
     @Slot(str, float, str, result=bool)
     def setProcessSetpoint(self, tag_id: str, value: float, reason: str) -> bool:
+        if self.operating_mode == OperationalMode.BENCH_MONITOR:
+            raise PermissionError("READ_ONLY_LOCK: Parameter adjustment is prohibited in BENCH_MONITOR mode.")
+
         tag = self.registry.get_tag(tag_id)
         if not tag:
             return False
@@ -161,6 +222,22 @@ class ScadaController(QObject):
             raise ValueError(msg)
 
         old_val = self._telemetry.get(tag_id, 0.0)
+
+        # In BENCH_CONTROL mode, write directly to Delta PLC Modbus registers
+        if self.operating_mode == OperationalMode.BENCH_CONTROL:
+            from scada.modbus.delta_map import DeltaRegisterMap
+            tag_to_reg = {
+                "vpu.main.agitator_speed": (DeltaRegisterMap.REG_STEP_AGITATOR_SPEED_SP, int(value)),
+                "vpu.main.homogenizer_speed": (DeltaRegisterMap.REG_STEP_HOMOGENIZER_SPEED_SP, int(value)),
+                "vpu.main.temperature": (DeltaRegisterMap.REG_STEP_TEMP_SP, int(round(value * 10))),
+                "vpu.main.vacuum_pressure": (DeltaRegisterMap.REG_STEP_VACUUM_SP, int(round(value * 10))),
+            }
+            if tag_id in tag_to_reg:
+                reg_offset, raw_val = tag_to_reg[tag_id]
+                res = self.modbus_worker.write_process_setpoint(reg_offset, raw_val)
+                if not res.get("success"):
+                    raise ConnectionError(f"PLC write failed: {res.get('error')}")
+
         self._telemetry[tag_id] = value
         if tag_id == "vpu.main.agitator_speed":
             self.simulator.target_agitator_speed = value
@@ -307,6 +384,22 @@ class ScadaController(QObject):
     @Slot(str)
     def next_recipe_step(self, reason: str = "") -> None:
         pass
+
+    @Slot(int, bool, bool, result=str)
+    def setDigitalOutput(self, output_index: int, state: bool, force: bool = True) -> str:
+        """
+        Controls physical output Y0.x on the Delta PLC rack (or simulated state).
+        force=True allows hardware checkout on the commissioning bench.
+        """
+        res = self.modbus_worker.write_digital_output(output_index, state, force=force)
+        return json.dumps(res)
+
+    @Slot(result=str)
+    def getDigitalIoStatusJson(self) -> str:
+        """Reads current states of digital inputs X0-X15 and outputs Y0-Y15."""
+        outputs = self.modbus_worker.read_digital_outputs(0, 16)
+        inputs = self.modbus_worker.read_digital_inputs(0, 16)
+        return json.dumps({"outputs": outputs, "inputs": inputs})
 
     @Slot()
     def cleanup(self) -> None:

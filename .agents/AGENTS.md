@@ -21,6 +21,9 @@
 7. **Physical Keyboard & RBAC Navigation Security**:
    - All interactive modals must support physical PC keyboard entry (`0`-`9`, Enter, Backspace, Esc).
    - Dismissing authentication on restricted screens (e.g. Diagnostics) MUST revert navigation to the previously authorized screen.
+8. **Mandatory Automatic Staging**:
+   - Every time any file is created, modified, or edited, stage all modified files (`git add`) immediately upon finishing each task turn.
+   - Do NOT run `git commit` or `git push` without explicit user permission.
 
 ---
 
