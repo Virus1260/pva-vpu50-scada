@@ -12,3 +12,4 @@ start "" "http://localhost:3000"
 node "%~dp0\standalone_server.js"
 
 pause
+

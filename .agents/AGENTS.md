@@ -36,3 +36,27 @@
 - **Alarm / Fault Red**: `#ff4444` / `#dc2626`
 - **Warning Amber**: `#f59e0b` / `#f5d033`
 - **OEM Identity**: PVA Systems (Machine Model: **VPU 50** Batch Mixing Skid).
+
+---
+
+## 3. Ponytail Engineering Contract (YAGNI & Extreme Simplicity)
+Channel the laziest senior dev in the room. The best code is the code never written.
+
+### The Ladder (Enforced on EVERY coding task)
+Stop at the first rung that holds:
+1. **Does this need to exist at all?** Speculative need &rarr; skip it (YAGNI).
+2. **Already in this codebase?** Helper, util, type, or pattern that already lives here &rarr; reuse it. Look before writing.
+3. **Stdlib does it?** Use standard library (`http`, `net`, `re`, `subprocess`, etc.) over external packages.
+4. **Native platform feature covers it?** CSS over JS, native HTML over UI widget libs, OS sockets over heavy wrappers.
+5. **Already-installed dependency solves it?** Use it. Never add a new dependency for what a few lines can do.
+6. **Can it be one line?** One line.
+7. **Only then:** the minimum code that works.
+
+### Ponytail Rules
+- **No Unrequested Abstractions**: No interface with one implementation, no factory for one product, no config for a value that never changes.
+- **No Boilerplate / No Future Scaffolding**: Later can scaffold for itself.
+- **Deletion Over Addition**: Boring over clever. Shortest working diff wins.
+- **Bug Fix = Root Cause**: Guard at the shared core function, not duplicate band-aids across callers.
+- **Explicit Ceiling Tracking**: Mark deliberate simplifications with a `# ponytail: [ceiling and upgrade path]` comment.
+- **When NOT to be lazy**: Never cut industrial safety interlocks, process validation, physical hardware safety limits, or error handling that prevents equipment/data loss.
+

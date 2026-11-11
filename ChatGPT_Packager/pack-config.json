@@ -45,9 +45,7 @@
     ".js",
     ".st",
     ".csv",
-    ".mesh",
-    ".ts",
-    ".tsx"
+    ".mesh"
   ],
   "includeRootFiles": [
     "CMakeLists.txt",
@@ -75,8 +73,7 @@
     "App",
     "cmake",
     "dist",
-    "assets",
-    "web_dashboard"
+    "assets"
   ],
   "excludeDirectories": [
     ".git",
@@ -93,7 +90,6 @@
     "build_wasm",
     "cmake-build-*",
     "node_modules",
-    ".next",
     "scratch",
     ".system_generated",
     ".vscode",

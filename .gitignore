@@ -11,7 +11,7 @@ dist/
 .vercel/
 cmake-build-*/
 bin/
-/lib/
+lib/
 out/
 
 # CMake temporary files and caches
