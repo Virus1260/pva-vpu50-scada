@@ -45,10 +45,6 @@ Project {
         directory: "PVA_VPU50_SCADAContent/config"
     }
 
-    QmlFiles {
-        directory: "Generated"
-    }
-
     JavaScriptFiles {
         directory: "PVA_VPU50_SCADA"
     }
@@ -59,10 +55,6 @@ Project {
 
     ImageFiles {
         directory: "PVA_VPU50_SCADAContent"
-    }
-
-    ImageFiles {
-        directory: "Generated"
     }
 
     Files {

@@ -82,6 +82,11 @@
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_butterfly_open.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_diaphragm_closed.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/icons/pid/valve_diaphragm_open.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/not_used/backspace.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/not_used/ekato_logo.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/not_used/pid_schema.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/not_used/start_green.svg</file>
+        <file>PVA_VPU50_SCADAContent/assets/not_used/thumbnail.png</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_body.svg</file>
         <file>PVA_VPU50_SCADAContent/assets/pid_vessel_jacket.svg</file>
         <file>PVA_VPU50_SCADAContent/components/common/DeviceSetpointStepper.qml</file>

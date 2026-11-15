@@ -4,7 +4,8 @@ cmake_minimum_required(VERSION 3.21.1)
 option(LINK_INSIGHT "Link Qt Insight Tracker library" ON)
 option(BUILD_QDS_COMPONENTS "Build design studio components" ON)
 
-project(PVA_VPU50_SCADAApp LANGUAGES CXX)
+project(PVA_VPU50_SCADAApp VERSION 1.0.0 LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -16,7 +17,7 @@ set(QML_IMPORT_PATH ${QT_QML_OUTPUT_DIRECTORY}
     FORCE
 )
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Widgets Qml Quick OPTIONAL_COMPONENTS QuickTimeline ShaderTools Quick3D)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Widgets Qml Quick SerialBus Sql OPTIONAL_COMPONENTS QuickTimeline ShaderTools Quick3D)
 qt_standard_project_setup()
 
 

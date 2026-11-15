@@ -3,7 +3,6 @@
 # =========================================================================
 
 # Build output directories
-archive/
 build/
 build-*/
 build_wasm/
@@ -40,6 +39,7 @@ CMakeCache.txt
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+!.vscode/c_cpp_properties.json
 .idea/
 *.suo
 *.user

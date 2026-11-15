@@ -1,12 +1,15 @@
 {
     "qml.importPaths": [
-        "C:/Qt/6.11.1/mingw_64/qml",
+        "C:/Qt/6.12.0/mingw_64/qml",
         "C:/Qt/Tools/QtDesignStudio/qt6_design_studio_reduced_version/qml",
-        "${workspaceFolder}/Scada_control_screen_try_2Content"
+        "${workspaceFolder}/PVA_VPU50_SCADAContent",
+        "${workspaceFolder}/PVA_VPU50_SCADA"
     ],
     "qmlls.importPaths": [
-        "C:/Qt/6.11.1/mingw_64/qml",
+        "C:/Qt/6.12.0/mingw_64/qml",
         "C:/Qt/Tools/QtDesignStudio/qt6_design_studio_reduced_version/qml",
-        "${workspaceFolder}/Scada_control_screen_try_2Content"
-    ]
+        "${workspaceFolder}/PVA_VPU50_SCADAContent",
+        "${workspaceFolder}/PVA_VPU50_SCADA"
+    ],
+    "cmake.prefixPath": "C:/Qt/6.12.0/mingw_64"
 }

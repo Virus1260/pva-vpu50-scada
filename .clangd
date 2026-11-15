@@ -1,0 +1,18 @@
+CompileFlags:
+  CompilationDatabase: "build-native"
+  Add:
+    - "-I/C:/Qt/6.12.0/mingw_64/include"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtCore"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtGui"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtWidgets"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtQml"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtQuick"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtSerialBus"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtSql"
+    - "-I/C:/Qt/6.12.0/mingw_64/include/QtNetwork"
+    - "-I/C:/Qt/Tools/mingw1310_64/include"
+    - "-I/C:/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include"
+    - "-I/C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include"
+    - "-I/C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++"
+    - "-I/C:/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32"
+    - "-std=c++17"
