@@ -21,6 +21,15 @@ class ScadaEngine : public QObject
     Q_PROPERTY(QString operatingMode READ operatingMode NOTIFY telemetryUpdated)
     Q_PROPERTY(bool isPlcConnected READ isPlcConnected NOTIFY telemetryUpdated)
     Q_PROPERTY(QString plcStatusText READ plcStatusText NOTIFY telemetryUpdated)
+    Q_PROPERTY(QString plcHost READ plcHost WRITE setPlcHost NOTIFY plcConfigChanged)
+    Q_PROPERTY(int plcPort READ plcPort WRITE setPlcPort NOTIFY plcConfigChanged)
+    Q_PROPERTY(quint64 packetsSent READ packetsSent NOTIFY telemetryUpdated)
+    Q_PROPERTY(quint64 packetsReceived READ packetsReceived NOTIFY telemetryUpdated)
+    Q_PROPERTY(quint64 packetErrors READ packetErrors NOTIFY telemetryUpdated)
+    Q_PROPERTY(int plcLatencyMs READ plcLatencyMs NOTIFY telemetryUpdated)
+    Q_PROPERTY(QVariantList digitalOutputs READ digitalOutputs NOTIFY telemetryUpdated)
+    Q_PROPERTY(QVariantList digitalInputs READ digitalInputs NOTIFY telemetryUpdated)
+    Q_PROPERTY(QVariantList extensionInputs READ extensionInputs NOTIFY telemetryUpdated)
     Q_PROPERTY(QString activeBatchId READ activeBatchId NOTIFY recipeStateUpdated)
     Q_PROPERTY(QString activeRecipeName READ activeRecipeName NOTIFY recipeStateUpdated)
     Q_PROPERTY(int currentStepIndex READ currentStepIndex NOTIFY recipeStateUpdated)
@@ -30,7 +39,7 @@ class ScadaEngine : public QObject
 public:
     explicit ScadaEngine(const QString &runtimeDir,
                          const QString &mode = "BENCH_MONITOR",
-                         const QString &plcHost = "192.168.1.6",
+                         const QString &plcHost = "192.168.1.7",
                          int plcPort = 502,
                          QObject *parent = nullptr);
     ~ScadaEngine() override;
@@ -40,6 +49,18 @@ public:
     QString operatingMode() const;
     bool isPlcConnected() const;
     QString plcStatusText() const;
+    QString plcHost() const;
+    void setPlcHost(const QString &host);
+    int plcPort() const;
+    void setPlcPort(int port);
+    quint64 packetsSent() const;
+    quint64 packetsReceived() const;
+    quint64 packetErrors() const;
+    int plcLatencyMs() const;
+    QVariantList digitalOutputs() const;
+    QVariantList digitalInputs() const;
+    QVariantList extensionInputs() const;
+
     QString activeBatchId() const;
     QString activeRecipeName() const;
     int currentStepIndex() const;
@@ -60,6 +81,12 @@ public:
     Q_INVOKABLE QString getRecipesJson();
     Q_INVOKABLE QString getDigitalIoStatusJson();
     Q_INVOKABLE QString setDigitalOutput(int index, bool state, bool force = false);
+
+    // COMMGR & Network Diagnostics
+    Q_INVOKABLE void setPlcTarget(const QString &host, int port);
+    Q_INVOKABLE void startNetworkScan();
+    Q_INVOKABLE QString getDeltaHardwareRackJson() const;
+    Q_INVOKABLE QString probeSubnetDevicesJson();
 
     // Tag Querying & Configurable I/O System
     Q_INVOKABLE QVariant tagValue(const QString &tagId, const QVariant &defaultVal = QVariant()) const;
@@ -83,6 +110,8 @@ signals:
     void recipeStateUpdated();
     void auditUpdated();
     void batchListUpdated();
+    void plcConfigChanged();
+    void networkScanFinished(const QString &devicesJson);
 
 private slots:
     void onTick();
@@ -99,6 +128,7 @@ private:
                        const QVariantMap &after);
     void evaluateAlarms();
     void stepSimulation(double dt);
+    QString performNetworkScan();
 
     QString m_runtimeDir;
     QString m_operatingMode; // "SIMULATION", "BENCH_MONITOR", "BENCH_CONTROL"
@@ -124,6 +154,9 @@ private:
     double m_targetHomoSpeed;
     double m_targetTemp;
     double m_targetVacuum;
+
+    bool m_isScanning;
+    QString m_lastScannedDevicesJson;
 };
 
 #endif // SCADA_ENGINE_H

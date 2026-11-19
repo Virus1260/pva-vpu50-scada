@@ -8,7 +8,6 @@
 #include <QGuiApplication>
 #include "qqmlextensionplugin.h"
 
-Q_IMPORT_QML_PLUGIN(PVA_VPU50_SCADAContentPlugin)
 Q_IMPORT_QML_PLUGIN(PVA_VPU50_SCADAPlugin)
 Q_IMPORT_QML_PLUGIN(PVA_VPU50_SCADAContentPlugin)
 Q_IMPORT_QML_PLUGIN(themePlugin)

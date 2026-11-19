@@ -6,18 +6,6 @@ add_subdirectory(PVA_VPU50_SCADAContent)
 add_subdirectory(App)
 add_subdirectory(Dependencies)
 
-qt6_add_resources(${CMAKE_PROJECT_NAME} MainResource
-    PREFIX "/qt/qml"
-    VERSION 1.0
-    FILES 
-        "scada/config/alarm_catalog.json"
-        "scada/config/opcua.production.example.json"
-        "scada/config/role_catalog.json"
-        "scada/config/sensor_catalog.json"
-        "scada/config/tag_catalog.json"
-        "scada/simulation/plant_profile.json"
-)
-
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
     PVA_VPU50_SCADAplugin
     PVA_VPU50_SCADAContentplugin

@@ -7,6 +7,13 @@
 #include <QJsonArray>
 #include <QSqlError>
 #include <QDebug>
+#include <QNetworkInterface>
+#include <QHostAddress>
+#include <QTcpSocket>
+#include <QProcess>
+#include <QElapsedTimer>
+#include <QThread>
+#include <QRegularExpression>
 #include <cmath>
 
 ScadaEngine::ScadaEngine(const QString &runtimeDir,
@@ -32,6 +39,7 @@ ScadaEngine::ScadaEngine(const QString &runtimeDir,
     , m_targetHomoSpeed(0.0)
     , m_targetTemp(25.0)
     , m_targetVacuum(0.0)
+    , m_isScanning(false)
 {
     QDir().mkpath(m_runtimeDir);
 
@@ -104,6 +112,383 @@ bool ScadaEngine::isPlcConnected() const
 QString ScadaEngine::plcStatusText() const
 {
     return m_modbusClient ? m_modbusClient->statusMessage() : QString("Offline");
+}
+
+QString ScadaEngine::plcHost() const
+{
+    return m_modbusClient ? m_modbusClient->plcHost() : QString("192.168.1.7");
+}
+
+void ScadaEngine::setPlcHost(const QString &host)
+{
+    if (m_modbusClient && m_modbusClient->plcHost() != host) {
+        setPlcTarget(host, m_modbusClient->plcPort());
+    }
+}
+
+int ScadaEngine::plcPort() const
+{
+    return m_modbusClient ? m_modbusClient->plcPort() : 502;
+}
+
+void ScadaEngine::setPlcPort(int port)
+{
+    if (m_modbusClient && m_modbusClient->plcPort() != port) {
+        setPlcTarget(m_modbusClient->plcHost(), port);
+    }
+}
+
+quint64 ScadaEngine::packetsSent() const
+{
+    return m_modbusClient ? m_modbusClient->packetsSent() : 0;
+}
+
+quint64 ScadaEngine::packetsReceived() const
+{
+    return m_modbusClient ? m_modbusClient->packetsReceived() : 0;
+}
+
+quint64 ScadaEngine::packetErrors() const
+{
+    return m_modbusClient ? m_modbusClient->packetErrors() : 0;
+}
+
+int ScadaEngine::plcLatencyMs() const
+{
+    return m_modbusClient ? m_modbusClient->lastLatencyMs() : 1;
+}
+
+QVariantList ScadaEngine::digitalOutputs() const
+{
+    return m_telemetry.value("digital_outputs_y0").toList();
+}
+
+QVariantList ScadaEngine::digitalInputs() const
+{
+    return m_telemetry.value("digital_inputs_x0").toList();
+}
+
+QVariantList ScadaEngine::extensionInputs() const
+{
+    return m_telemetry.value("digital_inputs_x1").toList();
+}
+
+void ScadaEngine::setPlcTarget(const QString &host, int port)
+{
+    if (!m_modbusClient) return;
+    m_modbusClient->setPlcTarget(host, port);
+    m_telemetry["plc_host"] = host;
+    m_telemetry["plc_port"] = port;
+    m_telemetry["plc_connected"] = m_modbusClient->isConnected();
+    m_telemetry["plc_status"] = m_modbusClient->statusMessage();
+    emit plcConfigChanged();
+    emit telemetryUpdated();
+}
+
+QString ScadaEngine::getDeltaHardwareRackJson() const
+{
+    QJsonArray rack;
+    bool connected = isPlcConnected();
+
+    // PS Module
+    QJsonObject ps;
+    ps["slot"] = "PS";
+    ps["name"] = "AS-PS02";
+    ps["desc"] = "Power Supply Module";
+    ps["status"] = connected ? "NORMAL" : "OFFLINE";
+    ps["detail"] = "24VDC Output, 2000mA Capacity";
+    rack.append(ps);
+
+    // CPU Module
+    QJsonObject cpu;
+    cpu["slot"] = "CPU";
+    cpu["name"] = "AS332T-A";
+    cpu["desc"] = "Main CPU (16 DI / 16 DO Transistor)";
+    cpu["status"] = connected ? "RUNNING" : "OFFLINE";
+    bool batteryLow = m_telemetry.value("cpu_battery_low", true).toBool();
+    cpu["warning"] = (connected && batteryLow) ? "16#0027 (Battery Low - RTC Reset to 2000-01-01)" : "";
+    cpu["detail"] = QString("Firmware v1.08.01, Modbus Port %1").arg(plcPort());
+    rack.append(cpu);
+
+    // Function Card 2
+    QJsonObject card2;
+    card2["slot"] = "CARD 2";
+    card2["name"] = "AS-FFTP01";
+    card2["desc"] = "Ethernet Function Card";
+    card2["status"] = connected ? "LINK ACTIVE" : "DISCONNECTED";
+    card2["ip"] = plcHost();
+    card2["mac"] = "56:F0:3A:39:10:CC";
+    card2["detail"] = QString("Modbus TCP (%1) / OPC UA (4840) / HTTP (80)").arg(plcPort());
+    rack.append(card2);
+
+    // Slot 1: Digital Inputs
+    QJsonObject slot1;
+    slot1["slot"] = "SLOT 1";
+    slot1["name"] = "AS16AM10N-A";
+    slot1["desc"] = "16 Channel Digital Input (X1.0-X1.15)";
+    slot1["status"] = connected ? "NORMAL" : "OFFLINE";
+    slot1["detail"] = "24VDC Sink/Source Inputs";
+    rack.append(slot1);
+
+    // Slot 2: Analog Inputs
+    QJsonObject slot2;
+    slot2["slot"] = "SLOT 2";
+    slot2["name"] = "AS04AD-A";
+    slot2["desc"] = "4 Channel Analog Input (D28020-D28039)";
+    bool adFault = m_telemetry.value("ad_slot2_fault", true).toBool();
+    if (!connected) {
+        slot2["status"] = "OFFLINE";
+        slot2["error"] = "";
+    } else if (adFault) {
+        slot2["status"] = "FAULT 16#1801";
+        slot2["error"] = "16#1801 (External voltage abnormal - check +24V terminal)";
+    } else {
+        slot2["status"] = "NORMAL";
+        slot2["error"] = "";
+    }
+    slot2["detail"] = "Channels CH1-CH4 (0-10V / 4-20mA)";
+    rack.append(slot2);
+
+    // Slot 3: Analog Outputs
+    QJsonObject slot3;
+    slot3["slot"] = "SLOT 3";
+    slot3["name"] = "AS04DA-A";
+    slot3["desc"] = "4 Channel Analog Output (D28040-D28059)";
+    bool daFault = m_telemetry.value("da_slot3_fault", true).toBool();
+    if (!connected) {
+        slot3["status"] = "OFFLINE";
+        slot3["error"] = "";
+    } else if (daFault) {
+        slot3["status"] = "FAULT 16#1801";
+        slot3["error"] = "16#1801 (External voltage abnormal - check +24V terminal)";
+    } else {
+        slot3["status"] = "NORMAL";
+        slot3["error"] = "";
+    }
+    slot3["detail"] = "Channels CH1-CH4 (0-10V / 4-20mA)";
+    rack.append(slot3);
+
+    // Slot 4: RTD Inputs
+    QJsonObject slot4;
+    slot4["slot"] = "SLOT 4";
+    slot4["name"] = "AS06RTD-A";
+    slot4["desc"] = "6 Channel RTD Input (D28060-D28079)";
+    bool rtdFault = m_telemetry.value("rtd_slot4_fault", true).toBool();
+    if (!connected) {
+        slot4["status"] = "OFFLINE";
+        slot4["error"] = "";
+    } else if (rtdFault) {
+        slot4["status"] = "FAULT 16#1801";
+        slot4["error"] = "16#1801 (External voltage abnormal - check +24V terminal)";
+    } else {
+        slot4["status"] = "NORMAL";
+        slot4["error"] = "";
+    }
+    slot4["detail"] = "PT100/PT1000 Temperature Sensors";
+    rack.append(slot4);
+
+    return QString::fromUtf8(QJsonDocument(rack).toJson(QJsonDocument::Compact));
+}
+
+QString ScadaEngine::performNetworkScan()
+{
+    // 1. Detect local network interfaces to identify active subnet
+    QString localSubnetPrefix;
+    QString localHostIp;
+    QString localHostMac = "Local Host";
+
+    const QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+    for (const QNetworkInterface &iface : interfaces) {
+        if (!iface.flags().testFlag(QNetworkInterface::IsUp) ||
+            !iface.flags().testFlag(QNetworkInterface::IsRunning) ||
+            iface.flags().testFlag(QNetworkInterface::IsLoopBack)) {
+            continue;
+        }
+        for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+            const QHostAddress ip = entry.ip();
+            if (ip.protocol() == QAbstractSocket::IPv4Protocol && !ip.isLoopback()) {
+                const QString ipStr = ip.toString();
+                if (ipStr.startsWith("192.168.1.") || localSubnetPrefix.isEmpty()) {
+                    localHostIp = ipStr;
+                    int lastDot = ipStr.lastIndexOf('.');
+                    if (lastDot > 0) {
+                        localSubnetPrefix = ipStr.left(lastDot + 1);
+                    }
+                    if (!iface.hardwareAddress().isEmpty()) {
+                        localHostMac = iface.hardwareAddress();
+                    }
+                }
+            }
+        }
+    }
+    if (localHostIp.isEmpty()) {
+        localHostIp = "192.168.1.10";
+        localSubnetPrefix = "192.168.1.";
+    }
+
+    // 2. Query ARP table via QProcess 'arp -a'
+    struct ArpEntry {
+        QString ip;
+        QString mac;
+    };
+    QList<ArpEntry> arpEntries;
+
+    QProcess arpProc;
+    arpProc.start("arp", QStringList() << "-a");
+    if (arpProc.waitForFinished(1200)) {
+        const QString arpOut = QString::fromLocal8Bit(arpProc.readAllStandardOutput());
+        const QStringList lines = arpOut.split(QRegularExpression("[\r\n]+"), Qt::SkipEmptyParts);
+        const QRegularExpression ipRegex(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+([0-9a-fA-F:-]{11,17}))");
+        for (const QString &line : lines) {
+            auto match = ipRegex.match(line);
+            if (match.hasMatch()) {
+                QString ip = match.captured(1);
+                QString mac = match.captured(2).replace('-', ':').toUpper();
+                if (!ip.endsWith(".255") && !ip.startsWith("224.") && !ip.startsWith("239.") && !ip.startsWith("255.") && mac != "FF:FF:FF:FF:FF:FF") {
+                    arpEntries.append({ip, mac});
+                }
+            }
+        }
+    }
+
+    // 3. Assemble target candidate IPs to test
+    QStringList candidateIps;
+    auto addCandidate = [&candidateIps](const QString &ip) {
+        if (!ip.isEmpty() && !candidateIps.contains(ip)) {
+            candidateIps.append(ip);
+        }
+    };
+
+    if (m_modbusClient && !m_modbusClient->plcHost().isEmpty()) {
+        addCandidate(m_modbusClient->plcHost());
+    }
+    addCandidate("192.168.1.7");
+    addCandidate("192.168.1.5");
+    addCandidate(localHostIp);
+
+    for (const auto &entry : arpEntries) {
+        if (entry.ip.startsWith(localSubnetPrefix)) {
+            addCandidate(entry.ip);
+        }
+    }
+
+    auto getMacForIp = [&](const QString &ip) -> QString {
+        if (ip == localHostIp) return localHostMac;
+        for (const auto &entry : arpEntries) {
+            if (entry.ip == ip) return entry.mac;
+        }
+        if (ip == "192.168.1.7") return "56:F0:3A:39:10:CC";
+        if (ip == "192.168.1.5") return "00:18:23:E0:41:A2";
+        return "Dynamic ARP";
+    };
+
+    // Helper for fast port testing with 100ms timeout
+    auto testPort = [](const QString &host, int port, int timeoutMs, int &outRttMs) -> bool {
+        QTcpSocket socket;
+        QElapsedTimer timer;
+        timer.start();
+        socket.connectToHost(host, static_cast<quint16>(port));
+        bool ok = socket.waitForConnected(timeoutMs);
+        outRttMs = ok ? static_cast<int>(timer.elapsed()) : -1;
+        if (ok) {
+            socket.disconnectFromHost();
+        } else {
+            socket.abort();
+        }
+        return ok;
+    };
+
+    // 4. Test ports and assemble JSON payload
+    QJsonArray devicesArr;
+    for (const QString &ip : candidateIps) {
+        bool isLocal = (ip == localHostIp);
+        QString mac = getMacForIp(ip);
+
+        bool has502 = false;
+        bool has80 = false;
+        bool has4840 = false;
+        int rtt502 = -1;
+        int rtt80 = -1;
+        int rtt4840 = -1;
+
+        if (!isLocal) {
+            has502 = testPort(ip, 502, 100, rtt502);
+            has80 = testPort(ip, 80, 100, rtt80);
+            has4840 = testPort(ip, 4840, 100, rtt4840);
+        }
+
+        int bestRtt = -1;
+        if (has502 && (bestRtt < 0 || rtt502 < bestRtt)) bestRtt = rtt502;
+        if (has80 && (bestRtt < 0 || rtt80 < bestRtt)) bestRtt = rtt80;
+        if (has4840 && (bestRtt < 0 || rtt4840 < bestRtt)) bestRtt = rtt4840;
+
+        QJsonObject obj;
+        obj["ip"] = ip;
+        obj["mac"] = mac;
+        obj["modbus_502"] = has502;
+        obj["http_80"] = has80;
+        obj["opcua_4840"] = has4840;
+
+        if (isLocal) {
+            obj["device"] = "Host PC (Local SCADA Station)";
+            obj["status"] = "LOCAL HOST";
+            obj["rtt_ms"] = 0;
+        } else if (has502) {
+            if (mac.startsWith("56:F0:3A") || mac.startsWith("56-F0-3A") || ip == "192.168.1.7") {
+                obj["device"] = "Delta AS-FFTP01 Ethernet Card";
+            } else {
+                obj["device"] = "Delta AS Series PLC";
+            }
+            obj["status"] = "ACTIVE LINK";
+            obj["rtt_ms"] = (bestRtt >= 0 ? bestRtt : 1);
+        } else if (ip == "192.168.1.5") {
+            obj["device"] = "Delta AS332T-A CPU Main Port (HWCONFIG Default)";
+            obj["status"] = "PORT UNLINKED";
+            obj["rtt_ms"] = -1;
+        } else if (ip == "192.168.1.7") {
+            obj["device"] = "Delta AS-FFTP01 Ethernet Card";
+            obj["status"] = "PORT UNLINKED";
+            obj["rtt_ms"] = -1;
+        } else if (has80 || has4840) {
+            obj["device"] = QString("Industrial Automation Node (%1)").arg(ip);
+            obj["status"] = "ACTIVE LINK";
+            obj["rtt_ms"] = (bestRtt >= 0 ? bestRtt : 1);
+        } else {
+            obj["device"] = QString("Network Device (%1)").arg(ip);
+            obj["status"] = "REACHABLE";
+            obj["rtt_ms"] = 1;
+        }
+
+        devicesArr.append(obj);
+    }
+
+    return QString::fromUtf8(QJsonDocument(devicesArr).toJson(QJsonDocument::Compact));
+}
+
+void ScadaEngine::startNetworkScan()
+{
+    if (m_isScanning) return;
+    m_isScanning = true;
+
+    QThread *worker = QThread::create([this]() {
+        QString res = performNetworkScan();
+        QMetaObject::invokeMethod(this, [this, res]() {
+            m_isScanning = false;
+            m_lastScannedDevicesJson = res;
+            emit networkScanFinished(res);
+        }, Qt::QueuedConnection);
+    });
+    connect(worker, &QThread::finished, worker, &QObject::deleteLater);
+    worker->start();
+}
+
+QString ScadaEngine::probeSubnetDevicesJson()
+{
+    if (!m_lastScannedDevicesJson.isEmpty()) {
+        return m_lastScannedDevicesJson;
+    }
+    m_lastScannedDevicesJson = performNetworkScan();
+    return m_lastScannedDevicesJson;
 }
 
 QString ScadaEngine::activeBatchId() const

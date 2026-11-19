@@ -26,12 +26,19 @@ public:
     void setPlcHost(const QString &host);
     int plcPort() const;
     void setPlcPort(int port);
+    void setPlcTarget(const QString &host, int port);
 
     // Operational Commands
     void connectToPlc();
     void disconnectFromPlc();
     void startPolling(int intervalMs = 100);
     void stopPolling();
+
+    // Diagnostics & Performance Counters
+    quint64 packetsSent() const { return m_packetsSent; }
+    quint64 packetsReceived() const { return m_packetsReceived; }
+    quint64 packetErrors() const { return m_packetErrors; }
+    int lastLatencyMs() const { return m_lastLatencyMs; }
 
     // Setpoint & Output writes (permitted ONLY in BENCH_CONTROL mode)
     bool writeHoldingRegister(int address, quint16 value, QString *errorMsg = nullptr);
@@ -52,6 +59,7 @@ private slots:
     void onReadTelemetryRegistersFinished();
     void onReadRtdRegistersFinished();
     void onReadAnalogRegistersFinished();
+    void onReadDaRegistersFinished();
 
 private:
     void scheduleReconnect();
@@ -69,6 +77,11 @@ private:
     bool m_isConnected;
     QString m_statusMessage;
     int m_pollCycle;
+
+    quint64 m_packetsSent;
+    quint64 m_packetsReceived;
+    quint64 m_packetErrors;
+    int m_lastLatencyMs;
 
     // Temporary storage during a single poll sweep
     QVariantMap m_currentSweepData;

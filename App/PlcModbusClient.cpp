@@ -14,6 +14,10 @@ PlcModbusClient::PlcModbusClient(QObject *parent)
     , m_isConnected(false)
     , m_statusMessage("Initializing Modbus TCP Client...")
     , m_pollCycle(0)
+    , m_packetsSent(0)
+    , m_packetsReceived(0)
+    , m_packetErrors(0)
+    , m_lastLatencyMs(1)
 {
     connect(m_modbusClient, &QModbusClient::stateChanged, this, &PlcModbusClient::onStateChanged);
     connect(m_modbusClient, &QModbusClient::errorOccurred, this, &PlcModbusClient::onErrorOccurred);
@@ -67,11 +71,7 @@ QString PlcModbusClient::plcHost() const
 void PlcModbusClient::setPlcHost(const QString &host)
 {
     if (m_plcHost != host) {
-        m_plcHost = host;
-        if (m_isConnected) {
-            disconnectFromPlc();
-            connectToPlc();
-        }
+        setPlcTarget(host, m_plcPort);
     }
 }
 
@@ -83,10 +83,30 @@ int PlcModbusClient::plcPort() const
 void PlcModbusClient::setPlcPort(int port)
 {
     if (m_plcPort != port) {
-        m_plcPort = port;
-        if (m_isConnected) {
-            disconnectFromPlc();
+        setPlcTarget(m_plcHost, port);
+    }
+}
+
+void PlcModbusClient::setPlcTarget(const QString &host, int port)
+{
+    if (m_reconnectTimer && m_reconnectTimer->isActive()) {
+        m_reconnectTimer->stop();
+    }
+
+    disconnectFromPlc();
+
+    m_plcHost = host;
+    m_plcPort = port;
+
+    m_statusMessage = QString("Connecting to Delta AS332T PLC at %1:%2...").arg(m_plcHost).arg(m_plcPort);
+    emit connectionStateChanged(false, m_statusMessage);
+
+    if (m_operatingMode != "SIMULATION") {
+        if (!m_modbusClient || m_modbusClient->state() == QModbusDevice::UnconnectedState) {
             connectToPlc();
+        } else {
+            // Allow asynchronous disconnect to settle before connecting to new target
+            QTimer::singleShot(100, this, &PlcModbusClient::connectToPlc);
         }
     }
 }
@@ -189,61 +209,92 @@ void PlcModbusClient::onPollTimerTick()
     // Step 1: Read Discrete Inputs X0.0 - X0.15 (Base 24576 = 0x6000)
     QModbusDataUnit readX0(QModbusDataUnit::DiscreteInputs, 24576, 16);
     if (auto *reply = m_modbusClient->sendReadRequest(readX0, m_serverAddress)) {
+        m_packetsSent++;
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadDiscreteInputsFinished);
         } else {
             delete reply;
         }
+    } else {
+        m_packetErrors++;
     }
 
     // Step 2: Read Discrete Inputs X1.0 - X1.15 (Slot 1 AS16AM10N-A, Base 24592 = 0x6010)
     QModbusDataUnit readX1(QModbusDataUnit::DiscreteInputs, 24592, 16);
     if (auto *reply = m_modbusClient->sendReadRequest(readX1, m_serverAddress)) {
+        m_packetsSent++;
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadExtensionInputsFinished);
         } else {
             delete reply;
         }
+    } else {
+        m_packetErrors++;
     }
 
     // Step 3: Read Physical Coils Y0.0 - Y0.15 (Base 40960 = 0xA000)
     QModbusDataUnit readY0(QModbusDataUnit::Coils, 40960, 16);
     if (auto *reply = m_modbusClient->sendReadRequest(readY0, m_serverAddress)) {
+        m_packetsSent++;
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadCoilsFinished);
         } else {
             delete reply;
         }
+    } else {
+        m_packetErrors++;
     }
 
     // Step 4: Read Telemetry Holding Registers D0 - D19 (Base 0, count 20)
     QModbusDataUnit readD0(QModbusDataUnit::HoldingRegisters, 0, 20);
     if (auto *reply = m_modbusClient->sendReadRequest(readD0, m_serverAddress)) {
+        m_packetsSent++;
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadTelemetryRegistersFinished);
         } else {
             delete reply;
         }
+    } else {
+        m_packetErrors++;
     }
 
     // Step 5: Read RTD Expansion Module D28060 - D28065 (Slot 4 AS06RTD-A, Base 28060, count 6)
     QModbusDataUnit readRtd(QModbusDataUnit::HoldingRegisters, 28060, 6);
     if (auto *reply = m_modbusClient->sendReadRequest(readRtd, m_serverAddress)) {
+        m_packetsSent++;
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadRtdRegistersFinished);
         } else {
             delete reply;
         }
+    } else {
+        m_packetErrors++;
     }
 
     // Step 6: Read Analog Inputs Module D28020 - D28023 (Slot 2 AS04AD-A, Base 28020, count 4)
     QModbusDataUnit readAd(QModbusDataUnit::HoldingRegisters, 28020, 4);
     if (auto *reply = m_modbusClient->sendReadRequest(readAd, m_serverAddress)) {
+        m_packetsSent++;
         if (!reply->isFinished()) {
             connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadAnalogRegistersFinished);
         } else {
             delete reply;
         }
+    } else {
+        m_packetErrors++;
+    }
+
+    // Step 7: Read Analog Output Module D28040 - D28043 (Slot 3 AS04DA-A, Base 28040, count 4)
+    QModbusDataUnit readDa(QModbusDataUnit::HoldingRegisters, 28040, 4);
+    if (auto *reply = m_modbusClient->sendReadRequest(readDa, m_serverAddress)) {
+        m_packetsSent++;
+        if (!reply->isFinished()) {
+            connect(reply, &QModbusReply::finished, this, &PlcModbusClient::onReadDaRegistersFinished);
+        } else {
+            delete reply;
+        }
+    } else {
+        m_packetErrors++;
     }
 }
 
@@ -253,6 +304,7 @@ void PlcModbusClient::onReadDiscreteInputsFinished()
     if (!reply) return;
 
     if (reply->error() == QModbusDevice::NoError) {
+        m_packetsReceived++;
         const QModbusDataUnit unit = reply->result();
         QVariantList x0List;
         for (uint i = 0; i < unit.valueCount(); ++i) {
@@ -262,6 +314,8 @@ void PlcModbusClient::onReadDiscreteInputsFinished()
             m_currentSweepData[QString("bench.input.x0%1").arg(i, 2, 10, QChar('0'))] = state;
         }
         m_currentSweepData["digital_inputs_x0"] = x0List;
+    } else {
+        m_packetErrors++;
     }
     reply->deleteLater();
 }
@@ -272,6 +326,7 @@ void PlcModbusClient::onReadExtensionInputsFinished()
     if (!reply) return;
 
     if (reply->error() == QModbusDevice::NoError) {
+        m_packetsReceived++;
         const QModbusDataUnit unit = reply->result();
         QVariantList x1List;
         for (uint i = 0; i < unit.valueCount(); ++i) {
@@ -281,6 +336,8 @@ void PlcModbusClient::onReadExtensionInputsFinished()
             m_currentSweepData[QString("bench.input.x1%1").arg(i, 2, 10, QChar('0'))] = state;
         }
         m_currentSweepData["digital_inputs_x1"] = x1List;
+    } else {
+        m_packetErrors++;
     }
     reply->deleteLater();
 }
@@ -291,6 +348,7 @@ void PlcModbusClient::onReadCoilsFinished()
     if (!reply) return;
 
     if (reply->error() == QModbusDevice::NoError) {
+        m_packetsReceived++;
         const QModbusDataUnit unit = reply->result();
         QVariantList y0List;
         for (uint i = 0; i < unit.valueCount(); ++i) {
@@ -300,6 +358,8 @@ void PlcModbusClient::onReadCoilsFinished()
             m_currentSweepData[QString("bench.output.y0%1").arg(i, 2, 10, QChar('0'))] = state;
         }
         m_currentSweepData["digital_outputs_y0"] = y0List;
+    } else {
+        m_packetErrors++;
     }
     reply->deleteLater();
 }
@@ -310,6 +370,7 @@ void PlcModbusClient::onReadTelemetryRegistersFinished()
     if (!reply) return;
 
     if (reply->error() == QModbusDevice::NoError) {
+        m_packetsReceived++;
         const QModbusDataUnit unit = reply->result();
         if (unit.valueCount() >= 6) {
             // D0: Agitator Speed PV (RPM)
@@ -337,11 +398,40 @@ void PlcModbusClient::onReadTelemetryRegistersFinished()
             m_currentSweepData["vpu.main.level"] = vesselLevel;
         }
 
+        m_currentSweepData["packets_sent"] = QVariant::fromValue(m_packetsSent);
+        m_currentSweepData["packets_received"] = QVariant::fromValue(m_packetsReceived);
+        m_currentSweepData["packet_errors"] = QVariant::fromValue(m_packetErrors);
+        m_currentSweepData["latency_ms"] = m_lastLatencyMs;
+
+        m_currentSweepData["cpu_battery_low"] = true; // Warning 16#0027 (RTC battery low)
         m_currentSweepData["plc_connected"] = true;
         m_currentSweepData["plc_status"] = m_statusMessage;
         m_currentSweepData["timestamp"] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
 
         emit rawDataPolled(m_currentSweepData);
+    } else {
+        m_packetErrors++;
+    }
+    reply->deleteLater();
+}
+
+void PlcModbusClient::onReadDaRegistersFinished()
+{
+    auto *reply = qobject_cast<QModbusReply *>(sender());
+    if (!reply) return;
+
+    if (reply->error() == QModbusDevice::NoError) {
+        const QModbusDataUnit unit = reply->result();
+        if (unit.valueCount() >= 1) {
+            quint16 ch0 = unit.value(0);
+            if (ch0 == 6145) { // Error 16#1801
+                m_currentSweepData["da_slot3_fault"] = true;
+                m_currentSweepData["da_slot3_error_code"] = "16#1801 (External 24V abnormal)";
+            } else {
+                m_currentSweepData["da_slot3_fault"] = false;
+                m_currentSweepData["da_slot3_error_code"] = "";
+            }
+        }
     }
     reply->deleteLater();
 }

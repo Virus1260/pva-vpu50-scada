@@ -1,5 +1,5 @@
 add_subdirectory(application)
-add_subdirectory(compat)
+# add_subdirectory(compat)
 add_subdirectory(components)
 add_subdirectory(designeffects)
 add_subdirectory(effects_qt6)
